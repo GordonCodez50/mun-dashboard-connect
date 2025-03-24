@@ -17,17 +17,22 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
-4. Access the application at http://localhost:5173
+3. Copy `.env.example` to `.env` and configure as needed
+4. Start the development server: `npm run dev`
+5. Access the application at http://localhost:5173
 
 ### Production Deployment (Vercel)
 
 This application is configured for seamless deployment on Vercel:
 
 1. Connect your repository to Vercel
-2. Set the following environment variables (optional):
+2. Set the following environment variables:
    - `VITE_WS_ENDPOINT`: WebSocket server endpoint (if using a real backend)
    - `VITE_SIMULATION_MODE`: Set to 'false' to use real WebSocket connection
+   - `VITE_USE_LOCAL_STORAGE`: Set to 'false' to use a real authentication system
+
+3. Deploy the application
+4. After deployment, you can access your app at your Vercel URL
 
 ## System Administration Guide
 
@@ -101,6 +106,7 @@ To switch from simulation mode to production mode:
 1. Set up a WebSocket server backend
 2. Set `VITE_SIMULATION_MODE=false` in your environment variables
 3. Set `VITE_WS_ENDPOINT` to your WebSocket server URL
+4. Set `VITE_USE_LOCAL_STORAGE=false` to use a real authentication system
 
 ## Security Notes
 

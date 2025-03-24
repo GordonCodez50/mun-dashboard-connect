@@ -11,7 +11,8 @@ export const WS_CONFIG = {
   endpoint: import.meta.env.VITE_WS_ENDPOINT || 'wss://api.example.com/ws',
   
   // Feature flags
-  simulationMode: import.meta.env.VITE_SIMULATION_MODE === 'true' || true,
+  // Simulation mode should be disabled in production
+  simulationMode: import.meta.env.VITE_SIMULATION_MODE === 'true' || false,
   
   // Connection settings
   reconnectAttempts: 5,
@@ -22,7 +23,7 @@ export const WS_CONFIG = {
 export const AUTH_CONFIG = {
   // If true, users will be persisted in localStorage (for demo purposes)
   // In production, this should be false to use a real authentication system
-  useLocalStorage: true,
+  useLocalStorage: import.meta.env.VITE_USE_LOCAL_STORAGE === 'true' || true,
   
   // Storage keys
   storageKeys: {
