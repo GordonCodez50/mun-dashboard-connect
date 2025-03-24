@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { StatusBadge, CouncilStatus } from '@/components/ui/StatusBadge';
+import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
+import useWebSocket from '@/hooks/useWebSocket';
 
 type Alert = {
   id: string;
@@ -21,7 +21,7 @@ type Council = {
   id: string;
   name: string;
   chairName: string;
-  status: CouncilStatus;
+  status: CouncilStatusType;
   lastUpdate: Date;
 };
 
@@ -32,6 +32,11 @@ const AdminPanel = () => {
   const [alertsMuted, setAlertsMuted] = useState(false);
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
+
+  // Set up WebSocket connections
+  const { data: newAlert } = useWebSocket<Alert>('NEW_ALERT');
+  const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
+  const { sendMessage: updateAlertStatus } = useWebSocket<{alertId: string, status: string}>('ALERT_STATUS_UPDATE');
 
   // Initialize mock data
   useEffect(() => {
@@ -88,6 +93,45 @@ const AdminPanel = () => {
     setLiveAlerts(mockAlerts);
   }, []);
 
+  // Handle new alerts from WebSocket
+  useEffect(() => {
+    if (newAlert) {
+      // Convert string timestamp to Date object if needed
+      const alert = {
+        ...newAlert,
+        timestamp: typeof newAlert.timestamp === 'string' 
+          ? new Date(newAlert.timestamp)
+          : newAlert.timestamp
+      };
+      
+      setLiveAlerts(prev => [alert, ...prev]);
+      
+      if (!alertsMuted) {
+        // Play notification sound for urgent alerts
+        if (alert.priority === 'urgent') {
+          const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3');
+          audio.play();
+        }
+        
+        toast.info(`New alert from ${alert.council}: ${alert.type}`, {
+          description: alert.message,
+          duration: 5000
+        });
+      }
+    }
+  }, [newAlert, alertsMuted]);
+
+  // Handle council status updates from WebSocket
+  useEffect(() => {
+    if (statusUpdate && statusUpdate.councilId) {
+      setCouncils(prev => prev.map(council => 
+        council.id === statusUpdate.councilId 
+          ? { ...council, status: statusUpdate.status, lastUpdate: new Date() }
+          : council
+      ));
+    }
+  }, [statusUpdate]);
+
   // Handle acknowledging an alert
   const handleAcknowledge = (alertId: string) => {
     setLiveAlerts(prev => 
@@ -95,6 +139,10 @@ const AdminPanel = () => {
         alert.id === alertId ? { ...alert, status: 'acknowledged' } : alert
       )
     );
+    
+    // Send status update via WebSocket
+    updateAlertStatus({ alertId, status: 'acknowledged' });
+    
     toast.success('Alert acknowledged');
   };
 
@@ -105,6 +153,10 @@ const AdminPanel = () => {
         alert.id === alertId ? { ...alert, status: 'resolved' } : alert
       )
     );
+    
+    // Send status update via WebSocket
+    updateAlertStatus({ alertId, status: 'resolved' });
+    
     toast.success('Alert marked as resolved');
   };
 
@@ -113,6 +165,17 @@ const AdminPanel = () => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
       return;
+    }
+    
+    // Send reply via WebSocket (we'd need to add a MESSAGE_CHAIR event type)
+    const alert = liveAlerts.find(a => a.id === alertId);
+    if (alert) {
+      websocketService.send('ALERT_STATUS_UPDATE', {
+        alertId,
+        status: alert.status,
+        reply: replyMessage,
+        admin: user?.name
+      });
     }
     
     toast.success(`Reply sent to ${liveAlerts.find(a => a.id === alertId)?.chairName}`);
@@ -164,7 +227,10 @@ const AdminPanel = () => {
           
           {/* Live Alerts */}
           <div className="mb-8">
-            <h2 className="text-lg font-medium text-primary mb-4">Live Alerts</h2>
+            <h2 className="text-lg font-medium text-primary mb-4 flex items-center">
+              Live Alerts
+              <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            </h2>
             {liveAlerts.length > 0 ? (
               <div className="space-y-4">
                 {liveAlerts.map((alert) => (

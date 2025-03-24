@@ -1,23 +1,59 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import useWebSocket from '@/hooks/useWebSocket';
 
 export type CountdownTimerProps = {
   initialTime: number; // in seconds
   onComplete?: () => void;
   autoStart?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  timerId?: string; // Optional ID for WebSocket sync
+  isAdmin?: boolean; // Whether this instance can control other timers
 };
 
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   initialTime,
   onComplete,
   autoStart = true,
-  size = 'md'
+  size = 'md',
+  timerId,
+  isAdmin = false
 }) => {
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const [isRunning, setIsRunning] = useState(autoStart);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Set up WebSocket for timer sync
+  const { data: timerSync, sendMessage: sendTimerUpdate } = useWebSocket<{
+    timerId: string;
+    action: 'start' | 'pause' | 'reset';
+    timeLeft?: number;
+  }>('TIMER_SYNC');
+  
+  // Listen for timer sync updates
+  useEffect(() => {
+    if (timerSync && timerId && timerSync.timerId === timerId) {
+      switch (timerSync.action) {
+        case 'start':
+          setIsRunning(true);
+          setIsPaused(false);
+          if (timerSync.timeLeft !== undefined) {
+            setTimeLeft(timerSync.timeLeft);
+          }
+          break;
+        case 'pause':
+          setIsPaused(true);
+          break;
+        case 'reset':
+          if (timerRef.current) clearInterval(timerRef.current);
+          setTimeLeft(initialTime);
+          setIsRunning(false);
+          setIsPaused(false);
+          break;
+      }
+    }
+  }, [timerSync, timerId, initialTime]);
   
   // Calculate minutes and seconds
   const minutes = Math.floor(timeLeft / 60);
@@ -51,8 +87,28 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
             if (timerRef.current) clearInterval(timerRef.current);
             setIsRunning(false);
             if (onComplete) onComplete();
+            
+            // Notify via WebSocket if this is the admin timer
+            if (isAdmin && timerId) {
+              sendTimerUpdate({
+                timerId,
+                action: 'reset',
+                timeLeft: 0
+              });
+            }
+            
             return 0;
           }
+          
+          // If admin timer, periodically sync with other timers
+          if (isAdmin && timerId && prev % 5 === 0) { // Sync every 5 seconds
+            sendTimerUpdate({
+              timerId,
+              action: 'start',
+              timeLeft: prev - 1
+            });
+          }
+          
           return prev - 1;
         });
       }, 1000);
@@ -61,17 +117,34 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, isPaused, onComplete]);
+  }, [isRunning, isPaused, onComplete, isAdmin, timerId, sendTimerUpdate]);
   
   // Start/Resume timer
   const startTimer = () => {
     setIsRunning(true);
     setIsPaused(false);
+    
+    // Notify via WebSocket if this is the admin timer
+    if (isAdmin && timerId) {
+      sendTimerUpdate({
+        timerId,
+        action: 'start',
+        timeLeft
+      });
+    }
   };
   
   // Pause timer
   const pauseTimer = () => {
     setIsPaused(true);
+    
+    // Notify via WebSocket if this is the admin timer
+    if (isAdmin && timerId) {
+      sendTimerUpdate({
+        timerId,
+        action: 'pause'
+      });
+    }
   };
   
   // Reset timer
@@ -80,6 +153,15 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     setTimeLeft(initialTime);
     setIsRunning(false);
     setIsPaused(false);
+    
+    // Notify via WebSocket if this is the admin timer
+    if (isAdmin && timerId) {
+      sendTimerUpdate({
+        timerId,
+        action: 'reset',
+        timeLeft: initialTime
+      });
+    }
   };
 
   return (
@@ -138,6 +220,14 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
           Reset
         </button>
       </div>
+      
+      {/* Show real-time sync indicator if timerId is provided */}
+      {timerId && (
+        <div className="mt-2 flex items-center text-xs text-gray-500">
+          <span>Real-time {isAdmin ? "controlling" : "synced"}</span>
+          <div className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+        </div>
+      )}
     </div>
   );
 };

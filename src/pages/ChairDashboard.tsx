@@ -1,12 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
-import { StatusBadge, CouncilStatus } from '@/components/ui/StatusBadge';
+import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { toast } from "sonner";
 import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send } from 'lucide-react';
+import useWebSocket from '@/hooks/useWebSocket';
 
 type Alert = {
   id: string;
@@ -18,17 +18,36 @@ type Alert = {
 
 const ChairDashboard = () => {
   const { user } = useAuth();
-  const [councilStatus, setCouncilStatus] = useState<CouncilStatus>('in-session');
+  const [councilStatus, setCouncilStatus] = useState<CouncilStatusType>('in-session');
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
+  
+  const { sendMessage: sendAlert } = useWebSocket<Alert>('NEW_ALERT');
+  const { data: alertStatusUpdate } = useWebSocket<{alertId: string, status: string, reply?: string}>('ALERT_STATUS_UPDATE');
+  const { sendMessage: updateCouncilStatus } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
 
-  // Handle alert button click
+  useEffect(() => {
+    if (alertStatusUpdate && alertStatusUpdate.alertId) {
+      setRecentAlerts(prev => 
+        prev.map(alert => 
+          alert.id === alertStatusUpdate.alertId 
+            ? { ...alert, status: alertStatusUpdate.status as any } 
+            : alert
+        )
+      );
+      
+      if (alertStatusUpdate.reply) {
+        toast.info('New reply from admin', {
+          description: alertStatusUpdate.reply,
+          duration: 5000
+        });
+      }
+    }
+  }, [alertStatusUpdate]);
+
   const handleAlert = async (alertType: string) => {
     setLoadingAlert(alertType);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
     
     const newAlert: Alert = {
       id: Date.now().toString(),
@@ -38,12 +57,18 @@ const ChairDashboard = () => {
       status: 'pending'
     };
     
+    sendAlert({
+      ...newAlert,
+      council: 'Security Council',
+      chairName: user?.name || 'Chair',
+      priority: alertType === 'Security' ? 'urgent' : 'normal'
+    });
+    
     setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
     toast.success(`${alertType} alert sent successfully`);
     setLoadingAlert(null);
   };
 
-  // Get alert message based on type
   const getAlertMessage = (type: string): string => {
     switch (type) {
       case 'IT Support': return 'Technical assistance needed';
@@ -55,7 +80,6 @@ const ChairDashboard = () => {
     }
   };
 
-  // Handle sending custom alert
   const handleCustomAlert = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -66,9 +90,6 @@ const ChairDashboard = () => {
     
     setLoadingAlert('Custom');
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     const newAlert: Alert = {
       id: Date.now().toString(),
       type: 'Custom',
@@ -77,16 +98,28 @@ const ChairDashboard = () => {
       status: 'pending'
     };
     
+    sendAlert({
+      ...newAlert,
+      council: 'Security Council',
+      chairName: user?.name || 'Chair',
+      priority: 'normal'
+    });
+    
     setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
     toast.success('Custom alert sent successfully');
     setCustomAlert('');
     setLoadingAlert(null);
   };
 
-  // Handle status change
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as CouncilStatus;
+    const newStatus = e.target.value as CouncilStatusType;
     setCouncilStatus(newStatus);
+    
+    updateCouncilStatus({
+      councilId: '1',
+      status: newStatus
+    });
+    
     toast.success(`Status updated to ${newStatus.replace('-', ' ')}`);
   };
 
@@ -103,7 +136,6 @@ const ChairDashboard = () => {
             </p>
           </header>
           
-          {/* Status Panel */}
           <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -129,7 +161,6 @@ const ChairDashboard = () => {
             </div>
           </div>
           
-          {/* Quick Actions Grid */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-primary mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -161,7 +192,6 @@ const ChairDashboard = () => {
             </div>
           </div>
           
-          {/* Custom Alert */}
           <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
             <h2 className="text-lg font-medium text-primary mb-4">Custom Alert</h2>
             <form onSubmit={handleCustomAlert} className="flex flex-col sm:flex-row gap-3">
@@ -194,7 +224,6 @@ const ChairDashboard = () => {
             </form>
           </div>
           
-          {/* Timer Summary */}
           <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
             <h2 className="text-lg font-medium text-primary mb-4">Quick Timer</h2>
             <div className="flex justify-center py-2">
@@ -202,7 +231,6 @@ const ChairDashboard = () => {
             </div>
           </div>
           
-          {/* Recent Alerts */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-primary mb-4">Recent Alerts</h2>
             {recentAlerts.length > 0 ? (

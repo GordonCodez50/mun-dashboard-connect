@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { toast } from "sonner";
 import { Clock, Volume2, VolumeX } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 // Presets in seconds
 const timePresets = [
@@ -16,11 +17,15 @@ const timePresets = [
 ];
 
 const TimerManager = () => {
+  const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(120); // Default 2 minutes
   const [customTime, setCustomTime] = useState('');
   const [adminSync, setAdminSync] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isActive, setIsActive] = useState(false);
+  
+  // Determine if user is admin
+  const isAdmin = user?.role === 'admin';
   
   // Handle preset selection
   const handlePresetSelect = (seconds: number) => {
@@ -114,6 +119,10 @@ const TimerManager = () => {
                 <div className="mb-6 flex items-center gap-2">
                   <Clock className="text-accent h-6 w-6" />
                   <h2 className="text-xl font-medium text-primary">Session Timer</h2>
+                  <div className="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded-full flex items-center">
+                    Real-time
+                    <div className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                  </div>
                 </div>
                 
                 <div className="w-full max-w-lg">
@@ -122,26 +131,30 @@ const TimerManager = () => {
                     onComplete={handleTimerComplete} 
                     autoStart={false}
                     size="lg"
+                    timerId="main-session-timer"
+                    isAdmin={isAdmin || !adminSync} // Admin controls if admin or sync is off
                   />
                 </div>
                 
                 {/* Admin sync toggle */}
                 <div className="mt-8 flex items-center justify-center gap-8">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={toggleAdminSync}
-                      className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${
-                        adminSync ? 'bg-accent' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
-                          adminSync ? 'translate-x-6' : 'translate-x-1'
+                  {!isAdmin && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={toggleAdminSync}
+                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${
+                          adminSync ? 'bg-accent' : 'bg-gray-200'
                         }`}
-                      />
-                    </button>
-                    <span className="text-sm text-gray-600">Admin Sync</span>
-                  </div>
+                      >
+                        <span
+                          className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
+                            adminSync ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                      <span className="text-sm text-gray-600">Admin Sync</span>
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-2">
                     <button

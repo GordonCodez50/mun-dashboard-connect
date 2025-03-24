@@ -1,0 +1,200 @@
+
+import { toast } from "sonner";
+
+// WebSocket event types
+export type WebSocketEventType = 
+  | 'COUNCIL_STATUS_UPDATE' 
+  | 'NEW_ALERT' 
+  | 'ALERT_STATUS_UPDATE' 
+  | 'TIMER_SYNC'
+  | 'DOCUMENT_UPDATE';
+
+// WebSocket message format
+export interface WebSocketMessage {
+  type: WebSocketEventType;
+  data: any;
+  timestamp: string;
+}
+
+// Mock WebSocket for development (will be replaced with a real WebSocket in production)
+class WebSocketService {
+  private socket: WebSocket | null = null;
+  private listeners: Map<WebSocketEventType, Set<(data: any) => void>> = new Map();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
+  private url: string;
+  
+  constructor(url: string = 'wss://api.example.com/ws') {
+    this.url = url;
+  }
+  
+  // Connect to WebSocket server
+  connect(): void {
+    if (this.socket?.readyState === WebSocket.OPEN) return;
+    
+    try {
+      // For development, we'll use mock data
+      // In production, uncomment the next line
+      // this.socket = new WebSocket(this.url);
+      
+      // Mock socket events for development
+      this.simulateConnection();
+    } catch (error) {
+      console.error('WebSocket connection failed:', error);
+      this.handleReconnect();
+    }
+  }
+  
+  // Add event listener
+  on<T>(event: WebSocketEventType, callback: (data: T) => void): () => void {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
+    }
+    
+    this.listeners.get(event)?.add(callback as (data: any) => void);
+    
+    // Return unsubscribe function
+    return () => {
+      const listeners = this.listeners.get(event);
+      if (listeners) {
+        listeners.delete(callback as (data: any) => void);
+      }
+    };
+  }
+  
+  // Remove event listener
+  off(event: WebSocketEventType, callback: (data: any) => void): void {
+    const listeners = this.listeners.get(event);
+    if (listeners) {
+      listeners.delete(callback);
+    }
+  }
+  
+  // Send message to server
+  send(event: WebSocketEventType, data: any): void {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      this.connect();
+      // Queue message to be sent after connection
+      setTimeout(() => this.send(event, data), 100);
+      return;
+    }
+    
+    const message: WebSocketMessage = {
+      type: event,
+      data,
+      timestamp: new Date().toISOString()
+    };
+    
+    // In production, uncomment the next line
+    // this.socket.send(JSON.stringify(message));
+    
+    // For development, we'll simulate sending and immediate echo
+    this.simulateSend(message);
+  }
+  
+  // Close WebSocket connection
+  close(): void {
+    if (this.socket) {
+      this.socket.close();
+      this.socket = null;
+    }
+    
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+  }
+  
+  // Handle reconnection
+  private handleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnect attempts reached');
+      toast.error('Unable to connect to real-time services. Please refresh the page.');
+      return;
+    }
+    
+    this.reconnectAttempts++;
+    const delay = Math.min(30000, Math.pow(2, this.reconnectAttempts) * 1000);
+    
+    this.reconnectTimeout = setTimeout(() => {
+      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+      this.connect();
+    }, delay);
+  }
+  
+  // Simulate connection for development
+  private simulateConnection(): void {
+    console.log('WebSocket connected (simulated)');
+    
+    // Reset reconnect attempts on successful connection
+    this.reconnectAttempts = 0;
+    
+    // Simulate periodic status updates
+    setInterval(() => {
+      const statuses: ('in-session' | 'on-break' | 'technical-issue')[] = ['in-session', 'on-break', 'technical-issue'];
+      const randomCouncil = Math.floor(Math.random() * 5) + 1;
+      
+      if (Math.random() > 0.7) { // 30% chance of a status update
+        this.dispatchEvent('COUNCIL_STATUS_UPDATE', {
+          councilId: String(randomCouncil),
+          status: statuses[Math.floor(Math.random() * statuses.length)],
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, 15000);
+    
+    // Simulate random alerts
+    setInterval(() => {
+      const alertTypes = ['IT Support', 'Mic Issue', 'Security', 'Break'];
+      const councils = ['Security Council', 'Human Rights Council', 'Economic and Social Council', 'General Assembly', 'Environmental Committee'];
+      const chairNames = ['John Smith', 'Emma Johnson', 'Michael Brown', 'Sarah Wilson', 'Alex Thompson'];
+      
+      if (Math.random() > 0.8) { // 20% chance of a new alert
+        const randomCouncil = Math.floor(Math.random() * councils.length);
+        this.dispatchEvent('NEW_ALERT', {
+          id: Date.now().toString(),
+          council: councils[randomCouncil],
+          chairName: chairNames[randomCouncil],
+          type: alertTypes[Math.floor(Math.random() * alertTypes.length)],
+          message: 'Simulated alert from WebSocket',
+          timestamp: new Date().toISOString(),
+          status: 'pending',
+          priority: Math.random() > 0.7 ? 'urgent' : 'normal'
+        });
+      }
+    }, 30000);
+  }
+  
+  // Simulate sending message for development
+  private simulateSend(message: WebSocketMessage): void {
+    console.log('WebSocket message sent (simulated):', message);
+    
+    // Simulate echo/response from server
+    setTimeout(() => {
+      this.dispatchEvent(message.type, message.data);
+    }, 200);
+  }
+  
+  // Dispatch event to listeners
+  private dispatchEvent(event: WebSocketEventType, data: any): void {
+    const listeners = this.listeners.get(event);
+    if (listeners) {
+      listeners.forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in WebSocket listener for event ${event}:`, error);
+        }
+      });
+    }
+  }
+}
+
+// Singleton instance
+export const websocketService = new WebSocketService();
+
+// Initialize connection
+websocketService.connect();
+
+export default websocketService;

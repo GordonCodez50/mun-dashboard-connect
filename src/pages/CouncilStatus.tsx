@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { ArrowUpDown, Search, RefreshCw } from 'lucide-react';
+import useWebSocket from '@/hooks/useWebSocket';
 
 type Council = {
   id: string;
@@ -27,17 +27,38 @@ const CouncilStatus = () => {
     direction: 'ascending'
   });
 
+  // Set up WebSocket connection for council status updates
+  const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
+
   // Initialize mock data
   useEffect(() => {
     fetchCouncils();
     
-    // Auto-refresh every 10 seconds
+    // With WebSocket, we don't need frequent polling
+    // Just do a full refresh occasionally to ensure consistency
     const intervalId = setInterval(() => {
       fetchCouncils(false);
-    }, 10000);
+    }, 60000); // Reduced frequency to once per minute
     
     return () => clearInterval(intervalId);
   }, []);
+
+  // Handle WebSocket status updates
+  useEffect(() => {
+    if (statusUpdate && statusUpdate.councilId) {
+      setCouncils(prev => prev.map(council => 
+        council.id === statusUpdate.councilId 
+          ? { ...council, status: statusUpdate.status, lastUpdate: new Date() }
+          : council
+      ));
+      
+      // Only show toast for significant changes
+      const affectedCouncil = councils.find(c => c.id === statusUpdate.councilId);
+      if (affectedCouncil && affectedCouncil.status !== statusUpdate.status) {
+        toast.info(`${affectedCouncil.name} status changed to ${statusUpdate.status.replace('-', ' ')}`);
+      }
+    }
+  }, [statusUpdate, councils]);
 
   // Fetch councils data (mock)
   const fetchCouncils = (showToast = true) => {
@@ -311,7 +332,17 @@ const CouncilStatus = () => {
                           <div className="text-sm text-gray-700">{council.chairName}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <StatusBadge status={council.status} />
+                          <StatusBadge 
+                            status={council.status} 
+                            councilId={council.id}
+                            onStatusChange={(newStatus) => {
+                              setCouncils(prev => prev.map(c => 
+                                c.id === council.id 
+                                  ? { ...c, status: newStatus, lastUpdate: new Date() }
+                                  : c
+                              ));
+                            }}
+                          />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           {council.location}
@@ -334,10 +365,10 @@ const CouncilStatus = () => {
                 </tbody>
               </table>
             </div>
-            {/* Auto-refresh indicator */}
+            {/* Real-time indicator */}
             <div className="px-6 py-3 bg-gray-50 text-xs text-gray-500 flex items-center justify-end">
-              <span>Auto-refreshes every 10 seconds</span>
-              <div className={`ml-2 w-2 h-2 rounded-full ${isRefreshing ? 'bg-accent animate-pulse' : 'bg-gray-300'}`}></div>
+              <span>Real-time updates active</span>
+              <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
             </div>
           </div>
         </div>

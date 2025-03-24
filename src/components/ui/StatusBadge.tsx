@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import useWebSocket from '@/hooks/useWebSocket';
 
 export type CouncilStatus = 'in-session' | 'on-break' | 'technical-issue';
 
@@ -8,13 +9,28 @@ export type StatusBadgeProps = {
   status: CouncilStatus;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  councilId?: string;
+  onStatusChange?: (status: CouncilStatus) => void;
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
   status,
   className,
-  size = 'md'
+  size = 'md',
+  councilId,
+  onStatusChange
 }) => {
+  // If councilId is provided, listen for status updates via WebSocket
+  const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatus}>('COUNCIL_STATUS_UPDATE');
+  
+  useEffect(() => {
+    if (statusUpdate && councilId && statusUpdate.councilId === councilId) {
+      if (onStatusChange) {
+        onStatusChange(statusUpdate.status);
+      }
+    }
+  }, [statusUpdate, councilId, onStatusChange]);
+
   const getStatusLabel = () => {
     switch (status) {
       case 'in-session': return 'In Session';
