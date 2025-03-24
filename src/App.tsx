@@ -12,9 +12,19 @@ import AdminPanel from "./pages/AdminPanel";
 import CouncilStatus from "./pages/CouncilStatus";
 import TimerManager from "./pages/TimerManager";
 import Documents from "./pages/Documents";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Initialize query client with production settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30000,
+    },
+  },
+});
 
 // Protected route component
 const ProtectedRoute = ({ 
@@ -76,6 +86,10 @@ const AppWithAuth = () => {
         <Route
           path="/timer-control"
           element={<ProtectedRoute element={<TimerManager />} requiredRole="admin" />}
+        />
+        <Route
+          path="/user-management"
+          element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
         />
 
         {/* Shared Routes */}

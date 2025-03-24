@@ -1,141 +1,209 @@
 
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { Home, AlertTriangle, Timer, FileText, BarChart3, LogOut } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { 
+  LayoutDashboard, 
+  AlertTriangle, 
+  Timer, 
+  FileText, 
+  LogOut, 
+  Users, 
+  Activity,
+  UserPlus,
+  Settings
+} from 'lucide-react';
 
-type SidebarLink = {
-  icon: React.ElementType;
-  label: string;
-  path: string;
-  role?: 'chair' | 'admin' | 'both';
-};
-
-export const Sidebar: React.FC = () => {
+export const Sidebar = () => {
   const { user, logout } = useAuth();
-  const location = useLocation();
+  const navigate = useNavigate();
   
-  // Links shared between chair and admin
-  const sharedLinks: SidebarLink[] = [
-    {
-      icon: FileText,
-      label: 'Documents',
-      path: '/documents',
-      role: 'both'
-    }
-  ];
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   
-  // Chair-specific links
-  const chairLinks: SidebarLink[] = [
-    {
-      icon: Home,
-      label: 'Dashboard',
-      path: '/chair-dashboard',
-      role: 'chair'
-    },
-    {
-      icon: AlertTriangle,
-      label: 'Send Alert',
-      path: '/send-alert',
-      role: 'chair'
-    },
-    {
-      icon: Timer,
-      label: 'Timer',
-      path: '/timer',
-      role: 'chair'
-    }
-  ];
-  
-  // Admin-specific links
-  const adminLinks: SidebarLink[] = [
-    {
-      icon: Home,
-      label: 'Dashboard',
-      path: '/admin-panel',
-      role: 'admin'
-    },
-    {
-      icon: AlertTriangle,
-      label: 'Live Alerts',
-      path: '/live-alerts',
-      role: 'admin'
-    },
-    {
-      icon: BarChart3,
-      label: 'Council Status',
-      path: '/council-status',
-      role: 'admin'
-    },
-    {
-      icon: Timer,
-      label: 'Timer Control',
-      path: '/timer-control',
-      role: 'admin'
-    }
-  ];
-
-  // Combine links based on user role
-  const links = [
-    ...(user?.role === 'chair' ? chairLinks : []),
-    ...(user?.role === 'admin' ? adminLinks : []),
-    ...sharedLinks.filter(link => link.role === 'both' || link.role === user?.role)
-  ];
-
   return (
-    <div className="h-screen w-64 bg-primary flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-sidebar-border">
-        <div className="text-center">
-          <h2 className="text-white text-lg font-semibold mb-1">MUN Conference</h2>
-          {user?.role === 'chair' && user?.council && (
-            <p className="text-white/70 text-sm">{user.council}</p>
-          )}
+    <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 z-10 hidden md:block animate-fade-in">
+      <div className="h-full flex flex-col py-6">
+        <div className="px-6 mb-8">
+          <div className="flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9h.01"></path>
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <circle cx="12" cy="15" r="3"></circle>
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-xl font-bold text-primary text-center mt-3">MUN Dashboard</h2>
+          <p className="text-sm text-gray-500 text-center mt-1 truncate">
+            {user?.role === 'admin' ? 'Admin Panel' : user?.council}
+          </p>
         </div>
-      </div>
-      
-      {/* User info */}
-      <div className="p-4 border-b border-sidebar-border flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-semibold">
-          {user?.name.charAt(0)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-white font-medium truncate">{user?.name}</p>
-          <p className="text-white/60 text-sm capitalize">{user?.role}</p>
-        </div>
-      </div>
-      
-      {/* Navigation links */}
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <ul className="px-3 space-y-1">
-          {links.map((link) => (
-            <li key={link.path}>
-              <NavLink
-                to={link.path}
-                className={({ isActive }) => cn(
-                  "sidebar-link",
-                  isActive && "active"
-                )}
+        
+        <nav className="flex-1 px-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
+            Main
+          </p>
+          
+          {user?.role === 'chair' ? (
+            <>
+              <NavLink 
+                to="/chair-dashboard" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
               >
-                <link.icon className="w-5 h-5" />
-                <span>{link.label}</span>
+                <LayoutDashboard size={18} className="mr-3" />
+                Dashboard
               </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      
-      {/* Logout button */}
-      <div className="p-4 border-t border-sidebar-border">
-        <button 
-          onClick={logout}
-          className="sidebar-link w-full justify-center gap-2"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Logout</span>
-        </button>
+              
+              <NavLink 
+                to="/send-alert" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <AlertTriangle size={18} className="mr-3" />
+                Send Alerts
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink 
+                to="/admin-panel" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <LayoutDashboard size={18} className="mr-3" />
+                Dashboard
+              </NavLink>
+              
+              <NavLink 
+                to="/live-alerts" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <AlertTriangle size={18} className="mr-3" />
+                Live Alerts
+              </NavLink>
+              
+              <NavLink 
+                to="/council-status" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Activity size={18} className="mr-3" />
+                Council Status
+              </NavLink>
+              
+              <NavLink 
+                to="/user-management" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <UserPlus size={18} className="mr-3" />
+                User Management
+              </NavLink>
+            </>
+          )}
+          
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
+            Common
+          </p>
+          
+          <NavLink 
+            to="/timer" 
+            className={({ isActive }) => 
+              `flex items-center px-3 py-2 rounded-md mb-1 ${
+                isActive 
+                  ? 'bg-accent/10 text-accent' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`
+            }
+          >
+            <Timer size={18} className="mr-3" />
+            Timer
+          </NavLink>
+          
+          <NavLink 
+            to="/documents" 
+            className={({ isActive }) => 
+              `flex items-center px-3 py-2 rounded-md mb-1 ${
+                isActive 
+                  ? 'bg-accent/10 text-accent' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`
+            }
+          >
+            <FileText size={18} className="mr-3" />
+            Documents
+          </NavLink>
+          
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
+            Account
+          </p>
+          
+          <NavLink 
+            to="#settings" 
+            className="flex items-center px-3 py-2 rounded-md mb-1 text-gray-700 hover:bg-gray-100"
+          >
+            <Settings size={18} className="mr-3" />
+            Settings
+          </NavLink>
+          
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center px-3 py-2 rounded-md mb-1 text-gray-700 hover:bg-gray-100 text-left"
+          >
+            <LogOut size={18} className="mr-3" />
+            Logout
+          </button>
+        </nav>
+        
+        <div className="px-3 mt-6">
+          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-medium">
+                {user?.name?.charAt(0)}
+              </div>
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-medium text-primary truncate">{user?.name}</p>
+                <p className="text-xs text-gray-500 truncate">{user?.role}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 };

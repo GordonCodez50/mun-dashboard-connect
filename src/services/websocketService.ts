@@ -16,14 +16,22 @@ export interface WebSocketMessage {
   timestamp: string;
 }
 
+// Connection event handlers
+type ConnectionHandler = () => void;
+
 // Mock WebSocket for development (will be replaced with a real WebSocket in production)
 class WebSocketService {
   private socket: WebSocket | null = null;
   private listeners: Map<WebSocketEventType, Set<(data: any) => void>> = new Map();
+  private connectListeners: Set<ConnectionHandler> = new Set();
+  private disconnectListeners: Set<ConnectionHandler> = new Set();
+  private reconnectingListeners: Set<ConnectionHandler> = new Set();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private url: string;
+  private connected = false;
+  private reconnecting = false;
   
   constructor(url: string = 'wss://api.example.com/ws') {
     this.url = url;
@@ -31,12 +39,48 @@ class WebSocketService {
   
   // Connect to WebSocket server
   connect(): void {
-    if (this.socket?.readyState === WebSocket.OPEN) return;
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.connected = true;
+      return;
+    }
+    
+    if (this.reconnecting) return;
     
     try {
       // For development, we'll use mock data
-      // In production, uncomment the next line
-      // this.socket = new WebSocket(this.url);
+      // In production, uncomment the next lines and remove the simulateConnection call
+      /*
+      this.socket = new WebSocket(this.url);
+      
+      this.socket.onopen = () => {
+        this.connected = true;
+        this.reconnectAttempts = 0;
+        this.reconnecting = false;
+        this.notifyConnectListeners();
+      };
+      
+      this.socket.onclose = () => {
+        this.connected = false;
+        this.notifyDisconnectListeners();
+        this.handleReconnect();
+      };
+      
+      this.socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        if (this.socket?.readyState !== WebSocket.OPEN) {
+          this.handleReconnect();
+        }
+      };
+      
+      this.socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data) as WebSocketMessage;
+          this.dispatchEvent(message.type, message.data);
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      */
       
       // Mock socket events for development
       this.simulateConnection();
@@ -44,6 +88,95 @@ class WebSocketService {
       console.error('WebSocket connection failed:', error);
       this.handleReconnect();
     }
+  }
+  
+  // Check if socket is connected
+  isConnected(): boolean {
+    return this.connected;
+  }
+  
+  // Add connection event listener
+  onConnect(callback: ConnectionHandler): () => void {
+    this.connectListeners.add(callback);
+    
+    // If already connected, call the callback immediately
+    if (this.connected) {
+      callback();
+    }
+    
+    return () => {
+      this.connectListeners.delete(callback);
+    };
+  }
+  
+  // Remove connection event listener
+  offConnect(callback: ConnectionHandler): void {
+    this.connectListeners.delete(callback);
+  }
+  
+  // Add disconnection event listener
+  onDisconnect(callback: ConnectionHandler): () => void {
+    this.disconnectListeners.add(callback);
+    return () => {
+      this.disconnectListeners.delete(callback);
+    };
+  }
+  
+  // Remove disconnection event listener
+  offDisconnect(callback: ConnectionHandler): void {
+    this.disconnectListeners.delete(callback);
+  }
+  
+  // Add reconnecting event listener
+  onReconnecting(callback: ConnectionHandler): () => void {
+    this.reconnectingListeners.add(callback);
+    
+    // If already reconnecting, call the callback immediately
+    if (this.reconnecting) {
+      callback();
+    }
+    
+    return () => {
+      this.reconnectingListeners.delete(callback);
+    };
+  }
+  
+  // Remove reconnecting event listener
+  offReconnecting(callback: ConnectionHandler): void {
+    this.reconnectingListeners.delete(callback);
+  }
+  
+  // Notify connect listeners
+  private notifyConnectListeners(): void {
+    this.connectListeners.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in connect listener:', error);
+      }
+    });
+  }
+  
+  // Notify disconnect listeners
+  private notifyDisconnectListeners(): void {
+    this.disconnectListeners.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in disconnect listener:', error);
+      }
+    });
+  }
+  
+  // Notify reconnecting listeners
+  private notifyReconnectingListeners(): void {
+    this.reconnectingListeners.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in reconnecting listener:', error);
+      }
+    });
   }
   
   // Add event listener
@@ -73,7 +206,7 @@ class WebSocketService {
   
   // Send message to server
   send(event: WebSocketEventType, data: any): void {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+    if (!this.connected) {
       this.connect();
       // Queue message to be sent after connection
       setTimeout(() => this.send(event, data), 100);
@@ -87,7 +220,7 @@ class WebSocketService {
     };
     
     // In production, uncomment the next line
-    // this.socket.send(JSON.stringify(message));
+    // this.socket?.send(JSON.stringify(message));
     
     // For development, we'll simulate sending and immediate echo
     this.simulateSend(message);
@@ -98,6 +231,8 @@ class WebSocketService {
     if (this.socket) {
       this.socket.close();
       this.socket = null;
+      this.connected = false;
+      this.notifyDisconnectListeners();
     }
     
     if (this.reconnectTimeout) {
@@ -108,11 +243,16 @@ class WebSocketService {
   
   // Handle reconnection
   private handleReconnect(): void {
+    if (this.reconnecting) return;
+    
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.error('Max reconnect attempts reached');
       toast.error('Unable to connect to real-time services. Please refresh the page.');
       return;
     }
+    
+    this.reconnecting = true;
+    this.notifyReconnectingListeners();
     
     this.reconnectAttempts++;
     const delay = Math.min(30000, Math.pow(2, this.reconnectAttempts) * 1000);
@@ -127,8 +267,15 @@ class WebSocketService {
   private simulateConnection(): void {
     console.log('WebSocket connected (simulated)');
     
+    // Mark as connected
+    this.connected = true;
+    this.reconnecting = false;
+    
     // Reset reconnect attempts on successful connection
     this.reconnectAttempts = 0;
+    
+    // Notify listeners
+    this.notifyConnectListeners();
     
     // Simulate periodic status updates
     setInterval(() => {

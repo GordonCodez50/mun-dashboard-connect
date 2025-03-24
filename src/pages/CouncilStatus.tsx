@@ -27,23 +27,18 @@ const CouncilStatus = () => {
     direction: 'ascending'
   });
 
-  // Set up WebSocket connection for council status updates
   const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
 
-  // Initialize mock data
   useEffect(() => {
     fetchCouncils();
     
-    // With WebSocket, we don't need frequent polling
-    // Just do a full refresh occasionally to ensure consistency
     const intervalId = setInterval(() => {
       fetchCouncils(false);
-    }, 60000); // Reduced frequency to once per minute
+    }, 60000);
     
     return () => clearInterval(intervalId);
   }, []);
 
-  // Handle WebSocket status updates
   useEffect(() => {
     if (statusUpdate && statusUpdate.councilId) {
       setCouncils(prev => prev.map(council => 
@@ -52,7 +47,6 @@ const CouncilStatus = () => {
           : council
       ));
       
-      // Only show toast for significant changes
       const affectedCouncil = councils.find(c => c.id === statusUpdate.councilId);
       if (affectedCouncil && affectedCouncil.status !== statusUpdate.status) {
         toast.info(`${affectedCouncil.name} status changed to ${statusUpdate.status.replace('-', ' ')}`);
@@ -60,11 +54,9 @@ const CouncilStatus = () => {
     }
   }, [statusUpdate, councils]);
 
-  // Fetch councils data (mock)
   const fetchCouncils = (showToast = true) => {
     setIsRefreshing(true);
     
-    // Simulate API call
     setTimeout(() => {
       const mockCouncils: Council[] = [
         {
@@ -81,7 +73,7 @@ const CouncilStatus = () => {
           name: 'Human Rights Council',
           chairName: 'Emma Johnson',
           status: 'on-break',
-          lastUpdate: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+          lastUpdate: new Date(Date.now() - 1000 * 60 * 15),
           location: 'Room B202',
           delegates: 20
         },
@@ -90,7 +82,7 @@ const CouncilStatus = () => {
           name: 'Economic and Social Council',
           chairName: 'Michael Brown',
           status: 'technical-issue',
-          lastUpdate: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+          lastUpdate: new Date(Date.now() - 1000 * 60 * 5),
           location: 'Room C303',
           delegates: 25
         },
@@ -99,7 +91,7 @@ const CouncilStatus = () => {
           name: 'General Assembly',
           chairName: 'Sarah Wilson',
           status: 'in-session',
-          lastUpdate: new Date(Date.now() - 1000 * 60 * 2), // 2 minutes ago
+          lastUpdate: new Date(Date.now() - 1000 * 60 * 2),
           location: 'Main Hall',
           delegates: 50
         },
@@ -108,7 +100,7 @@ const CouncilStatus = () => {
           name: 'Environmental Committee',
           chairName: 'Alex Thompson',
           status: 'on-break',
-          lastUpdate: new Date(Date.now() - 1000 * 60 * 20), // 20 minutes ago
+          lastUpdate: new Date(Date.now() - 1000 * 60 * 20),
           location: 'Room D404',
           delegates: 18
         }
@@ -122,12 +114,10 @@ const CouncilStatus = () => {
     }, 800);
   };
 
-  // Handle manual refresh
   const handleRefresh = () => {
     fetchCouncils();
   };
 
-  // Handle sorting
   const requestSort = (key: keyof Council) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     
@@ -138,11 +128,9 @@ const CouncilStatus = () => {
     setSortConfig({ key, direction });
   };
 
-  // Sort and filter councils
   const sortedAndFilteredCouncils = React.useMemo(() => {
     let sortableCouncils = [...councils];
     
-    // Filter by search term
     if (searchTerm) {
       sortableCouncils = sortableCouncils.filter(
         council => 
@@ -152,7 +140,6 @@ const CouncilStatus = () => {
       );
     }
     
-    // Sort
     sortableCouncils.sort((a, b) => {
       if (a[sortConfig.key] < b[sortConfig.key]) {
         return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -166,7 +153,6 @@ const CouncilStatus = () => {
     return sortableCouncils;
   }, [councils, searchTerm, sortConfig]);
 
-  // Get status counts
   const statusCounts = React.useMemo(() => {
     return councils.reduce((acc, council) => {
       acc[council.status] = (acc[council.status] || 0) + 1;
@@ -187,7 +173,6 @@ const CouncilStatus = () => {
             </p>
           </header>
           
-          {/* Status Summary */}
           <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
@@ -226,7 +211,6 @@ const CouncilStatus = () => {
             </div>
           </div>
           
-          {/* Search and Controls */}
           <div className="mb-4 flex flex-col sm:flex-row gap-3 justify-between">
             <div className="relative max-w-md">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -253,7 +237,6 @@ const CouncilStatus = () => {
             </button>
           </div>
           
-          {/* Councils Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -365,7 +348,6 @@ const CouncilStatus = () => {
                 </tbody>
               </table>
             </div>
-            {/* Real-time indicator */}
             <div className="px-6 py-3 bg-gray-50 text-xs text-gray-500 flex items-center justify-end">
               <span>Real-time updates active</span>
               <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
