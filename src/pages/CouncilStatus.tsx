@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { StatusBadge, CouncilStatus } from '@/components/ui/StatusBadge';
+import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { ArrowUpDown, Search, RefreshCw } from 'lucide-react';
 
@@ -9,7 +9,7 @@ type Council = {
   id: string;
   name: string;
   chairName: string;
-  status: CouncilStatus;
+  status: CouncilStatusType;
   lastUpdate: Date;
   location: string;
   delegates: number;
