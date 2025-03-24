@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
+import { AUTH_CONFIG } from '@/config/appConfig';
 
 // Auth context type
 type AuthContextType = {
@@ -15,7 +16,7 @@ type AuthContextType = {
   isAuthenticated: boolean;
 };
 
-// Mock users database - in production this would be stored in a database
+// Initial users for demo purposes
 const INITIAL_USERS = [
   {
     id: 'chair1',
@@ -41,9 +42,8 @@ const INITIAL_USERS = [
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Use local storage key
-const USER_STORAGE_KEY = 'mun_user';
-const USERS_STORAGE_KEY = 'mun_users';
+// Use local storage keys from config
+const { user: USER_STORAGE_KEY, users: USERS_STORAGE_KEY } = AUTH_CONFIG.storageKeys;
 
 // Auth provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -54,6 +54,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize users from localStorage or defaults
   useEffect(() => {
+    // Only use localStorage in demo mode or if explicitly configured
+    if (!AUTH_CONFIG.useLocalStorage) {
+      setUsers(INITIAL_USERS);
+      setIsLoading(false);
+      return;
+    }
+
     const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
     if (storedUsers) {
       try {
@@ -78,6 +85,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check for existing session on mount
   useEffect(() => {
+    if (!AUTH_CONFIG.useLocalStorage) {
+      // In production, you would check for a valid session with your backend
+      setIsLoading(false);
+      return;
+    }
+
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     if (storedUser) {
       try {

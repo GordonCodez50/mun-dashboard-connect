@@ -1,5 +1,5 @@
-
 import { toast } from "sonner";
+import { WS_CONFIG } from "@/config/appConfig";
 
 // WebSocket event types
 export type WebSocketEventType = 
@@ -19,7 +19,6 @@ export interface WebSocketMessage {
 // Connection event handlers
 type ConnectionHandler = () => void;
 
-// Mock WebSocket for development (will be replaced with a real WebSocket in production)
 class WebSocketService {
   private socket: WebSocket | null = null;
   private listeners: Map<WebSocketEventType, Set<(data: any) => void>> = new Map();
@@ -27,14 +26,19 @@ class WebSocketService {
   private disconnectListeners: Set<ConnectionHandler> = new Set();
   private reconnectingListeners: Set<ConnectionHandler> = new Set();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = WS_CONFIG.reconnectAttempts;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private url: string;
   private connected = false;
   private reconnecting = false;
+  private simulationMode: boolean;
   
-  constructor(url: string = 'wss://api.example.com/ws') {
+  constructor(url: string = WS_CONFIG.endpoint, simulationMode = WS_CONFIG.simulationMode) {
     this.url = url;
+    this.simulationMode = simulationMode;
+    
+    // Log the current mode
+    console.log(`WebSocket Service initialized in ${this.simulationMode ? 'SIMULATION' : 'PRODUCTION'} mode`);
   }
   
   // Connect to WebSocket server
@@ -47,9 +51,13 @@ class WebSocketService {
     if (this.reconnecting) return;
     
     try {
-      // For development, we'll use mock data
-      // In production, uncomment the next lines and remove the simulateConnection call
-      /*
+      if (this.simulationMode) {
+        // For development, we'll use mock data
+        this.simulateConnection();
+        return;
+      }
+      
+      // Production WebSocket connection
       this.socket = new WebSocket(this.url);
       
       this.socket.onopen = () => {
@@ -57,12 +65,14 @@ class WebSocketService {
         this.reconnectAttempts = 0;
         this.reconnecting = false;
         this.notifyConnectListeners();
+        console.log('WebSocket connected to server');
       };
       
       this.socket.onclose = () => {
         this.connected = false;
         this.notifyDisconnectListeners();
         this.handleReconnect();
+        console.log('WebSocket disconnected');
       };
       
       this.socket.onerror = (error) => {
@@ -80,10 +90,6 @@ class WebSocketService {
           console.error('Error parsing WebSocket message:', error);
         }
       };
-      */
-      
-      // Mock socket events for development
-      this.simulateConnection();
     } catch (error) {
       console.error('WebSocket connection failed:', error);
       this.handleReconnect();
@@ -219,11 +225,14 @@ class WebSocketService {
       timestamp: new Date().toISOString()
     };
     
-    // In production, uncomment the next line
-    // this.socket?.send(JSON.stringify(message));
+    if (this.simulationMode) {
+      // For development, we'll simulate sending and immediate echo
+      this.simulateSend(message);
+      return;
+    }
     
-    // For development, we'll simulate sending and immediate echo
-    this.simulateSend(message);
+    // Production mode: actually send the message
+    this.socket?.send(JSON.stringify(message));
   }
   
   // Close WebSocket connection
@@ -265,7 +274,7 @@ class WebSocketService {
   
   // Simulate connection for development
   private simulateConnection(): void {
-    console.log('WebSocket connected (simulated)');
+    console.log('WebSocket connected (SIMULATION MODE)');
     
     // Mark as connected
     this.connected = true;
@@ -315,7 +324,7 @@ class WebSocketService {
   
   // Simulate sending message for development
   private simulateSend(message: WebSocketMessage): void {
-    console.log('WebSocket message sent (simulated):', message);
+    console.log('WebSocket message sent (SIMULATION MODE):', message);
     
     // Simulate echo/response from server
     setTimeout(() => {
@@ -341,7 +350,7 @@ class WebSocketService {
 // Singleton instance
 export const websocketService = new WebSocketService();
 
-// Initialize connection
+// Initialize connection on import
 websocketService.connect();
 
 export default websocketService;

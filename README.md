@@ -1,69 +1,109 @@
-# Welcome to your Lovable project
 
-## Project info
+# MUN Conference Dashboard
 
-**URL**: https://lovable.dev/projects/3fc5cb50-8094-436f-abcb-d94910ca1dc7
+A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **Real-time Updates**: Live alerts, council status updates, and timers
+- **Secure Authentication**: Role-based access control for chairs and admins
+- **Responsive Design**: Works on all devices from desktop to mobile
+- **User Management**: Create and manage chair and admin accounts
+- **Document Sharing**: Share and access conference documents
 
-**Use Lovable**
+## Setup & Deployment
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3fc5cb50-8094-436f-abcb-d94910ca1dc7) and start prompting.
+### Local Development
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Start the development server: `npm run dev`
+4. Access the application at http://localhost:5173
 
-**Use your preferred IDE**
+### Production Deployment (Vercel)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+This application is configured for seamless deployment on Vercel:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Connect your repository to Vercel
+2. Set the following environment variables (optional):
+   - `VITE_WS_ENDPOINT`: WebSocket server endpoint (if using a real backend)
+   - `VITE_SIMULATION_MODE`: Set to 'false' to use real WebSocket connection
 
-Follow these steps:
+## System Administration Guide
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Accessing the System
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Default Admin Account**:
+   - Username: `admin`
+   - Password: `password`
+   - **Important**: Change this password after first login in a production environment
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Default Chair Account**:
+   - Username: `chair`
+   - Password: `password`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### User Management
 
-**Edit a file directly in GitHub**
+#### Creating a New User
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Log in with an admin account
+2. Navigate to "User Management" in the sidebar
+3. Click "Create New User"
+4. Fill in the required fields:
+   - **Username**: Unique identifier for login
+   - **Password**: Secure password for the user
+   - **Full Name**: User's complete name
+   - **Role**: Select either "Chair" or "Admin"
+   - **Council** (for Chair only): Assign the chair to a specific council
+   - **Email**: Optional contact information
 
-**Use GitHub Codespaces**
+5. Click "Create User" to add the user to the system
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+#### Deleting a User
 
-## What technologies are used for this project?
+1. Navigate to "User Management" in the sidebar
+2. Find the user you want to delete in the list
+3. Click the "Delete" button next to their name
+4. Confirm the deletion when prompted
 
-This project is built with .
+### Admin Functions
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+As an admin, you can:
 
-## How can I deploy this project?
+- View all council statuses on the Admin Panel
+- Respond to alerts from chairs
+- Acknowledge and resolve issues
+- Monitor council sessions in real-time
+- Manage users through the User Management page
+- Control common timers for all councils
 
-Simply open [Lovable](https://lovable.dev/projects/3fc5cb50-8094-436f-abcb-d94910ca1dc7) and click on Share -> Publish.
+### Chair Functions
 
-## I want to use a custom domain - is that possible?
+As a chair, you can:
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- Update your council's status (in session, on break, technical issue)
+- Send alerts to admins for assistance
+- Control a council-specific timer
+- Access shared documents
+- Use the dashboard to manage your council session
+
+## Technical Information
+
+- Built with React, TypeScript, and Tailwind CSS
+- Uses WebSockets for real-time communication
+- Implements shadcn/ui components for consistent design
+- Deploys seamlessly to Vercel
+
+## Production Mode
+
+To switch from simulation mode to production mode:
+
+1. Set up a WebSocket server backend
+2. Set `VITE_SIMULATION_MODE=false` in your environment variables
+3. Set `VITE_WS_ENDPOINT` to your WebSocket server URL
+
+## Security Notes
+
+- In production, replace the localStorage-based authentication with a proper authentication system
+- Secure your WebSocket connections with proper authentication
+- Update default passwords immediately
