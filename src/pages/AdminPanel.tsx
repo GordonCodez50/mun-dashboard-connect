@@ -5,6 +5,7 @@ import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/componen
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
 import useWebSocket from '@/hooks/useWebSocket';
+import websocketService from '@/services/websocketService';
 
 type Alert = {
   id: string;
@@ -33,14 +34,11 @@ const AdminPanel = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
 
-  // Set up WebSocket connections
   const { data: newAlert } = useWebSocket<Alert>('NEW_ALERT');
   const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
   const { sendMessage: updateAlertStatus } = useWebSocket<{alertId: string, status: string}>('ALERT_STATUS_UPDATE');
 
-  // Initialize mock data
   useEffect(() => {
-    // Mock councils
     const mockCouncils: Council[] = [
       {
         id: '1',
@@ -65,7 +63,6 @@ const AdminPanel = () => {
       }
     ];
     
-    // Mock alerts
     const mockAlerts: Alert[] = [
       {
         id: '1',
@@ -93,10 +90,8 @@ const AdminPanel = () => {
     setLiveAlerts(mockAlerts);
   }, []);
 
-  // Handle new alerts from WebSocket
   useEffect(() => {
     if (newAlert) {
-      // Convert string timestamp to Date object if needed
       const alert = {
         ...newAlert,
         timestamp: typeof newAlert.timestamp === 'string' 
@@ -107,7 +102,6 @@ const AdminPanel = () => {
       setLiveAlerts(prev => [alert, ...prev]);
       
       if (!alertsMuted) {
-        // Play notification sound for urgent alerts
         if (alert.priority === 'urgent') {
           const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3');
           audio.play();
@@ -121,7 +115,6 @@ const AdminPanel = () => {
     }
   }, [newAlert, alertsMuted]);
 
-  // Handle council status updates from WebSocket
   useEffect(() => {
     if (statusUpdate && statusUpdate.councilId) {
       setCouncils(prev => prev.map(council => 
@@ -132,7 +125,6 @@ const AdminPanel = () => {
     }
   }, [statusUpdate]);
 
-  // Handle acknowledging an alert
   const handleAcknowledge = (alertId: string) => {
     setLiveAlerts(prev => 
       prev.map(alert => 
@@ -140,13 +132,11 @@ const AdminPanel = () => {
       )
     );
     
-    // Send status update via WebSocket
     updateAlertStatus({ alertId, status: 'acknowledged' });
     
     toast.success('Alert acknowledged');
   };
 
-  // Handle resolving an alert
   const handleResolve = (alertId: string) => {
     setLiveAlerts(prev => 
       prev.map(alert => 
@@ -154,20 +144,17 @@ const AdminPanel = () => {
       )
     );
     
-    // Send status update via WebSocket
     updateAlertStatus({ alertId, status: 'resolved' });
     
     toast.success('Alert marked as resolved');
   };
 
-  // Handle sending a reply
   const handleSendReply = (alertId: string) => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
       return;
     }
     
-    // Send reply via WebSocket (we'd need to add a MESSAGE_CHAIR event type)
     const alert = liveAlerts.find(a => a.id === alertId);
     if (alert) {
       websocketService.send('ALERT_STATUS_UPDATE', {
@@ -183,7 +170,6 @@ const AdminPanel = () => {
     setActiveAlertId(null);
   };
 
-  // Toggle alerts mute
   const toggleAlertsMute = () => {
     setAlertsMuted(!alertsMuted);
     toast.success(alertsMuted ? 'Alerts unmuted' : 'Alerts muted');
@@ -225,7 +211,6 @@ const AdminPanel = () => {
             </button>
           </header>
           
-          {/* Live Alerts */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-primary mb-4 flex items-center">
               Live Alerts
@@ -242,7 +227,6 @@ const AdminPanel = () => {
                         : 'border-gray-100'
                     } overflow-hidden animate-scale-in`}
                   >
-                    {/* Alert header */}
                     <div className={`px-4 py-3 flex justify-between items-center ${
                       alert.priority === 'urgent' ? 'bg-red-50' : 'bg-gray-50'
                     }`}>
@@ -269,7 +253,6 @@ const AdminPanel = () => {
                       </div>
                     </div>
                     
-                    {/* Alert content */}
                     <div className="p-4">
                       <div className="mb-4">
                         <p className="text-sm text-gray-800">{alert.message}</p>
@@ -278,7 +261,6 @@ const AdminPanel = () => {
                         </p>
                       </div>
                       
-                      {/* Reply section */}
                       {activeAlertId === alert.id ? (
                         <div className="mt-3">
                           <div className="flex items-start gap-2">
@@ -345,7 +327,6 @@ const AdminPanel = () => {
             )}
           </div>
           
-          {/* Council Overview */}
           <div>
             <h2 className="text-lg font-medium text-primary mb-4">Council Overview</h2>
             <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
