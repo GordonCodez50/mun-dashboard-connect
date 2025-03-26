@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { authService } from '@/services/firebaseService';
+import { extractUserInfo } from '@/config/firebaseConfig';
 
 // Auth context type
 type AuthContextType = {
   user: User | null;
   users: User[];
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   createUser: (userData: UserFormData) => Promise<boolean>;
   deleteUser: (userId: string) => Promise<boolean>;
@@ -51,15 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Login function
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     // Simulate network request
     setIsLoading(true);
     
     try {
-      // In Firebase, we use email for authentication
-      // If the username doesn't look like an email, append @example.com for demo
-      const email = username.includes('@') ? username : `${username}@example.com`;
-      
       const loggedInUser = await authService.signIn(email, password);
       setUser(loggedInUser);
       

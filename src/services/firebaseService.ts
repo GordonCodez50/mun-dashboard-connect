@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -20,7 +21,8 @@ import {
   where, 
   orderBy, 
   Timestamp, 
-  onSnapshot 
+  onSnapshot,
+  setDoc as firestoreSetDoc
 } from 'firebase/firestore';
 import { 
   getDatabase, 
@@ -33,7 +35,7 @@ import {
   remove 
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
-import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
+import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 
@@ -48,19 +50,28 @@ const analytics = getAnalytics(app);
 const DEMO_USERS = [
   {
     id: 'chair1',
-    username: 'chair@example.com',
-    name: 'John Smith',
+    username: 'ECOSOC',
+    name: 'ECOSOC Chair',
     role: 'chair' as UserRole,
-    council: 'Security Council',
-    email: 'chair@example.com',
+    council: 'ECOSOC',
+    email: 'chair-ecosoc@isbmun.com',
     createdAt: new Date(2023, 0, 1)
   },
   {
     id: 'admin1',
-    username: 'admin@example.com',
+    username: 'Admin',
     name: 'Admin User',
     role: 'admin' as UserRole,
-    email: 'admin@example.com',
+    email: 'admin@isbmun.com',
+    createdAt: new Date(2023, 0, 1)
+  },
+  {
+    id: 'press1',
+    username: 'Press',
+    name: 'Press Team',
+    role: 'chair' as UserRole,
+    council: 'PRESS',
+    email: 'press@isbmun.com',
     createdAt: new Date(2023, 0, 1)
   }
 ];
@@ -79,9 +90,12 @@ export const authService = {
         }
         
         try {
-          const userDoc = await getDoc(doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid));
+          // Check if user exists in Firestore
+          const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
+            // User exists in Firestore, return their data
             const userData = userDoc.data() as Omit<User, 'id'>;
             resolve({
               id: firebaseUser.uid,
@@ -90,9 +104,34 @@ export const authService = {
               lastLogin: userData.lastLogin ? (userData.lastLogin as unknown as Timestamp).toDate() : undefined
             });
           } else {
-            // User exists in Auth but not in Firestore
-            // This should not happen in normal operation
-            resolve(null);
+            // User doesn't exist in Firestore yet, create their profile based on email
+            if (firebaseUser.email) {
+              const { role, council, username } = extractUserInfo(firebaseUser.email);
+              
+              // Create user document in Firestore
+              const newUserData = {
+                username: username,
+                name: firebaseUser.displayName || username,
+                role: role,
+                council: council,
+                email: firebaseUser.email,
+                createdAt: Timestamp.now(),
+                lastLogin: Timestamp.now()
+              };
+              
+              await firestoreSetDoc(userDocRef, newUserData);
+              
+              // Return the new user
+              resolve({
+                id: firebaseUser.uid,
+                ...newUserData,
+                createdAt: new Date(),
+                lastLogin: new Date()
+              });
+            } else {
+              // No email associated with the account
+              resolve(null);
+            }
           }
         } catch (error) {
           console.error('Error getting user data:', error);
@@ -106,7 +145,7 @@ export const authService = {
   signIn: async (email: string, password: string): Promise<User> => {
     if (FIREBASE_CONFIG.demoMode) {
       // For demo mode, simulate sign in with predefined users
-      const demoUser = DEMO_USERS.find(u => u.username === email && password === 'password');
+      const demoUser = DEMO_USERS.find(u => u.email === email && password === 'password');
       if (!demoUser) {
         throw new Error('Invalid email or password');
       }
@@ -121,21 +160,41 @@ export const authService = {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
       
-      // Update last login time in Firestore
+      // Get or create user in Firestore
       const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
-      await updateDoc(userDocRef, {
-        lastLogin: Timestamp.now()
-      });
-      
-      // Get full user data from Firestore
       const userDoc = await getDoc(userDocRef);
       
-      if (!userDoc.exists()) {
-        throw new Error('User data not found');
+      let userData: any;
+      
+      if (userDoc.exists()) {
+        // Update last login time
+        await updateDoc(userDocRef, {
+          lastLogin: Timestamp.now()
+        });
+        
+        userData = userDoc.data();
+      } else {
+        // Create new user document based on email
+        if (firebaseUser.email) {
+          const { role, council, username } = extractUserInfo(firebaseUser.email);
+          
+          userData = {
+            username: username,
+            name: firebaseUser.displayName || username,
+            role: role,
+            council: council,
+            email: firebaseUser.email,
+            createdAt: Timestamp.now(),
+            lastLogin: Timestamp.now()
+          };
+          
+          await firestoreSetDoc(userDocRef, userData);
+        } else {
+          throw new Error('No email associated with this account');
+        }
       }
       
-      const userData = userDoc.data() as Omit<User, 'id'>;
-      
+      // Return user data
       return {
         id: firebaseUser.uid,
         ...userData,
@@ -178,7 +237,7 @@ export const authService = {
     
     try {
       // Create user in Firebase Auth
-      const email = userData.email || `${userData.username}@example.com`;
+      const email = userData.email || `${userData.username}@isbmun.com`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, userData.password);
       const firebaseUser = userCredential.user;
       
@@ -189,7 +248,7 @@ export const authService = {
       
       // Add user data to Firestore
       const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
-      await setDoc(userDocRef, {
+      await firestoreSetDoc(userDocRef, {
         username: userData.username,
         name: userData.name,
         role: userData.role,
@@ -273,16 +332,7 @@ const timestampToDate = (timestamp: Timestamp | undefined): Date | undefined => 
 const setDoc = (docRef: any, data: any) => {
   return updateDoc(docRef, data).catch(() => {
     // If update fails (document doesn't exist), create it
-    return setFirestoreDoc(docRef, data);
-  });
-};
-
-// Helper function to create a document
-const setFirestoreDoc = (docRef: any, data: any) => {
-  return updateDoc(docRef, {
-    ...data,
-    createdAt: data.createdAt || Timestamp.now(),
-    updatedAt: Timestamp.now()
+    return firestoreSetDoc(docRef, data);
   });
 };
 
@@ -412,21 +462,60 @@ export const firestoreService = {
     if (FIREBASE_CONFIG.demoMode) {
       // Return demo councils
       return [
-        { id: '1', name: 'Security Council', status: 'in-session' },
-        { id: '2', name: 'General Assembly', status: 'on-break' },
-        { id: '3', name: 'Human Rights Council', status: 'in-session' },
-        { id: '4', name: 'Economic and Social Council', status: 'technical-issue' },
-        { id: '5', name: 'Environmental Committee', status: 'in-session' }
+        { id: '1', name: 'ECOSOC', status: 'in-session' },
+        { id: '2', name: 'UNHRC', status: 'on-break' },
+        { id: '3', name: 'UNSC', status: 'in-session' },
+        { id: '4', name: 'SPECPOL', status: 'technical-issue' },
+        { id: '5', name: 'DISEC', status: 'in-session' }
       ];
     }
     
     try {
+      // First try to get councils from Firestore
       const councilsSnapshot = await getDocs(collection(firestore, FIRESTORE_COLLECTIONS.councils));
-      
-      return councilsSnapshot.docs.map(doc => ({
+      let councils = councilsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+      
+      // If no councils are found, try to extract them from user data
+      if (councils.length === 0) {
+        const usersSnapshot = await getDocs(collection(firestore, FIRESTORE_COLLECTIONS.users));
+        const uniqueCouncils = new Set<string>();
+        
+        usersSnapshot.docs.forEach(doc => {
+          const userData = doc.data();
+          if (userData.role === 'chair' && userData.council && userData.council !== 'PRESS') {
+            uniqueCouncils.add(userData.council);
+          }
+        });
+        
+        // Create council documents for each unique council
+        const councilPromises = Array.from(uniqueCouncils).map(async (councilName) => {
+          const docRef = await addDoc(collection(firestore, FIRESTORE_COLLECTIONS.councils), {
+            name: councilName,
+            status: 'in-session',
+            createdAt: Timestamp.now()
+          });
+          
+          // Initialize the council status in Realtime Database
+          const statusRef = ref(realtimeDb, `councilStatus/${docRef.id}`);
+          await set(statusRef, {
+            status: 'in-session',
+            timestamp: Date.now()
+          });
+          
+          return {
+            id: docRef.id,
+            name: councilName,
+            status: 'in-session'
+          };
+        });
+        
+        councils = await Promise.all(councilPromises);
+      }
+      
+      return councils;
     } catch (error) {
       console.error('Error getting councils:', error);
       throw error;
@@ -549,28 +638,28 @@ export const initializeDemoData = async () => {
     
     // Set up demo council statuses
     const statuses: ('in-session' | 'on-break' | 'technical-issue')[] = ['in-session', 'on-break', 'technical-issue'];
+    const demoCouncils = ['ECOSOC', 'UNHRC', 'UNSC', 'SPECPOL', 'DISEC'];
     
-    for (let i = 1; i <= 5; i++) {
-      const statusRef = ref(realtimeDb, `councilStatus/${i}`);
+    for (let i = 0; i < demoCouncils.length; i++) {
+      const statusRef = ref(realtimeDb, `councilStatus/${i + 1}`);
       await set(statusRef, {
         status: statuses[Math.floor(Math.random() * statuses.length)],
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        name: demoCouncils[i]
       });
     }
     
     // Set up demo alerts
     const alertTypes = ['IT Support', 'Mic Issue', 'Security', 'Break'];
-    const councils = ['Security Council', 'Human Rights Council', 'Economic and Social Council', 'General Assembly', 'Environmental Committee'];
-    const chairNames = ['John Smith', 'Emma Johnson', 'Michael Brown', 'Sarah Wilson', 'Alex Thompson'];
     
     const alertsRef = ref(realtimeDb, 'alerts');
     
     for (let i = 0; i < 3; i++) {
-      const randomCouncil = Math.floor(Math.random() * councils.length);
+      const randomCouncil = Math.floor(Math.random() * demoCouncils.length);
       const newAlertRef = push(alertsRef);
       await set(newAlertRef, {
-        council: councils[randomCouncil],
-        chairName: chairNames[randomCouncil],
+        council: demoCouncils[randomCouncil],
+        chairName: `${demoCouncils[randomCouncil]} Chair`,
         type: alertTypes[Math.floor(Math.random() * alertTypes.length)],
         message: 'Demo alert message',
         timestamp: Date.now() - Math.floor(Math.random() * 3600000),

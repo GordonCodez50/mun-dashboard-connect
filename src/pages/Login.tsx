@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,15 +14,15 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      toast.error('Please enter username and password');
+    if (!email || !password) {
+      toast.error('Please enter email and password');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      await login(username, password);
+      await login(email, password);
     } catch (error) {
       // Error is handled in the login function
     } finally {
@@ -41,7 +41,7 @@ const Login = () => {
               <circle cx="12" cy="15" r="3"></circle>
             </svg>
           </div>
-          <h2 className="text-center text-3xl font-extrabold text-primary">MUN Conference</h2>
+          <h2 className="text-center text-3xl font-extrabold text-primary">ISB MUN</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Council Management Dashboard
           </p>
@@ -51,22 +51,25 @@ const Login = () => {
           <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-xl border border-gray-100">
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-primary">
-                  Username / Email
+                <label htmlFor="email" className="block text-sm font-medium text-primary">
+                  Email Address
                 </label>
                 <div className="mt-1">
                   <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    autoComplete="username"
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
                     required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                    placeholder="Enter your username or email"
+                    placeholder="Enter your email address"
                   />
                 </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Example: chair-ecosoc@isbmun.com or admin@isbmun.com
+                </p>
               </div>
 
               <div>
@@ -121,7 +124,7 @@ const Login = () => {
 
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
-                Use "chair@example.com" or "admin@example.com" with password "password" for demo
+                For demo, use "chair-ecosoc@isbmun.com" or "admin@isbmun.com" with password "password"
               </p>
             </div>
           </div>

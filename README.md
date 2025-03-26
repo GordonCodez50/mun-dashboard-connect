@@ -1,5 +1,5 @@
 
-# MUN Conference Dashboard
+# ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
 
@@ -7,8 +7,8 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 
 - **Real-time Updates**: Live alerts, council status updates, and timers
 - **Secure Authentication**: Role-based access control for chairs and admins
+- **Email-based Role Recognition**: User roles determined by email format
 - **Responsive Design**: Works on all devices from desktop to mobile
-- **User Management**: Create and manage chair and admin accounts
 - **Document Sharing**: Share and access conference documents
 
 ## 🚀 Setup & Deployment (For 15-Year-Olds!)
@@ -21,7 +21,21 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
    - Firestore Database (click on "Firestore Database" and create a database in production mode)
    - Realtime Database (click on "Realtime Database" and create a database)
 
-### Step 2: Firebase Rules Setup
+### Step 2: Create User Accounts
+
+1. Go to the Firebase console and click on "Authentication"
+2. Click on "Add User" and create accounts based on these formats:
+   - Chair accounts: `chair-COUNCILNAME@isbmun.com` (e.g., chair-ecosoc@isbmun.com)
+   - Admin accounts: `admin@isbmun.com` or any email starting with "admin"
+   - Press accounts: `press@isbmun.com` or any email starting with "press"
+3. Set their passwords
+
+The system automatically recognizes:
+- Emails starting with "chair-" as chair accounts (with council name extracted from email)
+- Emails starting with "admin" as admin accounts
+- Emails starting with "press" as press accounts (with same access as chairs)
+
+### Step 3: Firebase Rules Setup
 
 1. Go to the Firebase console and click on "Firestore Database"
 2. Click on the "Rules" tab and replace the rules with:
@@ -30,24 +44,34 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
+    // Allow read access to authenticated users
+    match /{document=**} {
       allow read: if request.auth != null;
+    }
+    
+    // Allow chairs to update only their own council data
+    match /councils/{councilId} {
+      allow write: if request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name);
+    }
+    
+    // Allow users to create and update their own user data
+    match /users/{userId} {
       allow write: if request.auth != null && 
         (request.auth.uid == userId || 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
-    match /councils/{councilId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
+    
+    // Only admins can create or delete documents
     match /documents/{docId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && 
+      allow create, delete: if request.auth != null && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+    
+    // Allow both chairs and admins to create alerts
     match /alerts/{alertId} {
-      allow read, write: if request.auth != null;
+      allow write: if request.auth != null;
     }
   }
 }
@@ -80,14 +104,6 @@ service cloud.firestore {
 
 4. Click "Publish" on both rule sets!
 
-### Step 3: Local Development
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Make sure your `.env` file has all the Firebase info (see `.env.example`)
-4. Start the development server: `npm run dev`
-5. Access the application at http://localhost:5173
-
 ### Step 4: Deploy to Vercel (Super Easy!)
 
 1. Create a Vercel account if you don't have one: https://vercel.com/signup
@@ -97,36 +113,38 @@ service cloud.firestore {
 5. Follow the prompts (mostly just press Enter for the default options)
 6. Your app is deployed! 🎉
 
-### Step 5: Adding Users and Settings Things Up
+## Using Email-Based Role Recognition
 
-1. When you first deploy, the system will be in "demo mode" with these accounts:
-   - Admin: `admin@example.com` / password: `password`
-   - Chair: `chair@example.com` / password: `password`
+This app uses a special system to determine user roles based on email addresses:
 
-2. **Adding a New User**:
-   - Log in with the admin account
-   - Go to "User Management" in the sidebar
-   - Click "Create New User"
-   - Fill in their details (name, email, role, etc.)
-   - Click "Create User"
+### Chair Accounts
+- Format: `chair-COUNCILNAME@isbmun.com`
+- Example: `chair-ecosoc@isbmun.com`
+- The app automatically extracts "ECOSOC" as the council name
+- Chair users can only send alerts from their assigned council
 
-3. **Creating a New Council**:
-   - Log in with the admin account
-   - Go to "Council Status" in the sidebar
-   - Click "Add New Council" button
-   - Fill in the council details
-   - Click "Create Council"
+### Admin Accounts
+- Format: Any email starting with "admin"
+- Example: `admin@isbmun.com`
+- Admins can see and manage all councils, alerts, and users
 
-4. **Assigning Chairs to Councils**:
-   - When creating or editing a chair's profile, select their council from the dropdown menu
-   - Click "Save" to update
+### Press Accounts
+- Format: Any email starting with "press"
+- Example: `press@isbmun.com`
+- Press users have similar access to chairs but are assigned to the "PRESS" council
 
 ## Troubleshooting
 
 ### "Can't Log In" Problems
 - Make sure you've enabled Email/Password authentication in Firebase
-- Check if you're using the correct email and password
+- Check if you're using the correct email format (chair-councilname@isbmun.com or admin@isbmun.com)
+- Make sure the account exists in Firebase Authentication
 - Try using the demo accounts if nothing else works
+
+### "No Councils Showing" Problems
+- Councils are automatically created when chair users log in
+- Make sure chair emails follow the format `chair-COUNCILNAME@isbmun.com`
+- Check your Firebase rules to make sure they allow reading/writing
 
 ### "No Real-time Updates" Problems
 - Check your Firebase rules to make sure they allow reading/writing
@@ -136,19 +154,5 @@ service cloud.firestore {
 ### "Deployment Failed" Problems
 - Make sure all environment variables are set correctly in Vercel
 - Try running `vercel --prod` to force a production build
-
-## Firebase Security Rules Explained
-
-The Firebase security rules we set up protect your data while allowing the right people to access it:
-
-### Firestore Rules
-- Only authenticated users can read data
-- Only admins can create/modify councils and documents
-- Users can only modify their own user data (except admins who can modify anyone)
-
-### Realtime Database Rules
-- Only authenticated users can read real-time updates
-- Council status and timers can be updated by authenticated users (both chairs and admins)
-- Alerts can be created and read by all authenticated users
 
 Need more help? Ask your teacher or IT support person!

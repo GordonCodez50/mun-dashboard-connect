@@ -35,3 +35,46 @@ export const RTDB_PATHS = {
   alerts: 'alerts',
   timers: 'timers',
 };
+
+// Email formats for role determination
+export const EMAIL_PATTERNS = {
+  CHAIR_PREFIX: 'chair-',
+  ADMIN_PREFIX: 'admin',
+  PRESS_PREFIX: 'press',
+  DOMAIN: '@isbmun.com'
+};
+
+// Function to extract role and council from email
+export const extractUserInfo = (email: string) => {
+  email = email.toLowerCase();
+  
+  if (email.startsWith(EMAIL_PATTERNS.CHAIR_PREFIX)) {
+    // Extract council name from chair-COUNCILNAME@isbmun.com
+    const councilPart = email.substring(EMAIL_PATTERNS.CHAIR_PREFIX.length);
+    const council = councilPart.split('@')[0].toUpperCase();
+    return { 
+      role: 'chair' as const,
+      council,
+      username: council // Use council name as username
+    };
+  } else if (email.startsWith(EMAIL_PATTERNS.ADMIN_PREFIX)) {
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: 'Admin' // Default admin username
+    };
+  } else if (email.startsWith(EMAIL_PATTERNS.PRESS_PREFIX)) {
+    return {
+      role: 'chair' as const, // Press users have same access as chair
+      council: 'PRESS',
+      username: 'Press' // Default press username
+    };
+  }
+  
+  // Default fallback
+  return {
+    role: 'chair' as const,
+    council: undefined,
+    username: email.split('@')[0]
+  };
+};
