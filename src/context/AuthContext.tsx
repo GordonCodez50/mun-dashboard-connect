@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
-import { AUTH_CONFIG } from '@/config/appConfig';
+import { authService } from '@/services/firebaseService';
 
 // Auth context type
 type AuthContextType = {
@@ -16,170 +16,86 @@ type AuthContextType = {
   isAuthenticated: boolean;
 };
 
-// Initial users for demo purposes
-const INITIAL_USERS = [
-  {
-    id: 'chair1',
-    username: 'chair',
-    password: 'password',
-    name: 'John Smith',
-    role: 'chair' as UserRole,
-    council: 'Security Council',
-    email: 'john@example.com',
-    createdAt: new Date(2023, 0, 1)
-  },
-  {
-    id: 'admin1',
-    username: 'admin',
-    password: 'password',
-    name: 'Admin User',
-    role: 'admin' as UserRole,
-    email: 'admin@example.com',
-    createdAt: new Date(2023, 0, 1)
-  }
-];
-
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Use local storage keys from config
-const { user: USER_STORAGE_KEY, users: USERS_STORAGE_KEY } = AUTH_CONFIG.storageKeys;
 
 // Auth provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Initialize users from localStorage or defaults
+  // Load users and check authentication state on mount
   useEffect(() => {
-    // Only use localStorage in demo mode or if explicitly configured
-    if (!AUTH_CONFIG.useLocalStorage) {
-      setUsers(INITIAL_USERS);
-      setIsLoading(false);
-      return;
-    }
-
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    if (storedUsers) {
+    const loadInitialData = async () => {
       try {
-        const parsedUsers = JSON.parse(storedUsers);
-        // Convert string dates back to Date objects
-        const processedUsers = parsedUsers.map((u: any) => ({
-          ...u,
-          createdAt: new Date(u.createdAt),
-          lastLogin: u.lastLogin ? new Date(u.lastLogin) : undefined
-        }));
-        setUsers(processedUsers);
-      } catch (e) {
-        console.error('Failed to parse stored users:', e);
-        setUsers(INITIAL_USERS);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
+        // Check if user is already logged in
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+        
+        // Load all users for admin functions
+        const allUsers = await authService.getUsers();
+        setUsers(allUsers);
+        
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } else {
-      setUsers(INITIAL_USERS);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(INITIAL_USERS));
-    }
-  }, []);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    if (!AUTH_CONFIG.useLocalStorage) {
-      // In production, you would check for a valid session with your backend
-      setIsLoading(false);
-      return;
-    }
-
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        // Convert string dates back to Date objects
-        setUser({
-          ...parsedUser,
-          createdAt: new Date(parsedUser.createdAt),
-          lastLogin: parsedUser.lastLogin ? new Date(parsedUser.lastLogin) : undefined
-        });
-      } catch (e) {
-        console.error('Failed to parse stored user:', e);
-        localStorage.removeItem(USER_STORAGE_KEY);
-      }
-    }
-    setIsLoading(false);
+    };
+    
+    loadInitialData();
   }, []);
 
   // Login function
   const login = async (username: string, password: string) => {
     // Simulate network request
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const foundUserWithPassword = users.find(
-      user => user.username === username && user.password === password
-    );
-
-    if (foundUserWithPassword) {
-      // Create user object without password
-      const { password: _, ...userWithoutPassword } = foundUserWithPassword;
+    
+    try {
+      // In Firebase, we use email for authentication
+      // If the username doesn't look like an email, append @example.com for demo
+      const email = username.includes('@') ? username : `${username}@example.com`;
       
-      // Update last login time
-      const updatedUser = {
-        ...userWithoutPassword,
-        lastLogin: new Date()
-      };
+      const loggedInUser = await authService.signIn(email, password);
+      setUser(loggedInUser);
       
-      setUser(updatedUser);
-      
-      // Update user in users array
-      const updatedUsers = users.map(u => 
-        u.id === updatedUser.id ? { ...u, lastLogin: updatedUser.lastLogin } : u
-      );
-      setUsers(updatedUsers);
-      
-      // Store in localStorage
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+      // Reload users list
+      const allUsers = await authService.getUsers();
+      setUsers(allUsers);
       
       // Navigate based on role
-      if (updatedUser.role === 'chair') {
+      if (loggedInUser.role === 'chair') {
         navigate('/chair-dashboard');
-        toast.success(`Welcome, ${updatedUser.name}`);
+        toast.success(`Welcome, ${loggedInUser.name}`);
       } else {
         navigate('/admin-panel');
-        toast.success(`Welcome, ${updatedUser.name}`);
+        toast.success(`Welcome, ${loggedInUser.name}`);
       }
-    } else {
-      toast.error('Invalid username or password');
+    } catch (error: any) {
+      toast.error(error.message || 'Invalid username or password');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   // Create user function (admin only)
   const createUser = async (userData: UserFormData): Promise<boolean> => {
-    // Validate if username already exists
-    if (users.some(u => u.username === userData.username)) {
-      toast.error('Username already exists');
+    try {
+      const newUser = await authService.createUser(userData);
+      
+      // Update users list
+      setUsers(prev => [...prev, newUser]);
+      
+      toast.success(`User ${newUser.name} created successfully`);
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create user');
       return false;
     }
-    
-    // Create new user
-    const newUser = {
-      id: `user${Date.now()}`,
-      ...userData,
-      createdAt: new Date()
-    };
-    
-    // Add to users array
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    
-    // Store in localStorage
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    
-    toast.success(`User ${newUser.name} created successfully`);
-    return true;
   };
   
   // Delete user function (admin only)
@@ -190,23 +106,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
     
-    // Remove from users array
-    const updatedUsers = users.filter(u => u.id !== userId);
-    setUsers(updatedUsers);
-    
-    // Store in localStorage
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    
-    toast.success('User deleted successfully');
-    return true;
+    try {
+      await authService.deleteUser(userId);
+      
+      // Update users list
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      
+      toast.success('User deleted successfully');
+      return true;
+    } catch (error) {
+      toast.error('Failed to delete user');
+      return false;
+    }
   };
 
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(USER_STORAGE_KEY);
-    navigate('/');
-    toast.info('You have been logged out');
+  const logout = async () => {
+    try {
+      await authService.signOut();
+      setUser(null);
+      navigate('/');
+      toast.info('You have been logged out');
+    } catch (error) {
+      toast.error('Error signing out');
+    }
   };
 
   // Return provider

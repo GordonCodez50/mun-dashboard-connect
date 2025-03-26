@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
-import useWebSocket from '@/hooks/useWebSocket';
+import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 
 export type CouncilStatus = 'in-session' | 'on-break' | 'technical-issue';
 
@@ -14,22 +14,25 @@ export type StatusBadgeProps = {
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({
-  status,
+  status: initialStatus,
   className,
   size = 'md',
   councilId,
   onStatusChange
 }) => {
-  // If councilId is provided, listen for status updates via WebSocket
-  const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatus}>('COUNCIL_STATUS_UPDATE');
+  const [status, setStatus] = useState<CouncilStatus>(initialStatus);
+  
+  // If councilId is provided, listen for status updates via Firebase
+  const { data: statusUpdate } = useFirebaseRealtime<{status: CouncilStatus}>('COUNCIL_STATUS_UPDATE', councilId);
   
   useEffect(() => {
-    if (statusUpdate && councilId && statusUpdate.councilId === councilId) {
+    if (statusUpdate?.status) {
+      setStatus(statusUpdate.status);
       if (onStatusChange) {
         onStatusChange(statusUpdate.status);
       }
     }
-  }, [statusUpdate, councilId, onStatusChange]);
+  }, [statusUpdate, onStatusChange]);
 
   const getStatusLabel = () => {
     switch (status) {

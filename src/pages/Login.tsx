@@ -24,8 +24,7 @@ const Login = () => {
     try {
       await login(username, password);
     } catch (error) {
-      toast.error('An error occurred while logging in');
-      console.error(error);
+      // Error is handled in the login function
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +52,7 @@ const Login = () => {
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-primary">
-                  Username
+                  Username / Email
                 </label>
                 <div className="mt-1">
                   <input
@@ -65,7 +64,7 @@ const Login = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                   />
                 </div>
               </div>
@@ -122,7 +121,7 @@ const Login = () => {
 
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
-                Use "chair" or "admin" as username with password "password" for demo
+                Use "chair@example.com" or "admin@example.com" with password "password" for demo
               </p>
             </div>
           </div>

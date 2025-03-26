@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useEffect } from "react";
 
 import Login from "./pages/Login";
 import ChairDashboard from "./pages/ChairDashboard";
@@ -14,6 +15,7 @@ import TimerManager from "./pages/TimerManager";
 import Documents from "./pages/Documents";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
+import { initializeFirebase } from "./services/firebaseService";
 
 // Initialize query client with production settings
 const queryClient = new QueryClient({
@@ -51,6 +53,15 @@ const ProtectedRoute = ({
 
 // App wrapper to handle auth context
 const AppWithAuth = () => {
+  // Initialize Firebase when the app mounts
+  useEffect(() => {
+    const initFirebase = async () => {
+      await initializeFirebase();
+    };
+    
+    initFirebase();
+  }, []);
+  
   return (
     <>
       <Routes>

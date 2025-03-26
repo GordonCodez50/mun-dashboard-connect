@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import useWebSocket from '@/hooks/useWebSocket';
+import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 
 export type CountdownTimerProps = {
   initialTime: number; // in seconds
   onComplete?: () => void;
   autoStart?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  timerId?: string; // Optional ID for WebSocket sync
+  timerId?: string; // Optional ID for Firebase sync
   isAdmin?: boolean; // Whether this instance can control other timers
 };
 
@@ -24,16 +24,15 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Set up WebSocket for timer sync
-  const { data: timerSync, sendMessage: sendTimerUpdate } = useWebSocket<{
-    timerId: string;
+  // Set up Firebase for timer sync
+  const { data: timerSync, sendMessage: sendTimerUpdate } = useFirebaseRealtime<{
     action: 'start' | 'pause' | 'reset';
     timeLeft?: number;
-  }>('TIMER_SYNC');
+  }>('TIMER_SYNC', timerId);
   
   // Listen for timer sync updates
   useEffect(() => {
-    if (timerSync && timerId && timerSync.timerId === timerId) {
+    if (timerSync && timerId) {
       switch (timerSync.action) {
         case 'start':
           setIsRunning(true);
@@ -88,10 +87,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
             setIsRunning(false);
             if (onComplete) onComplete();
             
-            // Notify via WebSocket if this is the admin timer
+            // Notify via Firebase if this is the admin timer
             if (isAdmin && timerId) {
               sendTimerUpdate({
-                timerId,
                 action: 'reset',
                 timeLeft: 0
               });
@@ -103,7 +101,6 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
           // If admin timer, periodically sync with other timers
           if (isAdmin && timerId && prev % 5 === 0) { // Sync every 5 seconds
             sendTimerUpdate({
-              timerId,
               action: 'start',
               timeLeft: prev - 1
             });
@@ -124,10 +121,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     setIsRunning(true);
     setIsPaused(false);
     
-    // Notify via WebSocket if this is the admin timer
+    // Notify via Firebase if this is the admin timer
     if (isAdmin && timerId) {
       sendTimerUpdate({
-        timerId,
         action: 'start',
         timeLeft
       });
@@ -138,10 +134,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const pauseTimer = () => {
     setIsPaused(true);
     
-    // Notify via WebSocket if this is the admin timer
+    // Notify via Firebase if this is the admin timer
     if (isAdmin && timerId) {
       sendTimerUpdate({
-        timerId,
         action: 'pause'
       });
     }
@@ -154,10 +149,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     setIsRunning(false);
     setIsPaused(false);
     
-    // Notify via WebSocket if this is the admin timer
+    // Notify via Firebase if this is the admin timer
     if (isAdmin && timerId) {
       sendTimerUpdate({
-        timerId,
         action: 'reset',
         timeLeft: initialTime
       });
