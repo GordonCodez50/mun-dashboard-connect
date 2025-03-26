@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -109,15 +108,19 @@ export const authService = {
               const { role, council, username } = extractUserInfo(firebaseUser.email);
               
               // Create user document in Firestore
-              const newUserData = {
+              const newUserData: any = {
                 username: username,
                 name: firebaseUser.displayName || username,
                 role: role,
-                council: council,
                 email: firebaseUser.email,
                 createdAt: Timestamp.now(),
                 lastLogin: Timestamp.now()
               };
+              
+              // Only add council field if it's defined
+              if (council) {
+                newUserData.council = council;
+              }
               
               await firestoreSetDoc(userDocRef, newUserData);
               
@@ -182,11 +185,15 @@ export const authService = {
             username: username,
             name: firebaseUser.displayName || username,
             role: role,
-            council: council,
             email: firebaseUser.email,
             createdAt: Timestamp.now(),
             lastLogin: Timestamp.now()
           };
+          
+          // Only add council field if it's defined
+          if (council) {
+            userData.council = council;
+          }
           
           await firestoreSetDoc(userDocRef, userData);
         } else {
