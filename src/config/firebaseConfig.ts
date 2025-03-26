@@ -2,21 +2,23 @@
 // Firebase configuration for the MUN Conference Dashboard
 
 // Firebase configuration object
-// Replace these values with your actual Firebase project configuration
+// These are the actual Firebase project configuration values
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "your-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "your-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "your-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "your-messaging-sender-id",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "your-app-id",
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://your-project-rtdb.firebaseio.com",
+  apiKey: "AIzaSyACQXMIDb2-98Ttqtrde7PEtJfIBGqaxXY",
+  authDomain: "isbmun-dashboard.firebaseapp.com",
+  databaseURL: "https://isbmun-dashboard-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "isbmun-dashboard",
+  storageBucket: "isbmun-dashboard.firebasestorage.app",
+  messagingSenderId: "705687529606",
+  appId: "1:705687529606:web:bab945809e06c12c1a0907",
+  measurementId: "G-4R8RYDJGRZ"
 };
 
 // Feature flags and configuration
 export const FIREBASE_CONFIG = {
   // If true, use demo mode with predefined data
-  demoMode: import.meta.env.VITE_FIREBASE_DEMO_MODE === 'true' || true,
+  // You can set this to false once you've set up your Firebase project
+  demoMode: import.meta.env.VITE_FIREBASE_DEMO_MODE === 'true' || false,
 };
 
 // Data structure for Firestore

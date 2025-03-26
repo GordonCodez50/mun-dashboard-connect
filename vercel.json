@@ -38,5 +38,15 @@
         }
       ]
     }
-  ]
+  ],
+  "env": {
+    "VITE_FIREBASE_API_KEY": "AIzaSyACQXMIDb2-98Ttqtrde7PEtJfIBGqaxXY",
+    "VITE_FIREBASE_AUTH_DOMAIN": "isbmun-dashboard.firebaseapp.com",
+    "VITE_FIREBASE_PROJECT_ID": "isbmun-dashboard",
+    "VITE_FIREBASE_STORAGE_BUCKET": "isbmun-dashboard.firebasestorage.app",
+    "VITE_FIREBASE_MESSAGING_SENDER_ID": "705687529606",
+    "VITE_FIREBASE_APP_ID": "1:705687529606:web:bab945809e06c12c1a0907",
+    "VITE_FIREBASE_DATABASE_URL": "https://isbmun-dashboard-default-rtdb.europe-west1.firebasedatabase.app",
+    "VITE_FIREBASE_DEMO_MODE": "false"
+  }
 }

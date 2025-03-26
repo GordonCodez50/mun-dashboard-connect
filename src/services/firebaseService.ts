@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -33,6 +32,7 @@ import {
   update, 
   remove 
 } from 'firebase/database';
+import { getAnalytics } from 'firebase/analytics';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
@@ -42,6 +42,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const realtimeDb = getDatabase(app);
+const analytics = getAnalytics(app);
 
 // Demo data for simulation mode
 const DEMO_USERS = [
@@ -432,6 +433,41 @@ export const firestoreService = {
     }
   },
   
+  // Add a new council
+  addCouncil: async (councilData: { name: string; status: string }) => {
+    if (FIREBASE_CONFIG.demoMode) {
+      // Simulate adding a council
+      return {
+        id: Date.now().toString(),
+        ...councilData,
+        createdAt: new Date()
+      };
+    }
+    
+    try {
+      const docRef = await addDoc(collection(firestore, FIRESTORE_COLLECTIONS.councils), {
+        ...councilData,
+        createdAt: Timestamp.now()
+      });
+      
+      // Initialize the council status in Realtime Database
+      const statusRef = ref(realtimeDb, `councilStatus/${docRef.id}`);
+      await set(statusRef, {
+        status: councilData.status,
+        timestamp: Date.now()
+      });
+      
+      return {
+        id: docRef.id,
+        ...councilData,
+        createdAt: new Date()
+      };
+    } catch (error) {
+      console.error('Error adding council:', error);
+      throw error;
+    }
+  },
+  
   // Get all documents
   getDocuments: async () => {
     if (FIREBASE_CONFIG.demoMode) {
@@ -575,6 +611,7 @@ export default {
   auth,
   firestore,
   realtimeDb,
+  analytics,
   authService,
   realtimeService,
   firestoreService,
