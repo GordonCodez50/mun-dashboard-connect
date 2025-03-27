@@ -20,7 +20,14 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
         switch (eventType) {
           case 'COUNCIL_STATUS_UPDATE':
             if (entityId) {
+              // Listen to a specific council's status
               unsubscribe = realtimeService.onCouncilStatusUpdate(entityId, (data) => {
+                setData(data as T);
+                setIsLoading(false);
+              });
+            } else {
+              // Listen to all council statuses
+              unsubscribe = realtimeService.onAllCouncilStatusUpdates((data) => {
                 setData(data as T);
                 setIsLoading(false);
               });
@@ -28,8 +35,16 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
             break;
             
           case 'NEW_ALERT':
-          case 'ALERT_STATUS_UPDATE':
+            // Listen to all alerts
             unsubscribe = realtimeService.onNewAlert((data) => {
+              setData(data as T);
+              setIsLoading(false);
+            });
+            break;
+            
+          case 'ALERT_STATUS_UPDATE':
+            // Listen to alert status updates
+            unsubscribe = realtimeService.onAlertStatusUpdates((data) => {
               setData(data as T);
               setIsLoading(false);
             });
@@ -37,6 +52,7 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
             
           case 'TIMER_SYNC':
             if (entityId) {
+              // Listen to a specific timer
               unsubscribe = realtimeService.onTimerSync(entityId, (data) => {
                 setData(data as T);
                 setIsLoading(false);
@@ -45,6 +61,7 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
             break;
         }
       } catch (err) {
+        console.error(`Error setting up Firebase listener for ${eventType}:`, err);
         setError(err instanceof Error ? err : new Error('Unknown error'));
         setIsLoading(false);
       }
@@ -77,7 +94,7 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
           if (!messageData.id) {
             throw new Error('Alert ID is required for status updates');
           }
-          return realtimeService.updateAlertStatus(messageData.id, messageData.status);
+          return realtimeService.updateAlertStatus(messageData.id, messageData.status, messageData);
           
         case 'TIMER_SYNC':
           if (!entityId) {

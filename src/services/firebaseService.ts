@@ -345,7 +345,7 @@ const setDoc = (docRef: any, data: any) => {
 
 // Realtime Database service (replaces WebSocket)
 export const realtimeService = {
-  // Listen for council status updates
+  // Listen for council status updates for a specific council
   onCouncilStatusUpdate: (councilId: string, callback: (status: any) => void) => {
     const statusRef = ref(realtimeDb, `councilStatus/${councilId}`);
     onValue(statusRef, (snapshot) => {
@@ -353,6 +353,18 @@ export const realtimeService = {
       if (data) {
         callback(data);
       }
+    });
+    
+    // Return unsubscribe function
+    return () => off(statusRef);
+  },
+  
+  // Listen for status updates for all councils
+  onAllCouncilStatusUpdates: (callback: (statuses: any) => void) => {
+    const statusRef = ref(realtimeDb, 'councilStatus');
+    onValue(statusRef, (snapshot) => {
+      const data = snapshot.val();
+      callback(data || {});
     });
     
     // Return unsubscribe function
@@ -387,7 +399,21 @@ export const realtimeService = {
           ...(value as any)
         }));
         callback(alerts);
+      } else {
+        callback([]);
       }
+    });
+    
+    // Return unsubscribe function
+    return () => off(alertsRef);
+  },
+  
+  // Listen for alert status updates
+  onAlertStatusUpdates: (callback: (alerts: any) => void) => {
+    const alertsRef = ref(realtimeDb, 'alerts');
+    onValue(alertsRef, (snapshot) => {
+      const data = snapshot.val();
+      callback(data || {});
     });
     
     // Return unsubscribe function
@@ -414,12 +440,13 @@ export const realtimeService = {
   },
   
   // Update alert status
-  updateAlertStatus: async (alertId: string, status: string) => {
+  updateAlertStatus: async (alertId: string, status: string, additionalData: any = {}) => {
     try {
       const alertRef = ref(realtimeDb, `alerts/${alertId}`);
       await update(alertRef, {
         status,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        ...additionalData
       });
       
       return true;

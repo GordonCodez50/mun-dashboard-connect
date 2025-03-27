@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -6,7 +7,8 @@ import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/componen
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { toast } from "sonner";
 import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send } from 'lucide-react';
-import useWebSocket from '@/hooks/useWebSocket';
+import { realtimeService } from '@/services/firebaseService';
+import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 
 type Alert = {
   id: string;
@@ -22,51 +24,111 @@ const ChairDashboard = () => {
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
+  const [councilId, setCouncilId] = useState<string>('');
   
-  const { sendMessage: sendAlert } = useWebSocket<Alert>('NEW_ALERT');
-  const { data: alertStatusUpdate } = useWebSocket<{alertId: string, status: string, reply?: string}>('ALERT_STATUS_UPDATE');
-  const { sendMessage: updateCouncilStatus } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
+  // Use Firebase Realtime Database for alerts
+  const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
+  
+  // Use Firebase Realtime Database for alert status updates
+  const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
+  // Effect to set council ID based on user's council
   useEffect(() => {
-    if (alertStatusUpdate && alertStatusUpdate.alertId) {
-      setRecentAlerts(prev => 
-        prev.map(alert => 
-          alert.id === alertStatusUpdate.alertId 
-            ? { ...alert, status: alertStatusUpdate.status as any } 
-            : alert
-        )
-      );
-      
-      if (alertStatusUpdate.reply) {
-        toast.info('New reply from admin', {
-          description: alertStatusUpdate.reply,
-          duration: 5000
-        });
-      }
+    // Find council ID from user's council name
+    if (user?.council) {
+      // For now, we'll use a simple string as ID
+      // In a production app, you'd query Firestore to get the actual ID
+      setCouncilId(user.council);
     }
-  }, [alertStatusUpdate]);
+  }, [user]);
+
+  // Process alerts data to show the user's council alerts
+  useEffect(() => {
+    if (alertsData && Array.isArray(alertsData)) {
+      // Filter alerts for this user's council
+      const userAlerts = alertsData
+        .filter(alert => alert.council === user?.council)
+        .map(alert => ({
+          id: alert.id,
+          type: alert.type,
+          message: alert.message,
+          timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
+          status: alert.status,
+        }))
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, 5); // Show only the 5 most recent alerts
+      
+      setRecentAlerts(userAlerts);
+    }
+  }, [alertsData, user?.council]);
+
+  // Update alert status when it changes
+  useEffect(() => {
+    if (alertStatusData && recentAlerts.length > 0) {
+      // Update local alert status if there are changes
+      setRecentAlerts(prev => 
+        prev.map(alert => {
+          const updatedAlert = alertStatusData[alert.id];
+          if (updatedAlert && updatedAlert.status) {
+            return {
+              ...alert,
+              status: updatedAlert.status
+            };
+          }
+          return alert;
+        })
+      );
+
+      // Show reply notifications
+      Object.entries(alertStatusData).forEach(([alertId, data]: [string, any]) => {
+        if (data.reply) {
+          const alertExists = recentAlerts.some(alert => alert.id === alertId);
+          if (alertExists) {
+            toast.info('New reply from admin', {
+              description: data.reply,
+              duration: 5000
+            });
+          }
+        }
+      });
+    }
+  }, [alertStatusData, recentAlerts]);
 
   const handleAlert = async (alertType: string) => {
+    if (!user?.council) {
+      toast.error('Your council information is missing');
+      return;
+    }
+    
     setLoadingAlert(alertType);
     
-    const newAlert: Alert = {
-      id: Date.now().toString(),
-      type: alertType,
-      message: getAlertMessage(alertType),
-      timestamp: new Date(),
-      status: 'pending'
-    };
-    
-    sendAlert({
-      ...newAlert,
-      council: 'Security Council',
-      chairName: user?.name || 'Chair',
-      priority: alertType === 'Security' ? 'urgent' : 'normal'
-    });
-    
-    setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
-    toast.success(`${alertType} alert sent successfully`);
-    setLoadingAlert(null);
+    try {
+      const message = getAlertMessage(alertType);
+      
+      await realtimeService.createAlert({
+        type: alertType,
+        message: message,
+        council: user.council,
+        chairName: user.name || 'Chair',
+        priority: alertType === 'Security' ? 'urgent' : 'normal'
+      });
+      
+      const newAlert: Alert = {
+        id: Date.now().toString(), // Temporary ID until we get the real one
+        type: alertType,
+        message: message,
+        timestamp: new Date(),
+        status: 'pending'
+      };
+      
+      setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
+      toast.success(`${alertType} alert sent successfully`);
+    } catch (error) {
+      console.error('Error sending alert:', error);
+      toast.error('Failed to send alert');
+    } finally {
+      setLoadingAlert(null);
+    }
   };
 
   const getAlertMessage = (type: string): string => {
@@ -90,37 +152,49 @@ const ChairDashboard = () => {
     
     setLoadingAlert('Custom');
     
-    const newAlert: Alert = {
-      id: Date.now().toString(),
-      type: 'Custom',
-      message: customAlert,
-      timestamp: new Date(),
-      status: 'pending'
-    };
-    
-    sendAlert({
-      ...newAlert,
-      council: 'Security Council',
-      chairName: user?.name || 'Chair',
-      priority: 'normal'
-    });
-    
-    setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
-    toast.success('Custom alert sent successfully');
-    setCustomAlert('');
-    setLoadingAlert(null);
+    try {
+      await realtimeService.createAlert({
+        type: 'Custom',
+        message: customAlert,
+        council: user?.council || 'Unknown',
+        chairName: user?.name || 'Chair',
+        priority: 'normal'
+      });
+      
+      const newAlert: Alert = {
+        id: Date.now().toString(), // Temporary ID until we get the real one
+        type: 'Custom',
+        message: customAlert,
+        timestamp: new Date(),
+        status: 'pending'
+      };
+      
+      setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
+      toast.success('Custom alert sent successfully');
+      setCustomAlert('');
+    } catch (error) {
+      console.error('Error sending custom alert:', error);
+      toast.error('Failed to send alert');
+    } finally {
+      setLoadingAlert(null);
+    }
   };
 
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as CouncilStatusType;
     setCouncilStatus(newStatus);
     
-    updateCouncilStatus({
-      councilId: '1',
-      status: newStatus
-    });
-    
-    toast.success(`Status updated to ${newStatus.replace('-', ' ')}`);
+    try {
+      if (councilId) {
+        await realtimeService.updateCouncilStatus(councilId, newStatus);
+        toast.success(`Status updated to ${newStatus.replace('-', ' ')}`);
+      } else {
+        toast.error('Council information is missing');
+      }
+    } catch (error) {
+      console.error('Error updating council status:', error);
+      toast.error('Failed to update status');
+    }
   };
 
   return (
@@ -227,7 +301,7 @@ const ChairDashboard = () => {
           <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
             <h2 className="text-lg font-medium text-primary mb-4">Quick Timer</h2>
             <div className="flex justify-center py-2">
-              <CountdownTimer initialTime={120} autoStart={false} size="sm" />
+              <TimerComponent />
             </div>
           </div>
           
@@ -267,6 +341,152 @@ const ChairDashboard = () => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Improved timer component with better UI
+const TimerComponent = () => {
+  const [time, setTime] = useState<number>(120); // 2 minutes in seconds
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [inputMinutes, setInputMinutes] = useState<string>("2");
+  const [inputSeconds, setInputSeconds] = useState<string>("0");
+  
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (isRunning && time > 0) {
+      interval = setInterval(() => {
+        setTime((prevTime) => prevTime - 1);
+      }, 1000);
+    } else if (time === 0 && isRunning) {
+      setIsRunning(false);
+      // Play sound when timer finishes
+      const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-simple-countdown-922.mp3');
+      audio.play();
+      toast.info("Time's up!");
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRunning, time]);
+  
+  const handleStart = () => {
+    setIsRunning(true);
+  };
+  
+  const handlePause = () => {
+    setIsRunning(false);
+  };
+  
+  const handleReset = () => {
+    setIsRunning(false);
+    // Convert input values to numbers and set time
+    const minutes = parseInt(inputMinutes) || 0;
+    const seconds = parseInt(inputSeconds) || 0;
+    setTime(minutes * 60 + seconds);
+  };
+  
+  const handleSet = () => {
+    setIsRunning(false);
+    // Convert input values to numbers and set time
+    const minutes = parseInt(inputMinutes) || 0;
+    const seconds = parseInt(inputSeconds) || 0;
+    setTime(minutes * 60 + seconds);
+  };
+  
+  // Format time for display
+  const formatTime = (timeInSeconds: number): string => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate progress percentage
+  const initialTime = parseInt(inputMinutes) * 60 + parseInt(inputSeconds) || 120;
+  const progress = Math.max(0, (time / initialTime) * 100);
+  
+  return (
+    <div className="w-full max-w-md">
+      <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+        <div className="flex justify-center mb-2">
+          <div className="text-4xl font-bold text-primary">{formatTime(time)}</div>
+        </div>
+        
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+          <div 
+            className="bg-accent h-2.5 rounded-full transition-all duration-1000" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        
+        <div className="flex justify-center space-x-2">
+          {!isRunning ? (
+            <button
+              onClick={handleStart}
+              className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+            >
+              Start
+            </button>
+          ) : (
+            <button
+              onClick={handlePause}
+              className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
+            >
+              Pause
+            </button>
+          )}
+          
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <div className="grid grid-cols-2 gap-2 flex-1">
+          <div>
+            <label htmlFor="minutes" className="block text-sm text-gray-600">
+              Minutes
+            </label>
+            <input
+              id="minutes"
+              type="number"
+              min="0"
+              max="60"
+              value={inputMinutes}
+              onChange={(e) => setInputMinutes(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-accent focus:border-accent"
+            />
+          </div>
+          <div>
+            <label htmlFor="seconds" className="block text-sm text-gray-600">
+              Seconds
+            </label>
+            <input
+              id="seconds"
+              type="number"
+              min="0"
+              max="59"
+              value={inputSeconds}
+              onChange={(e) => setInputSeconds(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-accent focus:border-accent"
+            />
+          </div>
+        </div>
+        <div className="pt-6">
+          <button
+            onClick={handleSet}
+            className="px-4 py-2 bg-accent/10 text-accent rounded-md hover:bg-accent/20 transition-colors"
+          >
+            Set
+          </button>
         </div>
       </div>
     </div>

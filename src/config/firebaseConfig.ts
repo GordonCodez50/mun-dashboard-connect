@@ -78,3 +78,82 @@ export const extractUserInfo = (email: string) => {
     username: email.split('@')[0]
   };
 };
+
+// Recommended Firebase security rules
+export const RECOMMENDED_SECURITY_RULES = {
+  // Firestore security rules
+  firestore: `
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        // Allow admins to read and write all documents
+        match /{document=**} {
+          allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        }
+        
+        // Allow chair users to read all documents
+        match /{document=**} {
+          allow read: if request.auth != null;
+        }
+        
+        // Allow chair users to update their own council's status
+        match /councils/{councilId} {
+          allow update: if request.auth != null && 
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
+        }
+        
+        // Allow chair users to create alerts
+        match /alerts/{alertId} {
+          allow create: if request.auth != null && 
+                         request.resource.data.council == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council;
+        }
+        
+        // Allow users to read documents
+        match /documents/{documentId} {
+          allow read: if request.auth != null;
+        }
+      }
+    }
+  `,
+  
+  // Realtime Database security rules
+  realtimeDb: `
+    {
+      "rules": {
+        // Allow admins to read and write all data
+        ".read": "auth != null",
+        
+        "councilStatus": {
+          // Allow chairs to update only their own council status
+          "$councilId": {
+            ".write": "auth != null && 
+                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
+                      root.child('users').child(auth.uid).child('council').val() == data.child('name').val())"
+          }
+        },
+        
+        "alerts": {
+          // Anyone can create alerts
+          ".write": "auth != null",
+          
+          "$alertId": {
+            // Admins can update any alert, chairs can only update their own
+            ".write": "auth != null && 
+                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
+                      data.child('council').val() == root.child('users').child(auth.uid).child('council').val())"
+          }
+        },
+        
+        "timers": {
+          // Allow access to timers for authorized users
+          "$timerId": {
+            ".write": "auth != null && 
+                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
+                      data.child('council').val() == root.child('users').child(auth.uid).child('council').val() || 
+                      !data.exists())"
+          }
+        }
+      }
+    }
+  `
+};

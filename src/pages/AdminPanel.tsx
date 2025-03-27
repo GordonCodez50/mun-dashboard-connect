@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
-import useWebSocket from '@/hooks/useWebSocket';
-import websocketService from '@/services/websocketService';
+import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
+import { firestoreService, realtimeService } from '@/services/firebaseService';
 
 type Alert = {
   id: string;
@@ -34,122 +35,124 @@ const AdminPanel = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
 
-  const { data: newAlert } = useWebSocket<Alert>('NEW_ALERT');
-  const { data: statusUpdate } = useWebSocket<{councilId: string, status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE');
-  const { sendMessage: updateAlertStatus } = useWebSocket<{alertId: string, status: string}>('ALERT_STATUS_UPDATE');
+  // Use Firebase Realtime Database for alerts
+  const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
 
+  // Use Firebase Realtime Database for council status
+  const { data: councilStatusData } = useFirebaseRealtime<any>('COUNCIL_STATUS_UPDATE');
+
+  // Load councils from Firestore
   useEffect(() => {
-    const mockCouncils: Council[] = [
-      {
-        id: '1',
-        name: 'Security Council',
-        chairName: 'John Smith',
-        status: 'in-session',
-        lastUpdate: new Date()
-      },
-      {
-        id: '2',
-        name: 'Human Rights Council',
-        chairName: 'Emma Johnson',
-        status: 'on-break',
-        lastUpdate: new Date(Date.now() - 1000 * 60 * 15) // 15 minutes ago
-      },
-      {
-        id: '3',
-        name: 'Economic and Social Council',
-        chairName: 'Michael Brown',
-        status: 'technical-issue',
-        lastUpdate: new Date(Date.now() - 1000 * 60 * 5) // 5 minutes ago
+    const loadCouncils = async () => {
+      try {
+        const councilsData = await firestoreService.getCouncils();
+        const formattedCouncils = councilsData.map(council => ({
+          id: council.id,
+          name: council.name,
+          chairName: `${council.name} Chair`,
+          status: (council.status as CouncilStatusType) || 'in-session',
+          lastUpdate: new Date()
+        }));
+        setCouncils(formattedCouncils);
+      } catch (error) {
+        console.error('Error loading councils:', error);
+        toast.error('Failed to load councils');
       }
-    ];
+    };
     
-    const mockAlerts: Alert[] = [
-      {
-        id: '1',
-        council: 'Security Council',
-        chairName: 'John Smith',
-        type: 'IT Support',
-        message: 'Projector not working properly',
-        timestamp: new Date(Date.now() - 1000 * 60 * 2), // 2 minutes ago
-        status: 'pending',
-        priority: 'normal'
-      },
-      {
-        id: '2',
-        council: 'Economic and Social Council',
-        chairName: 'Michael Brown',
-        type: 'Security',
-        message: 'Unauthorized person in the council room',
-        timestamp: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
-        status: 'acknowledged',
-        priority: 'urgent'
-      }
-    ];
-    
-    setCouncils(mockCouncils);
-    setLiveAlerts(mockAlerts);
+    loadCouncils();
   }, []);
 
+  // Process alert data from Firebase
   useEffect(() => {
-    if (newAlert) {
-      const alert = {
-        ...newAlert,
-        timestamp: typeof newAlert.timestamp === 'string' 
-          ? new Date(newAlert.timestamp)
-          : newAlert.timestamp
-      };
+    if (alertsData && Array.isArray(alertsData)) {
+      const processedAlerts = alertsData.map(alert => ({
+        ...alert,
+        timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
+      }));
       
-      setLiveAlerts(prev => [alert, ...prev]);
+      setLiveAlerts(processedAlerts);
       
-      if (!alertsMuted) {
-        if (alert.priority === 'urgent') {
-          const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3');
-          audio.play();
-        }
+      // Play sound for new urgent alerts if not muted
+      const newUrgentAlerts = processedAlerts.filter(
+        alert => alert.priority === 'urgent' && 
+        alert.status === 'pending' && 
+        !liveAlerts.some(a => a.id === alert.id)
+      );
+      
+      if (newUrgentAlerts.length > 0 && !alertsMuted) {
+        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3');
+        audio.play();
         
-        toast.info(`New alert from ${alert.council}: ${alert.type}`, {
-          description: alert.message,
-          duration: 5000
+        newUrgentAlerts.forEach(alert => {
+          toast.info(`New urgent alert from ${alert.council}: ${alert.type}`, {
+            description: alert.message,
+            duration: 5000
+          });
         });
       }
     }
-  }, [newAlert, alertsMuted]);
+  }, [alertsData, alertsMuted, liveAlerts]);
 
+  // Update council status when data changes
   useEffect(() => {
-    if (statusUpdate && statusUpdate.councilId) {
-      setCouncils(prev => prev.map(council => 
-        council.id === statusUpdate.councilId 
-          ? { ...council, status: statusUpdate.status, lastUpdate: new Date() }
-          : council
-      ));
+    if (councilStatusData) {
+      // Update councils with new status data
+      setCouncils(prev => {
+        const updatedCouncils = [...prev];
+        
+        // Find and update each council's status
+        Object.entries(councilStatusData).forEach(([councilId, data]: [string, any]) => {
+          const councilIndex = updatedCouncils.findIndex(c => c.id === councilId);
+          if (councilIndex >= 0 && data.status) {
+            updatedCouncils[councilIndex] = {
+              ...updatedCouncils[councilIndex],
+              status: data.status as CouncilStatusType,
+              lastUpdate: data.timestamp ? new Date(data.timestamp) : new Date()
+            };
+          }
+        });
+        
+        return updatedCouncils;
+      });
     }
-  }, [statusUpdate]);
+  }, [councilStatusData]);
 
-  const handleAcknowledge = (alertId: string) => {
-    setLiveAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId ? { ...alert, status: 'acknowledged' } : alert
-      )
-    );
-    
-    updateAlertStatus({ alertId, status: 'acknowledged' });
-    
-    toast.success('Alert acknowledged');
+  const handleAcknowledge = async (alertId: string) => {
+    try {
+      await realtimeService.updateAlertStatus(alertId, 'acknowledged');
+      
+      setLiveAlerts(prev => 
+        prev.map(alert => 
+          alert.id === alertId ? { ...alert, status: 'acknowledged' } : alert
+        )
+      );
+      
+      toast.success('Alert acknowledged');
+    } catch (error) {
+      console.error('Error acknowledging alert:', error);
+      toast.error('Failed to acknowledge alert');
+    }
   };
 
-  const handleResolve = (alertId: string) => {
-    setLiveAlerts(prev => 
-      prev.map(alert => 
-        alert.id === alertId ? { ...alert, status: 'resolved' } : alert
-      )
-    );
-    
-    updateAlertStatus({ alertId, status: 'resolved' });
-    
-    toast.success('Alert marked as resolved');
+  const handleResolve = async (alertId: string) => {
+    try {
+      await realtimeService.updateAlertStatus(alertId, 'resolved');
+      
+      setLiveAlerts(prev => 
+        prev.map(alert => 
+          alert.id === alertId ? { ...alert, status: 'resolved' } : alert
+        )
+      );
+      
+      toast.success('Alert marked as resolved');
+    } catch (error) {
+      console.error('Error resolving alert:', error);
+      toast.error('Failed to resolve alert');
+    }
   };
 
-  const handleSendReply = (alertId: string) => {
+  const handleSendReply = async (alertId: string) => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
       return;
@@ -157,17 +160,20 @@ const AdminPanel = () => {
     
     const alert = liveAlerts.find(a => a.id === alertId);
     if (alert) {
-      websocketService.send('ALERT_STATUS_UPDATE', {
-        alertId,
-        status: alert.status,
-        reply: replyMessage,
-        admin: user?.name
-      });
+      try {
+        await realtimeService.updateAlertStatus(alertId, alert.status, {
+          reply: replyMessage,
+          admin: user?.name || 'Admin'
+        });
+        
+        toast.success(`Reply sent to ${alert.chairName}`);
+        setReplyMessage('');
+        setActiveAlertId(null);
+      } catch (error) {
+        console.error('Error sending reply:', error);
+        toast.error('Failed to send reply');
+      }
     }
-    
-    toast.success(`Reply sent to ${liveAlerts.find(a => a.id === alertId)?.chairName}`);
-    setReplyMessage('');
-    setActiveAlertId(null);
   };
 
   const toggleAlertsMute = () => {
