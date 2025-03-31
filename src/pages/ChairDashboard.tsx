@@ -62,37 +62,26 @@ const ChairDashboard = () => {
     }
   }, [alertsData, user?.council]);
 
-  // Update alert status when it changes
+  // Update the useEffect that handles alert status updates
   useEffect(() => {
-    if (alertStatusData && recentAlerts.length > 0) {
-      // Update local alert status if there are changes
-      setRecentAlerts(prev => 
-        prev.map(alert => {
-          const updatedAlert = alertStatusData[alert.id];
-          if (updatedAlert && updatedAlert.status) {
-            return {
-              ...alert,
-              status: updatedAlert.status
-            };
-          }
-          return alert;
-        })
-      );
-
-      // Show reply notifications
+    if (alertStatusData) {
+      // Keep track of shown replies to prevent duplicates
+      const processedReplies = new Set();
+      
       Object.entries(alertStatusData).forEach(([alertId, data]: [string, any]) => {
-        if (data.reply) {
+        if (data.reply && !processedReplies.has(alertId)) {
           const alertExists = recentAlerts.some(alert => alert.id === alertId);
           if (alertExists) {
             toast.info('New reply from admin', {
               description: data.reply,
               duration: 5000
             });
+            processedReplies.add(alertId);
           }
         }
       });
     }
-  }, [alertStatusData, recentAlerts]);
+  }, [alertStatusData]); // Remove recentAlerts from dependency array
 
   const handleAlert = async (alertType: string) => {
     if (!user?.council) {
