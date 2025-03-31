@@ -7,14 +7,13 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
   authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
-  databaseURL: "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeastl.firebasedatabase.app",
+  databaseURL: "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "isbmun-dashboard-prod-red",
-  storageBucket: "isbmun-dashboard-prod-red.firebasestorage.app",
+  storageBucket: "isbmun-dashboard-prod-red.appspot.com",
   messagingSenderId: "879089256467",
   appId: "1:879089256467:web:2f9e323c8c83805c6917e6",
   measurementId: "G-BBWT3VCT08"
 };
-
 
 // Feature flags and configuration
 export const FIREBASE_CONFIG = {
