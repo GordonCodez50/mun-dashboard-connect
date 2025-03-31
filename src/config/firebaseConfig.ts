@@ -9,7 +9,7 @@ export const firebaseConfig = {
   authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
   databaseURL: "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "isbmun-dashboard-prod-red",
-  storageBucket: "isbmun-dashboard-prod-red.appspot.com",
+  storageBucket: "isbmun-dashboard-prod-red.firebasestorage.app",
   messagingSenderId: "879089256467",
   appId: "1:879089256467:web:2f9e323c8c83805c6917e6",
   measurementId: "G-BBWT3VCT08"
