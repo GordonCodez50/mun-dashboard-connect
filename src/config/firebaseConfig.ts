@@ -4,14 +4,13 @@
 // Firebase configuration object
 // These are the actual Firebase project configuration values
 export const firebaseConfig = {
-  apiKey: "AIzaSyACQXMIDb2-98Ttqtrde7PEtJfIBGqaxXY",
-  authDomain: "isbmun-dashboard.firebaseapp.com",
-  databaseURL: "https://isbmun-dashboard-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "isbmun-dashboard",
-  storageBucket: "isbmun-dashboard.firebasestorage.app",
-  messagingSenderId: "705687529606",
-  appId: "1:705687529606:web:bab945809e06c12c1a0907",
-  measurementId: "G-4R8RYDJGRZ"
+  apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
+  authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
+  projectId: "isbmun-dashboard-prod-red",
+  storageBucket: "isbmun-dashboard-prod-red.firebasestorage.app",
+  messagingSenderId: "879089256467",
+  appId: "1:879089256467:web:2f9e323c8c83805c6917e6",
+  measurementId: "G-BBWT3VCT08"
 };
 
 // Feature flags and configuration
