@@ -152,7 +152,7 @@ const AdminPanel = () => {
     }
   };
 
-  const handleSendReply = async (alertId: string) => {
+    const handleSendReply = async (alertId: string) => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
       return;
@@ -161,9 +161,11 @@ const AdminPanel = () => {
     const alert = liveAlerts.find(a => a.id === alertId);
     if (alert) {
       try {
+        // Add timestamp to reply to prevent duplicates
         await realtimeService.updateAlertStatus(alertId, alert.status, {
           reply: replyMessage,
-          admin: user?.name || 'Admin'
+          admin: user?.name || 'Admin',
+          replyTimestamp: Date.now() // Add this line
         });
         
         toast.success(`Reply sent to ${alert.chairName}`);
@@ -175,6 +177,7 @@ const AdminPanel = () => {
       }
     }
   };
+
 
   const toggleAlertsMute = () => {
     setAlertsMuted(!alertsMuted);
