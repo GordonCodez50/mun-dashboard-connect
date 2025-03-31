@@ -3,9 +3,10 @@
 
 // Firebase configuration object
 // These are the actual Firebase project configuration values
-export const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
   authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
+  databaseURL: "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeastl.firebasedatabase.app",
   projectId: "isbmun-dashboard-prod-red",
   storageBucket: "isbmun-dashboard-prod-red.firebasestorage.app",
   messagingSenderId: "879089256467",
