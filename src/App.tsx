@@ -86,14 +86,6 @@ const AppWithAuth = () => {
           element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
         />
         <Route
-          path="/live-alerts"
-          element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
-        />
-        <Route
-          path="/timer-control"
-          element={<ProtectedRoute element={<TimerManager />} requiredRole="admin" />}
-        />
-        <Route
           path="/user-management"
           element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
         />

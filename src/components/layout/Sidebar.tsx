@@ -11,7 +11,6 @@ import {
   Users, 
   Activity,
   UserPlus,
-  Settings
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -94,34 +93,6 @@ export const Sidebar = () => {
               </NavLink>
               
               <NavLink 
-                to="/live-alerts" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <AlertTriangle size={18} className="mr-3" />
-                Live Alerts
-              </NavLink>
-              
-              <NavLink 
-                to="/council-status" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <Activity size={18} className="mr-3" />
-                Council Status
-              </NavLink>
-              
-              <NavLink 
                 to="/user-management" 
                 className={({ isActive }) => 
                   `flex items-center px-3 py-2 rounded-md mb-1 ${
@@ -141,19 +112,21 @@ export const Sidebar = () => {
             Common
           </p>
           
-          <NavLink 
-            to="/timer" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-2 rounded-md mb-1 ${
-                isActive 
-                  ? 'bg-accent/10 text-accent' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`
-            }
-          >
-            <Timer size={18} className="mr-3" />
-            Timer
-          </NavLink>
+          {user?.role === 'chair' && (
+            <NavLink 
+              to="/timer" 
+              className={({ isActive }) => 
+                `flex items-center px-3 py-2 rounded-md mb-1 ${
+                  isActive 
+                    ? 'bg-accent/10 text-accent' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`
+              }
+            >
+              <Timer size={18} className="mr-3" />
+              Timer
+            </NavLink>
+          )}
           
           <NavLink 
             to="/documents" 
@@ -172,14 +145,6 @@ export const Sidebar = () => {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
             Account
           </p>
-          
-          <NavLink 
-            to="#settings" 
-            className="flex items-center px-3 py-2 rounded-md mb-1 text-gray-700 hover:bg-gray-100"
-          >
-            <Settings size={18} className="mr-3" />
-            Settings
-          </NavLink>
           
           <button
             onClick={handleLogout}
