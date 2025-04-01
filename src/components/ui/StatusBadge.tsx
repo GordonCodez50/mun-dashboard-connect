@@ -80,5 +80,5 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   );
 };
 
-// Make sure to export CouncilStatus type
-export { CouncilStatus };
+// Fix the re-export to use 'export type' syntax
+// Remove this line that causes the conflict: export { CouncilStatus };
