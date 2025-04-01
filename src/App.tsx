@@ -11,7 +11,6 @@ import Login from "./pages/Login";
 import ChairDashboard from "./pages/ChairDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import TimerManager from "./pages/TimerManager";
-import Documents from "./pages/Documents";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
@@ -72,10 +71,6 @@ const AppWithAuth = () => {
           element={<ProtectedRoute element={<ChairDashboard />} requiredRole="chair" />}
         />
         <Route
-          path="/send-alert"
-          element={<ProtectedRoute element={<ChairDashboard />} requiredRole="chair" />}
-        />
-        <Route
           path="/timer"
           element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
         />
@@ -88,12 +83,6 @@ const AppWithAuth = () => {
         <Route
           path="/user-management"
           element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
-        />
-
-        {/* Shared Routes */}
-        <Route
-          path="/documents"
-          element={<ProtectedRoute element={<Documents />} requiredRole="both" />}
         />
 
         {/* Catch All */}

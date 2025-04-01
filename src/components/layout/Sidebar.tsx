@@ -4,12 +4,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { 
   LayoutDashboard, 
-  AlertTriangle, 
   Timer, 
-  FileText, 
   LogOut, 
-  Users, 
-  Activity,
+  Users,
   UserPlus,
 } from 'lucide-react';
 
@@ -60,20 +57,6 @@ export const Sidebar = () => {
               >
                 <LayoutDashboard size={18} className="mr-3" />
                 Dashboard
-              </NavLink>
-              
-              <NavLink 
-                to="/send-alert" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <AlertTriangle size={18} className="mr-3" />
-                Send Alerts
               </NavLink>
             </>
           ) : (
@@ -127,20 +110,6 @@ export const Sidebar = () => {
               Timer
             </NavLink>
           )}
-          
-          <NavLink 
-            to="/documents" 
-            className={({ isActive }) => 
-              `flex items-center px-3 py-2 rounded-md mb-1 ${
-                isActive 
-                  ? 'bg-accent/10 text-accent' 
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`
-            }
-          >
-            <FileText size={18} className="mr-3" />
-            Documents
-          </NavLink>
           
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
             Account
