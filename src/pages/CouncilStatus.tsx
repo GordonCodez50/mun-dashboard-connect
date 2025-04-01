@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { StatusBadge, CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { firestoreService, realtimeService } from '@/services/firebaseService';
 import { toast } from 'sonner';
+import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 
 type Council = {
   id: string;
@@ -17,6 +18,9 @@ const CouncilStatus = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [newCouncilName, setNewCouncilName] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Use Firebase Realtime Database for council status
+  const { data: councilStatusData } = useFirebaseRealtime<any>('COUNCIL_STATUS_UPDATE');
 
   // Load councils on component mount
   useEffect(() => {
@@ -35,6 +39,26 @@ const CouncilStatus = () => {
     loadCouncils();
   }, []);
 
+  // Update councils when status changes in Firebase
+  useEffect(() => {
+    if (councilStatusData) {
+      setCouncils(prev => 
+        prev.map(council => {
+          // Check for status updates by name or id
+          const statusUpdate = councilStatusData[council.name] || councilStatusData[council.id];
+          if (statusUpdate?.status) {
+            return {
+              ...council,
+              status: statusUpdate.status as CouncilStatusType,
+              lastUpdate: new Date(statusUpdate.timestamp)
+            };
+          }
+          return council;
+        })
+      );
+    }
+  }, [councilStatusData]);
+
   // Update council status
   const handleStatusChange = async (councilId: string, newStatus: CouncilStatusType) => {
     try {
@@ -42,15 +66,7 @@ const CouncilStatus = () => {
       const success = await realtimeService.updateCouncilStatus(councilId, newStatus);
       
       if (success) {
-        // Update local state
-        setCouncils(prev => 
-          prev.map(council => 
-            council.id === councilId 
-              ? { ...council, status: newStatus, lastUpdate: new Date() } 
-              : council
-          )
-        );
-        
+        // Local state is updated via the Firebase listener, so we don't need to update it here
         toast.success('Council status updated');
       }
     } catch (error) {

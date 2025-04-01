@@ -3,16 +3,15 @@
 
 // Firebase configuration object
 // These are the actual Firebase project configuration values
-// Firebase configuration object
 export const firebaseConfig = {
-  apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
-  authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
-  databaseURL: "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "isbmun-dashboard-prod-red",
-  storageBucket: "isbmun-dashboard-prod-red.firebasestorage.app",
-  messagingSenderId: "879089256467",
-  appId: "1:879089256467:web:2f9e323c8c83805c6917e6",
-  measurementId: "G-BBWT3VCT08"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "isbmun-dashboard-prod-red.firebaseapp.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://isbmun-dashboard-prod-red-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "isbmun-dashboard-prod-red",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "isbmun-dashboard-prod-red.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "879089256467",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:879089256467:web:2f9e323c8c83805c6917e6",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-BBWT3VCT08"
 };
 
 // Feature flags and configuration
@@ -97,6 +96,11 @@ export const RECOMMENDED_SECURITY_RULES = {
           allow read: if request.auth != null;
         }
         
+        // Allow all authenticated users to read and write their own user document
+        match /users/{userId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+        
         // Allow chair users to update their own council's status
         match /councils/{councilId} {
           allow update: if request.auth != null && 
@@ -121,37 +125,48 @@ export const RECOMMENDED_SECURITY_RULES = {
   realtimeDb: `
     {
       "rules": {
-        // Allow admins to read and write all data
+        // Allow all authenticated users to read data
         ".read": "auth != null",
         
         "councilStatus": {
-          // Allow chairs to update only their own council status
+          // Allow anyone to read council status
+          ".read": true,
+          
+          // Allow all authenticated users to write to council status
+          ".write": "auth != null",
+          
           "$councilId": {
-            ".write": "auth != null && 
-                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
-                      root.child('users').child(auth.uid).child('council').val() == data.child('name').val())"
+            // Allow anyone to read a specific council's status
+            ".read": true,
+            
+            // Allow authenticated users to write to any council status
+            // In a production app, you would restrict this further
+            ".write": "auth != null"
           }
         },
         
         "alerts": {
-          // Anyone can create alerts
+          // Allow authenticated users to read and create alerts
+          ".read": "auth != null",
           ".write": "auth != null",
           
           "$alertId": {
-            // Admins can update any alert, chairs can only update their own
-            ".write": "auth != null && 
-                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
-                      data.child('council').val() == root.child('users').child(auth.uid).child('council').val())"
+            // Anyone can read alerts
+            ".read": true,
+            
+            // Authenticated users can update alerts
+            ".write": "auth != null"
           }
         },
         
         "timers": {
-          // Allow access to timers for authorized users
+          // Allow access to timers for authenticated users
+          ".read": "auth != null",
+          ".write": "auth != null",
+          
           "$timerId": {
-            ".write": "auth != null && 
-                      (root.child('users').child(auth.uid).child('role').val() == 'admin' || 
-                      data.child('council').val() == root.child('users').child(auth.uid).child('council').val() || 
-                      !data.exists())"
+            ".read": "auth != null",
+            ".write": "auth != null"
           }
         }
       }

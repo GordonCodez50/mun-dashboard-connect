@@ -79,3 +79,6 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     </span>
   );
 };
+
+// Make sure to export CouncilStatus type
+export { CouncilStatus };

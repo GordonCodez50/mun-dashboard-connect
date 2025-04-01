@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
+import { StatusBadge, CouncilStatus } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
@@ -23,7 +22,7 @@ type Council = {
   id: string;
   name: string;
   chairName: string;
-  status: CouncilStatusType;
+  status: CouncilStatus;
   lastUpdate: Date;
 };
 
@@ -50,7 +49,7 @@ const AdminPanel = () => {
           id: council.id,
           name: council.name,
           chairName: `${council.name} Chair`,
-          status: (council.status as CouncilStatusType) || 'in-session',
+          status: (council.status as CouncilStatus) || 'in-session',
           lastUpdate: new Date()
         }));
         setCouncils(formattedCouncils);
@@ -103,11 +102,23 @@ const AdminPanel = () => {
         
         // Find and update each council's status
         Object.entries(councilStatusData).forEach(([councilId, data]: [string, any]) => {
-          const councilIndex = updatedCouncils.findIndex(c => c.id === councilId);
+          // Try to find council by ID first
+          let councilIndex = updatedCouncils.findIndex(c => c.id === councilId);
+          
+          // If not found, try to find by name (using the name stored in the status update)
+          if (councilIndex < 0 && data.name) {
+            councilIndex = updatedCouncils.findIndex(c => c.name === data.name);
+          }
+          
+          // If still not found, try to match by using the councilId as a name
+          if (councilIndex < 0) {
+            councilIndex = updatedCouncils.findIndex(c => c.name === councilId);
+          }
+          
           if (councilIndex >= 0 && data.status) {
             updatedCouncils[councilIndex] = {
               ...updatedCouncils[councilIndex],
-              status: data.status as CouncilStatusType,
+              status: data.status as CouncilStatus,
               lastUpdate: data.timestamp ? new Date(data.timestamp) : new Date()
             };
           }
@@ -152,7 +163,7 @@ const AdminPanel = () => {
     }
   };
 
-    const handleSendReply = async (alertId: string) => {
+  const handleSendReply = async (alertId: string) => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
       return;
@@ -177,7 +188,6 @@ const AdminPanel = () => {
       }
     }
   };
-
 
   const toggleAlertsMute = () => {
     setAlertsMuted(!alertsMuted);

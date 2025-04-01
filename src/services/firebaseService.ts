@@ -374,11 +374,37 @@ export const realtimeService = {
   // Update council status
   updateCouncilStatus: async (councilId: string, status: string) => {
     try {
+      // Get council name if councilId is a document ID
+      let councilName = councilId;
+      
+      if (!FIREBASE_CONFIG.demoMode) {
+        try {
+          const councilDoc = await getDoc(doc(firestore, FIRESTORE_COLLECTIONS.councils, councilId));
+          if (councilDoc.exists()) {
+            councilName = councilDoc.data().name || councilId;
+          }
+        } catch (err) {
+          console.log('Error getting council name, using ID as name:', err);
+        }
+      }
+      
       const statusRef = ref(realtimeDb, `councilStatus/${councilId}`);
       await set(statusRef, {
         status,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        name: councilName // Add council name to the status update
       });
+      
+      // If councilId is not the same as councilName, also update by name
+      if (councilId !== councilName) {
+        const nameStatusRef = ref(realtimeDb, `councilStatus/${councilName}`);
+        await set(nameStatusRef, {
+          status,
+          timestamp: Date.now(),
+          name: councilName
+        });
+      }
+      
       return true;
     } catch (error) {
       console.error('Error updating council status:', error);

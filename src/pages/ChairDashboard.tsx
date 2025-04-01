@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -31,13 +30,22 @@ const ChairDashboard = () => {
   
   // Use Firebase Realtime Database for alert status updates
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
+  
+  // Use Firebase Realtime Database for current council status
+  const { data: councilStatusData } = useFirebaseRealtime<{status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE', user?.council);
+
+  // Effect to update council status from Firebase
+  useEffect(() => {
+    if (councilStatusData?.status) {
+      setCouncilStatus(councilStatusData.status);
+    }
+  }, [councilStatusData]);
 
   // Effect to set council ID based on user's council
   useEffect(() => {
     // Find council ID from user's council name
     if (user?.council) {
-      // For now, we'll use a simple string as ID
-      // In a production app, you'd query Firestore to get the actual ID
+      // For now, we'll use the council name as ID
       setCouncilId(user.council);
     }
   }, [user]);
