@@ -10,7 +10,6 @@ import { useEffect } from "react";
 import Login from "./pages/Login";
 import ChairDashboard from "./pages/ChairDashboard";
 import AdminPanel from "./pages/AdminPanel";
-import CouncilStatus from "./pages/CouncilStatus";
 import TimerManager from "./pages/TimerManager";
 import Documents from "./pages/Documents";
 import UserManagement from "./pages/UserManagement";
@@ -89,10 +88,6 @@ const AppWithAuth = () => {
         <Route
           path="/live-alerts"
           element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
-        />
-        <Route
-          path="/council-status"
-          element={<ProtectedRoute element={<CouncilStatus />} requiredRole="admin" />}
         />
         <Route
           path="/timer-control"

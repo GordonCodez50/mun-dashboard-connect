@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
-import { StatusBadge, type CouncilStatus as CouncilStatusType } from '@/components/ui/StatusBadge';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { toast } from "sonner";
 import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send } from 'lucide-react';
@@ -19,36 +18,15 @@ type Alert = {
 
 const ChairDashboard = () => {
   const { user } = useAuth();
-  const [councilStatus, setCouncilStatus] = useState<CouncilStatusType>('in-session');
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
-  const [councilId, setCouncilId] = useState<string>('');
   
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   
   // Use Firebase Realtime Database for alert status updates
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
-  
-  // Use Firebase Realtime Database for current council status
-  const { data: councilStatusData } = useFirebaseRealtime<{status: CouncilStatusType}>('COUNCIL_STATUS_UPDATE', user?.council);
-
-  // Effect to update council status from Firebase
-  useEffect(() => {
-    if (councilStatusData?.status) {
-      setCouncilStatus(councilStatusData.status);
-    }
-  }, [councilStatusData]);
-
-  // Effect to set council ID based on user's council
-  useEffect(() => {
-    // Find council ID from user's council name
-    if (user?.council) {
-      // For now, we'll use the council name as ID
-      setCouncilId(user.council);
-    }
-  }, [user]);
 
   // Process alerts data to show the user's council alerts
   useEffect(() => {
@@ -177,23 +155,6 @@ const ChairDashboard = () => {
     }
   };
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as CouncilStatusType;
-    setCouncilStatus(newStatus);
-    
-    try {
-      if (councilId) {
-        await realtimeService.updateCouncilStatus(councilId, newStatus);
-        toast.success(`Status updated to ${newStatus.replace('-', ' ')}`);
-      } else {
-        toast.error('Council information is missing');
-      }
-    } catch (error) {
-      console.error('Error updating council status:', error);
-      toast.error('Failed to update status');
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -206,31 +167,6 @@ const ChairDashboard = () => {
               Welcome back, {user?.name}
             </p>
           </header>
-          
-          <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-medium text-primary">Council Status</h2>
-                <StatusBadge status={councilStatus} className="mt-2" size="lg" />
-              </div>
-              
-              <div className="w-full sm:w-auto">
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                  Update Status
-                </label>
-                <select
-                  id="status"
-                  value={councilStatus}
-                  onChange={handleStatusChange}
-                  className="block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-accent focus:border-accent rounded-md shadow-sm"
-                >
-                  <option value="in-session">In Session</option>
-                  <option value="on-break">On Break</option>
-                  <option value="technical-issue">Technical Issue</option>
-                </select>
-              </div>
-            </div>
-          </div>
           
           <div className="mb-8">
             <h2 className="text-lg font-medium text-primary mb-4">Quick Actions</h2>

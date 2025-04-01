@@ -3,7 +3,6 @@ import { WS_CONFIG } from "@/config/appConfig";
 
 // WebSocket event types
 export type WebSocketEventType = 
-  | 'COUNCIL_STATUS_UPDATE' 
   | 'NEW_ALERT' 
   | 'ALERT_STATUS_UPDATE' 
   | 'TIMER_SYNC'
@@ -285,20 +284,6 @@ class WebSocketService {
     
     // Notify listeners
     this.notifyConnectListeners();
-    
-    // Simulate periodic status updates
-    setInterval(() => {
-      const statuses: ('in-session' | 'on-break' | 'technical-issue')[] = ['in-session', 'on-break', 'technical-issue'];
-      const randomCouncil = Math.floor(Math.random() * 5) + 1;
-      
-      if (Math.random() > 0.7) { // 30% chance of a status update
-        this.dispatchEvent('COUNCIL_STATUS_UPDATE', {
-          councilId: String(randomCouncil),
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-          timestamp: new Date().toISOString()
-        });
-      }
-    }, 15000);
     
     // Simulate random alerts
     setInterval(() => {
