@@ -285,43 +285,6 @@ const ChairDashboard = () => {
               </CardContent>
             </Card>
           </div>
-          
-          <div className="mb-8">
-            <h2 className="text-lg font-medium text-primary dark:text-white mb-4">All Recent Alerts</h2>
-            {recentAlerts.length > 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
-                {recentAlerts.map((alert) => (
-                  <div key={alert.id} className="p-4 flex items-start gap-3">
-                    <span className="mt-0.5 text-accent">
-                      <AlertTriangle size={18} />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{alert.message}</p>
-                      <div className="mt-2">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                          alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                        }`}>
-                          {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>

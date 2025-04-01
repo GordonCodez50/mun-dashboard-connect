@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { toast } from "sonner";
-import { Clock, Volume2, VolumeX, Edit, Plus, Trash2 } from 'lucide-react';
+import { Clock, Volume2, VolumeX, Edit, Plus, Trash2, Timer } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -180,7 +180,7 @@ const TimerManager = () => {
                 <CardHeader className="pb-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Clock className="text-accent h-5 w-5" />
+                      <Timer className="text-accent h-5 w-5" />
                       <div className="flex items-center gap-2">
                         <Input
                           value={timer.label}
