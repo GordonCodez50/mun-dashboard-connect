@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { realtimeService } from '@/services/firebaseService';
 
 // Define event types
-export type RealtimeEventType = 'COUNCIL_STATUS_UPDATE' | 'NEW_ALERT' | 'ALERT_STATUS_UPDATE' | 'TIMER_SYNC';
+export type RealtimeEventType = 'NEW_ALERT' | 'ALERT_STATUS_UPDATE' | 'TIMER_SYNC';
 
 export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entityId?: string) {
   const [data, setData] = useState<T | null>(null);
@@ -18,22 +18,6 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
     const setupListener = async () => {
       try {
         switch (eventType) {
-          case 'COUNCIL_STATUS_UPDATE':
-            if (entityId) {
-              // Listen to a specific council's status
-              unsubscribe = realtimeService.onCouncilStatusUpdate(entityId, (data) => {
-                setData(data as T);
-                setIsLoading(false);
-              });
-            } else {
-              // Listen to all council statuses
-              unsubscribe = realtimeService.onAllCouncilStatusUpdates((data) => {
-                setData(data as T);
-                setIsLoading(false);
-              });
-            }
-            break;
-            
           case 'NEW_ALERT':
             // Listen to all alerts
             unsubscribe = realtimeService.onNewAlert((data) => {
@@ -81,12 +65,6 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
   const sendMessage = useCallback((messageData: any): Promise<boolean> => {
     try {
       switch (eventType) {
-        case 'COUNCIL_STATUS_UPDATE':
-          if (!entityId) {
-            throw new Error('Entity ID is required for council status updates');
-          }
-          return realtimeService.updateCouncilStatus(entityId, messageData.status);
-          
         case 'NEW_ALERT':
           return realtimeService.createAlert(messageData);
           

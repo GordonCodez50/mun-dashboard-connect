@@ -345,74 +345,6 @@ const setDoc = (docRef: any, data: any) => {
 
 // Realtime Database service (replaces WebSocket)
 export const realtimeService = {
-  // Listen for council status updates for a specific council
-  onCouncilStatusUpdate: (councilId: string, callback: (status: any) => void) => {
-    const statusRef = ref(realtimeDb, `councilStatus/${councilId}`);
-    onValue(statusRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        callback(data);
-      }
-    });
-    
-    // Return unsubscribe function
-    return () => off(statusRef);
-  },
-  
-  // Listen for status updates for all councils
-  onAllCouncilStatusUpdates: (callback: (statuses: any) => void) => {
-    const statusRef = ref(realtimeDb, 'councilStatus');
-    onValue(statusRef, (snapshot) => {
-      const data = snapshot.val();
-      callback(data || {});
-    });
-    
-    // Return unsubscribe function
-    return () => off(statusRef);
-  },
-  
-  // Update council status
-  updateCouncilStatus: async (councilId: string, status: string) => {
-    try {
-      // Get council name if councilId is a document ID
-      let councilName = councilId;
-      
-      if (!FIREBASE_CONFIG.demoMode) {
-        try {
-          const councilDoc = await getDoc(doc(firestore, FIRESTORE_COLLECTIONS.councils, councilId));
-          if (councilDoc.exists()) {
-            councilName = councilDoc.data().name || councilId;
-          }
-        } catch (err) {
-          console.log('Error getting council name, using ID as name:', err);
-        }
-      }
-      
-      const statusRef = ref(realtimeDb, `councilStatus/${councilId}`);
-      await set(statusRef, {
-        status,
-        timestamp: Date.now(),
-        name: councilName // Add council name to the status update
-      });
-      
-      // If councilId is not the same as councilName, also update by name
-      if (councilId !== councilName) {
-        const nameStatusRef = ref(realtimeDb, `councilStatus/${councilName}`);
-        await set(nameStatusRef, {
-          status,
-          timestamp: Date.now(),
-          name: councilName
-        });
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating council status:', error);
-      toast.error('Failed to update council status');
-      return false;
-    }
-  },
-  
   // Listen for new alerts
   onNewAlert: (callback: (alert: any) => void) => {
     const alertsRef = ref(realtimeDb, 'alerts');
@@ -522,16 +454,16 @@ export const firestoreService = {
     if (FIREBASE_CONFIG.demoMode) {
       // Return demo councils
       return [
-        { id: '1', name: 'ECOSOC', status: 'in-session' },
-        { id: '2', name: 'UNHRC', status: 'on-break' },
-        { id: '3', name: 'UNSC', status: 'in-session' },
-        { id: '4', name: 'SPECPOL', status: 'technical-issue' },
-        { id: '5', name: 'DISEC', status: 'in-session' }
+        { id: '1', name: 'ECOSOC' },
+        { id: '2', name: 'UNHRC' },
+        { id: '3', name: 'UNSC' },
+        { id: '4', name: 'SPECPOL' },
+        { id: '5', name: 'DISEC' }
       ];
     }
     
     try {
-      // First try to get councils from Firestore
+      // Get councils from Firestore
       const councilsSnapshot = await getDocs(collection(firestore, FIRESTORE_COLLECTIONS.councils));
       let councils = councilsSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -554,21 +486,12 @@ export const firestoreService = {
         const councilPromises = Array.from(uniqueCouncils).map(async (councilName) => {
           const docRef = await addDoc(collection(firestore, FIRESTORE_COLLECTIONS.councils), {
             name: councilName,
-            status: 'in-session',
             createdAt: Timestamp.now()
-          });
-          
-          // Initialize the council status in Realtime Database
-          const statusRef = ref(realtimeDb, `councilStatus/${docRef.id}`);
-          await set(statusRef, {
-            status: 'in-session',
-            timestamp: Date.now()
           });
           
           return {
             id: docRef.id,
-            name: councilName,
-            status: 'in-session'
+            name: councilName
           };
         });
         
@@ -583,7 +506,7 @@ export const firestoreService = {
   },
   
   // Add a new council
-  addCouncil: async (councilData: { name: string; status: string }) => {
+  addCouncil: async (councilData: { name: string }) => {
     if (FIREBASE_CONFIG.demoMode) {
       // Simulate adding a council
       return {
@@ -597,13 +520,6 @@ export const firestoreService = {
       const docRef = await addDoc(collection(firestore, FIRESTORE_COLLECTIONS.councils), {
         ...councilData,
         createdAt: Timestamp.now()
-      });
-      
-      // Initialize the council status in Realtime Database
-      const statusRef = ref(realtimeDb, `councilStatus/${docRef.id}`);
-      await set(statusRef, {
-        status: councilData.status,
-        timestamp: Date.now()
       });
       
       return {
@@ -696,21 +612,9 @@ export const initializeDemoData = async () => {
   if (FIREBASE_CONFIG.demoMode) {
     console.log('Initializing demo data...');
     
-    // Set up demo council statuses
-    const statuses: ('in-session' | 'on-break' | 'technical-issue')[] = ['in-session', 'on-break', 'technical-issue'];
-    const demoCouncils = ['ECOSOC', 'UNHRC', 'UNSC', 'SPECPOL', 'DISEC'];
-    
-    for (let i = 0; i < demoCouncils.length; i++) {
-      const statusRef = ref(realtimeDb, `councilStatus/${i + 1}`);
-      await set(statusRef, {
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        timestamp: Date.now(),
-        name: demoCouncils[i]
-      });
-    }
-    
     // Set up demo alerts
     const alertTypes = ['IT Support', 'Mic Issue', 'Security', 'Break'];
+    const demoCouncils = ['ECOSOC', 'UNHRC', 'UNSC', 'SPECPOL', 'DISEC'];
     
     const alertsRef = ref(realtimeDb, 'alerts');
     

@@ -31,7 +31,6 @@ export const FIRESTORE_COLLECTIONS = {
 
 // Data paths for Realtime Database
 export const RTDB_PATHS = {
-  councilStatus: 'councilStatus',
   alerts: 'alerts',
   timers: 'timers',
 };
@@ -101,7 +100,7 @@ export const RECOMMENDED_SECURITY_RULES = {
           allow read, write: if request.auth != null && request.auth.uid == userId;
         }
         
-        // Allow chair users to update their own council's status
+        // Allow chair users to update their own council's information
         match /councils/{councilId} {
           allow update: if request.auth != null && 
                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
@@ -127,23 +126,6 @@ export const RECOMMENDED_SECURITY_RULES = {
       "rules": {
         // Allow all authenticated users to read data
         ".read": "auth != null",
-        
-        "councilStatus": {
-          // Allow anyone to read council status
-          ".read": true,
-          
-          // Allow all authenticated users to write to council status
-          ".write": "auth != null",
-          
-          "$councilId": {
-            // Allow anyone to read a specific council's status
-            ".read": true,
-            
-            // Allow authenticated users to write to any council status
-            // In a production app, you would restrict this further
-            ".write": "auth != null"
-          }
-        },
         
         "alerts": {
           // Allow authenticated users to read and create alerts

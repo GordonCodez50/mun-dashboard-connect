@@ -1,7 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { StatusBadge, CouncilStatus } from '@/components/ui/StatusBadge';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
@@ -22,8 +22,7 @@ type Council = {
   id: string;
   name: string;
   chairName: string;
-  status: CouncilStatus;
-  lastUpdate: Date;
+  lastUpdate?: Date;
 };
 
 const AdminPanel = () => {
@@ -37,9 +36,6 @@ const AdminPanel = () => {
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
 
-  // Use Firebase Realtime Database for council status
-  const { data: councilStatusData } = useFirebaseRealtime<any>('COUNCIL_STATUS_UPDATE');
-
   // Load councils from Firestore
   useEffect(() => {
     const loadCouncils = async () => {
@@ -49,7 +45,6 @@ const AdminPanel = () => {
           id: council.id,
           name: council.name,
           chairName: `${council.name} Chair`,
-          status: (council.status as CouncilStatus) || 'in-session',
           lastUpdate: new Date()
         }));
         setCouncils(formattedCouncils);
@@ -92,42 +87,6 @@ const AdminPanel = () => {
       }
     }
   }, [alertsData, alertsMuted, liveAlerts]);
-
-  // Update council status when data changes
-  useEffect(() => {
-    if (councilStatusData) {
-      // Update councils with new status data
-      setCouncils(prev => {
-        const updatedCouncils = [...prev];
-        
-        // Find and update each council's status
-        Object.entries(councilStatusData).forEach(([councilId, data]: [string, any]) => {
-          // Try to find council by ID first
-          let councilIndex = updatedCouncils.findIndex(c => c.id === councilId);
-          
-          // If not found, try to find by name (using the name stored in the status update)
-          if (councilIndex < 0 && data.name) {
-            councilIndex = updatedCouncils.findIndex(c => c.name === data.name);
-          }
-          
-          // If still not found, try to match by using the councilId as a name
-          if (councilIndex < 0) {
-            councilIndex = updatedCouncils.findIndex(c => c.name === councilId);
-          }
-          
-          if (councilIndex >= 0 && data.status) {
-            updatedCouncils[councilIndex] = {
-              ...updatedCouncils[councilIndex],
-              status: data.status as CouncilStatus,
-              lastUpdate: data.timestamp ? new Date(data.timestamp) : new Date()
-            };
-          }
-        });
-        
-        return updatedCouncils;
-      });
-    }
-  }, [councilStatusData]);
 
   const handleAcknowledge = async (alertId: string) => {
     try {
@@ -359,12 +318,6 @@ const AdminPanel = () => {
                       Chair
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Update
-                    </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -377,12 +330,6 @@ const AdminPanel = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-700">{council.chairName}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <StatusBadge status={council.status} />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {council.lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <button
