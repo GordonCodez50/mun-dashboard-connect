@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
@@ -8,6 +7,7 @@ import { Clock, Volume2, VolumeX, Plus, Minus, Edit } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 // Presets in seconds
 const timePresets = [
