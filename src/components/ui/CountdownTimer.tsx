@@ -169,37 +169,39 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
     return (
       <div className={`flex flex-col items-center ${className}`}>
         {/* Timer display */}
-        <div className="relative p-6">
-          <div className={`font-mono font-semibold tracking-tighter ${getSizeClasses()} ${getTimerClass()}`}>
-            {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
-          </div>
-          {/* Circular progress */}
-          <svg className="absolute -inset-2" viewBox="0 0 100 100">
+        <div className="relative p-8 flex items-center justify-center">
+          {/* Circular progress - fixed positioning to prevent overlap */}
+          <svg className="absolute w-full h-full" viewBox="0 0 120 120" style={{ top: 0, left: 0 }}>
             <circle 
-              cx="50" 
-              cy="50" 
-              r="46" 
+              cx="60" 
+              cy="60" 
+              r="54" 
               fill="none" 
-              stroke="#f3f4f6" 
-              strokeWidth="4" 
+              stroke="rgba(229, 231, 235, 0.5)" 
+              strokeWidth="8" 
             />
             <circle 
-              cx="50" 
-              cy="50" 
-              r="46" 
+              cx="60" 
+              cy="60" 
+              r="54" 
               fill="none" 
               stroke={timeLeft <= 10 ? "#ef4444" : timeLeft <= 30 ? "#f59e0b" : "#4581B6"} 
-              strokeWidth="4" 
-              strokeDasharray="289.027"
-              strokeDashoffset={289.027 - (289.027 * progress / 100)} 
-              transform="rotate(-90 50 50)" 
+              strokeWidth="8" 
+              strokeDasharray="339.292"
+              strokeDashoffset={339.292 - (339.292 * progress / 100)} 
+              transform="rotate(-90 60 60)" 
               className="transition-all duration-1000 ease-linear"
             />
           </svg>
+          
+          {/* Timer text - positioned on top of the circle */}
+          <div className={`font-mono font-semibold tracking-tighter z-10 ${getSizeClasses()} ${getTimerClass()}`}>
+            {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+          </div>
         </div>
         
         {/* Controls */}
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-3 mt-4">
           {!isRunning || isPaused ? (
             <Button 
               onClick={startTimer}
@@ -251,7 +253,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
           {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
         </div>
         {/* Progress bar */}
-        <div className="w-full h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
           <div 
             className={`h-full transition-all duration-1000 ease-linear rounded-full ${
               timeLeft <= 10 ? "bg-destructive" : timeLeft <= 30 ? "bg-amber-500" : "bg-accent"

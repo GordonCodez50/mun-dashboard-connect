@@ -1,35 +1,31 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { toast } from "sonner";
-import { Clock, Volume2, VolumeX, Plus, Minus, Edit } from 'lucide-react';
+import { Clock, Volume2, VolumeX, Edit } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-// Presets in seconds
+// Presets in seconds - updated as requested
 const timePresets = [
-  { label: '30s', value: 30 },
   { label: '1m', value: 60 },
-  { label: '2m', value: 120 },
-  { label: '3m', value: 180 },
   { label: '5m', value: 300 },
-  { label: '10m', value: 600 }
+  { label: '10m', value: 600 },
+  { label: '15m', value: 900 },
+  { label: '30m', value: 1800 }
 ];
 
 const TimerManager = () => {
   const { user } = useAuth();
-  const [currentTime, setCurrentTime] = useState(120); // Default 2 minutes
+  const [currentTime, setCurrentTime] = useState(300); // Default 5 minutes
   const [customTime, setCustomTime] = useState('');
-  const [adminSync, setAdminSync] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isActive, setIsActive] = useState(false);
   const [editingTimer, setEditingTimer] = useState(false);
-  
-  // Determine if user is admin
-  const isAdmin = user?.role === 'admin';
   
   // Handle preset selection
   const handlePresetSelect = (seconds: number) => {
@@ -97,12 +93,6 @@ const TimerManager = () => {
     });
   };
   
-  // Toggle admin sync
-  const toggleAdminSync = () => {
-    setAdminSync(!adminSync);
-    toast.success(adminSync ? 'Admin sync disabled' : 'Admin sync enabled');
-  };
-  
   // Toggle sound
   const toggleSound = () => {
     setSoundEnabled(!soundEnabled);
@@ -132,7 +122,7 @@ const TimerManager = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Timer */}
-            <Card className="lg:col-span-2 border-gray-200 dark:border-gray-800 shadow-sm dark:bg-gray-800">
+            <Card className="lg:col-span-2 border-gray-200 dark:border-gray-800 shadow-md dark:bg-gray-800 overflow-hidden">
               <CardHeader className="pb-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -144,12 +134,7 @@ const TimerManager = () => {
                       <span className="text-xs px-2 py-0.5 bg-accent/20 text-accent rounded-full dark:bg-accent/30">
                         Editing
                       </span>
-                    ) : (
-                      <div className="text-xs px-2 py-0.5 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 rounded-full flex items-center">
-                        Real-time
-                        <div className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </CardHeader>
@@ -176,7 +161,6 @@ const TimerManager = () => {
                         autoStart={false}
                         size="lg"
                         timerId="main-session-timer"
-                        isAdmin={isAdmin || !adminSync} // Admin controls if admin or sync is off
                       />
                       <button 
                         className="absolute -top-2 -right-2 bg-accent text-white p-1 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"
@@ -191,26 +175,8 @@ const TimerManager = () => {
                   )}
                 </div>
                 
-                {/* Admin sync toggle */}
-                <div className="mt-8 flex items-center justify-center gap-8">
-                  {!isAdmin && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={toggleAdminSync}
-                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent ${
-                          adminSync ? 'bg-accent' : 'bg-gray-200 dark:bg-gray-600'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block w-4 h-4 transform transition-transform bg-white rounded-full ${
-                            adminSync ? 'translate-x-6' : 'translate-x-1'
-                          }`}
-                        />
-                      </button>
-                      <span className="text-sm text-gray-600 dark:text-gray-300">Admin Sync</span>
-                    </div>
-                  )}
-                  
+                {/* Sound toggle */}
+                <div className="mt-8 flex items-center justify-center">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={toggleSound}
@@ -243,7 +209,7 @@ const TimerManager = () => {
             </Card>
             
             {/* Time Controls */}
-            <Card className="lg:col-span-1 border-gray-200 dark:border-gray-800 shadow-sm dark:bg-gray-800">
+            <Card className="lg:col-span-1 border-gray-200 dark:border-gray-800 shadow-md dark:bg-gray-800">
               <CardHeader>
                 <CardTitle className="text-lg text-primary dark:text-white">Timer Controls</CardTitle>
               </CardHeader>
@@ -251,7 +217,7 @@ const TimerManager = () => {
               <CardContent className="space-y-6">
                 {/* Preset Times */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Preset Times</h3>
+                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Preset Times</h3>
                   <div className="grid grid-cols-3 gap-2">
                     {timePresets.map((preset) => (
                       <Button
@@ -268,7 +234,7 @@ const TimerManager = () => {
                 
                 {/* Custom Time */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Custom Time</h3>
+                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Custom Time</h3>
                   <div className="flex items-center gap-2">
                     <Input
                       type="text"
@@ -289,79 +255,24 @@ const TimerManager = () => {
                   </p>
                 </div>
                 
-                {/* Quick Adjust */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Quick Adjust</h3>
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => Math.max(0, prev - 10))}
-                      className="flex items-center gap-1"
-                    >
-                      <Minus size={14} /> 10s
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => Math.max(0, prev - 30))}
-                      className="flex items-center gap-1"
-                    >
-                      <Minus size={14} /> 30s
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => Math.max(0, prev - 60))}
-                      className="flex items-center gap-1"
-                    >
-                      <Minus size={14} /> 1m
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => prev + 10)}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus size={14} /> 10s
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => prev + 30)}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus size={14} /> 30s
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setCurrentTime(prev => prev + 60)}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus size={14} /> 1m
-                    </Button>
-                  </div>
-                </div>
-                
                 {/* Timer Guide */}
-                <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Quick Guide</h3>
-                  <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                    <li className="flex items-start gap-1">
+                <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Quick Guide</h3>
+                  <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
+                    <li className="flex items-start gap-2">
                       <span className="inline-block w-3 h-3 rounded-full bg-accent mt-0.5" />
                       <span>Normal: More than 30 seconds</span>
                     </li>
-                    <li className="flex items-start gap-1">
+                    <li className="flex items-start gap-2">
                       <span className="inline-block w-3 h-3 rounded-full bg-amber-500 mt-0.5" />
                       <span>Warning: Less than 30 seconds</span>
                     </li>
-                    <li className="flex items-start gap-1">
+                    <li className="flex items-start gap-2">
                       <span className="inline-block w-3 h-3 rounded-full bg-red-500 mt-0.5" />
                       <span>Critical: Less than 10 seconds</span>
                     </li>
-                    <li className="flex items-start gap-1 mt-2 text-xs italic">
-                      <span>Click on timer digits to edit directly</span>
+                    <li className="flex items-start gap-2 mt-3 text-xs italic">
+                      <span>Click on timer to edit directly</span>
                     </li>
                   </ul>
                 </div>
