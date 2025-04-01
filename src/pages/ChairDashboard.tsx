@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
-import { CountdownTimer } from '@/components/ui/CountdownTimer';
+import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
 import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Alert = {
   id: string;
@@ -156,20 +157,20 @@ const ChairDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
           <header className="mb-8">
-            <h1 className="text-3xl font-bold text-primary">Chair Dashboard</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-primary dark:text-white">Chair Dashboard</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               Welcome back, {user?.name}
             </p>
           </header>
           
           <div className="mb-8">
-            <h2 className="text-lg font-medium text-primary mb-4">Quick Actions</h2>
+            <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <AlertButton
                 icon={<Wrench size={24} />}
@@ -199,49 +200,96 @@ const ChairDashboard = () => {
             </div>
           </div>
           
-          <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-lg font-medium text-primary mb-4">Custom Alert</h2>
-            <form onSubmit={handleCustomAlert} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="text"
-                value={customAlert}
-                onChange={(e) => setCustomAlert(e.target.value)}
-                placeholder="Type your alert message here..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 input-shadow focus:outline-none focus:ring-accent focus:border-accent"
-              />
-              <button
-                type="submit"
-                disabled={loadingAlert === 'Custom'}
-                className={`inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
-                  loadingAlert === 'Custom' ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
-              >
-                {loadingAlert === 'Custom' ? (
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <>
-                    <Send size={18} />
-                    Send Alert
-                  </>
-                )}
-              </button>
+          <div className="mb-8">
+            <form onSubmit={handleCustomAlert} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+              <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Custom Alert</h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={customAlert}
+                  onChange={(e) => setCustomAlert(e.target.value)}
+                  placeholder="Type your alert message here..."
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 input-shadow focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white"
+                />
+                <button
+                  type="submit"
+                  disabled={loadingAlert === 'Custom'}
+                  className={`inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
+                    loadingAlert === 'Custom' ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {loadingAlert === 'Custom' ? (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      Send Alert
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
           
-          <div className="mb-8 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-lg font-medium text-primary mb-4">Quick Timer</h2>
-            <div className="flex justify-center py-2">
-              <TimerComponent />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <QuickTimerWidget />
+              </CardContent>
+            </Card>
+            
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-primary dark:text-white">Recent Alerts</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {recentAlerts.length > 0 ? (
+                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                    {recentAlerts.slice(0, 3).map((alert) => (
+                      <div key={alert.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
+                        <span className="mt-0.5 text-accent">
+                          <AlertTriangle size={16} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
+                          <div className="mt-2">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                              alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                            }`}>
+                              {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
           
           <div className="mb-8">
-            <h2 className="text-lg font-medium text-primary mb-4">Recent Alerts</h2>
+            <h2 className="text-lg font-medium text-primary dark:text-white mb-4">All Recent Alerts</h2>
             {recentAlerts.length > 0 ? (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 divide-y divide-gray-100">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
                 {recentAlerts.map((alert) => (
                   <div key={alert.id} className="p-4 flex items-start gap-3">
                     <span className="mt-0.5 text-accent">
@@ -249,17 +297,17 @@ const ChairDashboard = () => {
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-sm font-medium text-primary">{alert.type}</h3>
-                        <span className="text-xs text-gray-500">
+                        <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{alert.message}</p>
                       <div className="mt-2">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
+                          alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                          alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                          'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                         }`}>
                           {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
                         </span>
@@ -269,157 +317,11 @@ const ChairDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center p-8 bg-white rounded-lg shadow-sm border border-gray-100">
-                <p className="text-gray-500">No recent alerts</p>
+              <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Improved timer component with better UI
-const TimerComponent = () => {
-  const [time, setTime] = useState<number>(120); // 2 minutes in seconds
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [inputMinutes, setInputMinutes] = useState<string>("2");
-  const [inputSeconds, setInputSeconds] = useState<string>("0");
-  
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (isRunning && time > 0) {
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime - 1);
-      }, 1000);
-    } else if (time === 0 && isRunning) {
-      setIsRunning(false);
-      // Play sound when timer finishes
-      const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-simple-countdown-922.mp3');
-      audio.play();
-      toast.info("Time's up!");
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning, time]);
-  
-  const handleStart = () => {
-    setIsRunning(true);
-  };
-  
-  const handlePause = () => {
-    setIsRunning(false);
-  };
-  
-  const handleReset = () => {
-    setIsRunning(false);
-    // Convert input values to numbers and set time
-    const minutes = parseInt(inputMinutes) || 0;
-    const seconds = parseInt(inputSeconds) || 0;
-    setTime(minutes * 60 + seconds);
-  };
-  
-  const handleSet = () => {
-    setIsRunning(false);
-    // Convert input values to numbers and set time
-    const minutes = parseInt(inputMinutes) || 0;
-    const seconds = parseInt(inputSeconds) || 0;
-    setTime(minutes * 60 + seconds);
-  };
-  
-  // Format time for display
-  const formatTime = (timeInSeconds: number): string => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = timeInSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  // Calculate progress percentage
-  const initialTime = parseInt(inputMinutes) * 60 + parseInt(inputSeconds) || 120;
-  const progress = Math.max(0, (time / initialTime) * 100);
-  
-  return (
-    <div className="w-full max-w-md">
-      <div className="mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-        <div className="flex justify-center mb-2">
-          <div className="text-4xl font-bold text-primary">{formatTime(time)}</div>
-        </div>
-        
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-          <div 
-            className="bg-accent h-2.5 rounded-full transition-all duration-1000" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        
-        <div className="flex justify-center space-x-2">
-          {!isRunning ? (
-            <button
-              onClick={handleStart}
-              className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
-            >
-              Start
-            </button>
-          ) : (
-            <button
-              onClick={handlePause}
-              className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
-            >
-              Pause
-            </button>
-          )}
-          
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <div className="grid grid-cols-2 gap-2 flex-1">
-          <div>
-            <label htmlFor="minutes" className="block text-sm text-gray-600">
-              Minutes
-            </label>
-            <input
-              id="minutes"
-              type="number"
-              min="0"
-              max="60"
-              value={inputMinutes}
-              onChange={(e) => setInputMinutes(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-accent focus:border-accent"
-            />
-          </div>
-          <div>
-            <label htmlFor="seconds" className="block text-sm text-gray-600">
-              Seconds
-            </label>
-            <input
-              id="seconds"
-              type="number"
-              min="0"
-              max="59"
-              value={inputSeconds}
-              onChange={(e) => setInputSeconds(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-accent focus:border-accent"
-            />
-          </div>
-        </div>
-        <div className="pt-6">
-          <button
-            onClick={handleSet}
-            className="px-4 py-2 bg-accent/10 text-accent rounded-md hover:bg-accent/20 transition-colors"
-          >
-            Set
-          </button>
         </div>
       </div>
     </div>
