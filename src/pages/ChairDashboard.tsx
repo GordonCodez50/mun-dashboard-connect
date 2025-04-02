@@ -308,7 +308,7 @@ const ChairDashboard = () => {
                               className="flex items-center justify-center gap-1 px-4 py-2 text-sm bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
                             >
                               <MessageSquare size={16} />
-                              Reply
+                              Message
                             </button>
                           )}
                         </div>

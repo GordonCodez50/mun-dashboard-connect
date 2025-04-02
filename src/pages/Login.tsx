@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from "sonner";
 import { Eye, EyeOff } from 'lucide-react';
@@ -9,7 +9,23 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [logoExists, setLogoExists] = useState(false);
   const { login } = useAuth();
+
+  // Check if custom logo exists
+  useEffect(() => {
+    const checkLogoExists = async () => {
+      try {
+        const response = await fetch('/logo.png');
+        setLogoExists(response.ok);
+      } catch (error) {
+        console.error('Error checking for logo:', error);
+        setLogoExists(false);
+      }
+    };
+    
+    checkLogoExists();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +50,21 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="min-h-screen w-full flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8 animate-fade-in">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-          <div className="mx-auto w-24 h-24 bg-primary rounded-full flex items-center justify-center mb-4 shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 9h.01"></path>
-              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-              <circle cx="12" cy="15" r="3"></circle>
-            </svg>
-          </div>
+          {logoExists ? (
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="mx-auto w-24 h-24 object-contain mb-4 shadow-lg rounded-full"
+            />
+          ) : (
+            <div className="mx-auto w-24 h-24 bg-primary rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9h.01"></path>
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <circle cx="12" cy="15" r="3"></circle>
+              </svg>
+            </div>
+          )}
           <h2 className="text-center text-3xl font-extrabold text-primary">ISB MUN</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Council Management Dashboard
