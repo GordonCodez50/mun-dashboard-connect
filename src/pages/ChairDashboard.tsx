@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -239,7 +240,7 @@ const ChairDashboard = () => {
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 <QuickTimerWidget />
               </CardContent>
             </Card>

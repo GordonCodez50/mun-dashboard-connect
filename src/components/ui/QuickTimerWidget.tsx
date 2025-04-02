@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { Play, Pause, RefreshCw, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { Progress } from '@/components/ui/progress';
 
 interface QuickTimerWidgetProps {
   className?: string;
@@ -87,7 +87,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   };
   
   return (
-    <div className={`w-full max-w-md ${className}`}>
+    <div className={`w-full ${className}`}>
       {isEditing ? (
         <div className="py-2 max-w-[220px] mx-auto">
           <TimeInput 
@@ -98,7 +98,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           />
         </div>
       ) : (
-        <div className="mb-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md relative">
+        <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md relative">
           <button 
             className="absolute top-2 right-2 text-gray-400 hover:text-accent transition-colors"
             onClick={() => setIsEditing(true)}
@@ -107,37 +107,32 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           </button>
 
           <div 
-            className="flex justify-center mb-2 cursor-pointer"
+            className="flex justify-center mb-4 cursor-pointer"
             onClick={() => setIsEditing(true)}
           >
-            <div className={`text-4xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
+            <div className={`text-5xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
               {formatTime(time)}
             </div>
           </div>
           
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4 overflow-hidden">
-            <div 
-              className={`h-full transition-all duration-1000 ease-linear rounded-full ${
-                time <= 10 ? "bg-red-500" : time <= 30 ? "bg-amber-500" : "bg-accent"
-              }`}
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
+          <Progress 
+            value={progress} 
+            className="w-full h-3 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
+          />
           
-          <div className="flex justify-center space-x-3">
+          <div className="flex justify-center gap-3">
             <Button
               onClick={toggleTimer}
               variant={isRunning ? "secondary" : "default"}
-              className={`${!isRunning ? "bg-accent hover:bg-accent/90" : ""} px-4 py-2 h-9`}
-              size="sm"
+              className={`${!isRunning ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-10 w-28`}
             >
               {isRunning ? (
                 <>
-                  <Pause size={16} className="mr-1" /> Pause
+                  <Pause size={18} className="mr-1" /> Pause
                 </>
               ) : (
                 <>
-                  <Play size={16} className="mr-1" /> Start
+                  <Play size={18} className="mr-1" /> Start
                 </>
               )}
             </Button>
@@ -145,10 +140,9 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
             <Button
               onClick={handleReset}
               variant="outline"
-              className="px-4 py-2 h-9"
-              size="sm"
+              className="px-6 py-2 h-10 w-28"
             >
-              <RefreshCw size={16} className="mr-1" /> Reset
+              <RefreshCw size={18} className="mr-1" /> Reset
             </Button>
           </div>
         </div>
