@@ -5,18 +5,21 @@ import { TimeInput } from '@/components/ui/TimeInput';
 import { Play, Pause, RefreshCw, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface QuickTimerWidgetProps {
   className?: string;
 }
 
 export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = '' }) => {
+  const isMobile = useIsMobile();
   const [time, setTime] = useState<number>(120); // 2 minutes in seconds
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [inputMinutes, setInputMinutes] = useState<string>("2");
   const [inputSeconds, setInputSeconds] = useState<string>("0");
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [initialTime, setInitialTime] = useState<number>(120);
   
   // Clean up interval on unmount
   useEffect(() => {
@@ -36,7 +39,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
     } else if (time === 0 && isRunning) {
       setIsRunning(false);
       // Play sound when timer finishes
-      const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-simple-countdown-922.mp3');
+      const audio = new Audio('/notification.mp3');
       audio.play();
       toast.info("Time's up!");
     }
@@ -55,16 +58,16 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   const handleReset = () => {
     setIsRunning(false);
     // Convert input values to numbers and set time
-    const minutes = parseInt(inputMinutes) || 0;
-    const seconds = parseInt(inputSeconds) || 0;
-    setTime(minutes * 60 + seconds);
+    setTime(initialTime);
   };
   
   // Handle time update from the TimeInput component
   const handleTimeChange = (minutes: number, seconds: number) => {
+    const totalSeconds = minutes * 60 + seconds;
     setInputMinutes(minutes.toString());
     setInputSeconds(seconds.toString());
-    setTime(minutes * 60 + seconds);
+    setTime(totalSeconds);
+    setInitialTime(totalSeconds);
     setIsEditing(false);
   };
   
@@ -76,7 +79,6 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   };
 
   // Calculate progress percentage
-  const initialTime = parseInt(inputMinutes) * 60 + parseInt(inputSeconds) || 120;
   const progress = Math.max(0, (time / initialTime) * 100);
   
   // Determine timer color based on remaining time
@@ -98,41 +100,43 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           />
         </div>
       ) : (
-        <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md relative">
+        <div className="w-full p-6 md:p-8 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative">
           <button 
-            className="absolute top-2 right-2 text-gray-400 hover:text-accent transition-colors"
+            className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1"
             onClick={() => setIsEditing(true)}
+            aria-label="Edit timer"
           >
-            <Edit size={16} />
+            <Edit size={18} />
           </button>
 
           <div 
-            className="flex justify-center mb-4 cursor-pointer"
+            className="flex justify-center mb-6 cursor-pointer"
             onClick={() => setIsEditing(true)}
           >
-            <div className={`text-5xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
+            <div className={`text-6xl md:text-7xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
               {formatTime(time)}
             </div>
           </div>
           
           <Progress 
             value={progress} 
-            className="w-full h-3 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
+            className="w-full h-4 md:h-5 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
           />
           
-          <div className="flex justify-center gap-3">
+          <div className="flex justify-center gap-4">
             <Button
               onClick={toggleTimer}
               variant={isRunning ? "secondary" : "default"}
-              className={`${!isRunning ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-10 w-28`}
+              size={isMobile ? "default" : "lg"}
+              className={`${!isRunning ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium`}
             >
               {isRunning ? (
                 <>
-                  <Pause size={18} className="mr-1" /> Pause
+                  <Pause size={20} className="mr-2" /> Pause
                 </>
               ) : (
                 <>
-                  <Play size={18} className="mr-1" /> Start
+                  <Play size={20} className="mr-2" /> Start
                 </>
               )}
             </Button>
@@ -140,9 +144,10 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
             <Button
               onClick={handleReset}
               variant="outline"
-              className="px-6 py-2 h-10 w-28"
+              size={isMobile ? "default" : "lg"}
+              className="px-6 py-2 h-auto w-32 md:w-40 font-medium border-2"
             >
-              <RefreshCw size={18} className="mr-1" /> Reset
+              <RefreshCw size={20} className="mr-2" /> Reset
             </Button>
           </div>
         </div>

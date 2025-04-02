@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -28,16 +27,11 @@ const ChairDashboard = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   
-  // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
-  
-  // Use Firebase Realtime Database for alert status updates
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
-  // Process alerts data to show the user's council alerts
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
-      // Filter alerts for this user's council
       const userAlerts = alertsData
         .filter(alert => alert.council === user?.council || 
                          (alert.type === 'DirectMessage' && alert.toCouncil === user?.council))
@@ -51,16 +45,14 @@ const ChairDashboard = () => {
           admin: alert.admin
         }))
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-        .slice(0, 5); // Show only the 5 most recent alerts
+        .slice(0, 5);
       
       setRecentAlerts(userAlerts);
     }
   }, [alertsData, user?.council]);
 
-  // Update the useEffect that handles alert status updates
   useEffect(() => {
     if (alertStatusData) {
-      // Keep track of shown replies to prevent duplicates
       const processedReplies = new Set();
       
       Object.entries(alertStatusData).forEach(([alertId, data]: [string, any]) => {
@@ -76,7 +68,7 @@ const ChairDashboard = () => {
         }
       });
     }
-  }, [alertStatusData]); // Remove recentAlerts from dependency array
+  }, [alertStatusData]);
 
   const handleAlert = async (alertType: string) => {
     if (!user?.council) {
@@ -98,7 +90,7 @@ const ChairDashboard = () => {
       });
       
       const newAlert: Alert = {
-        id: Date.now().toString(), // Temporary ID until we get the real one
+        id: Date.now().toString(),
         type: alertType,
         message: message,
         timestamp: new Date(),
@@ -146,7 +138,7 @@ const ChairDashboard = () => {
       });
       
       const newAlert: Alert = {
-        id: Date.now().toString(), // Temporary ID until we get the real one
+        id: Date.now().toString(),
         type: 'Custom',
         message: customAlert,
         timestamp: new Date(),
@@ -164,7 +156,6 @@ const ChairDashboard = () => {
     }
   };
 
-  // Add function to handle sending a reply
   const handleSendReply = async (alertId: string) => {
     if (!replyMessage.trim()) {
       toast.error('Please enter a message');
@@ -182,7 +173,6 @@ const ChairDashboard = () => {
       setReplyMessage('');
       setActiveAlertId(null);
       
-      // Update local alert data
       setRecentAlerts(prev => prev.map(alert => 
         alert.id === alertId 
           ? { ...alert, status: 'acknowledged' }
@@ -272,100 +262,98 @@ const ChairDashboard = () => {
             </form>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <QuickTimerWidget />
-              </CardContent>
-            </Card>
-            
-            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-primary dark:text-white">Recent Alerts</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-2">
-                {recentAlerts.length > 0 ? (
-                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {recentAlerts.slice(0, 3).map((alert) => (
-                      <div key={alert.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
-                        <span className="mt-0.5 text-accent">
-                          <AlertTriangle size={16} />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
+          <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 mb-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <QuickTimerWidget />
+            </CardContent>
+          </Card>
+          
+          <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 mb-8">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg text-primary dark:text-white">Recent Alerts</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              {recentAlerts.length > 0 ? (
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {recentAlerts.slice(0, 3).map((alert) => (
+                    <div key={alert.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
+                      <span className="mt-0.5 text-accent">
+                        <AlertTriangle size={16} />
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
+                        
+                        {alert.admin && alert.reply && (
+                          <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                            <span className="font-medium">{alert.admin}:</span> {alert.reply}
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
+                        )}
+                        
+                        <div className="mt-2 flex justify-between items-center">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                            alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                          }`}>
+                            {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                          </span>
                           
-                          {alert.admin && alert.reply && (
-                            <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                              <span className="font-medium">{alert.admin}:</span> {alert.reply}
-                            </div>
-                          )}
-                          
-                          <div className="mt-2 flex justify-between items-center">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                              alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                              alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                            }`}>
-                              {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                            </span>
-                            
-                            {alert.status !== 'resolved' && activeAlertId !== alert.id && (
-                              <button 
-                                onClick={() => setActiveAlertId(alert.id)}
-                                className="text-xs text-accent flex items-center gap-1"
-                              >
-                                <MessageSquare size={12} />
-                                Reply
-                              </button>
-                            )}
-                          </div>
-                          
-                          {activeAlertId === alert.id && (
-                            <div className="mt-2">
-                              <div className="flex items-start gap-2">
-                                <input
-                                  type="text"
-                                  value={replyMessage}
-                                  onChange={(e) => setReplyMessage(e.target.value)}
-                                  placeholder="Type your reply..."
-                                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent"
-                                />
-                                <button
-                                  onClick={() => handleSendReply(alert.id)}
-                                  className="px-2 py-1 bg-accent text-white text-xs rounded-md hover:bg-accent/90"
-                                >
-                                  Send
-                                </button>
-                                <button
-                                  onClick={() => setActiveAlertId(null)}
-                                  className="px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded-md hover:bg-gray-300"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
+                          {alert.status !== 'resolved' && activeAlertId !== alert.id && (
+                            <button 
+                              onClick={() => setActiveAlertId(alert.id)}
+                              className="flex items-center justify-center gap-1 px-3 py-1 text-sm bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+                            >
+                              <MessageSquare size={16} />
+                              Reply
+                            </button>
                           )}
                         </div>
+                        
+                        {activeAlertId === alert.id && (
+                          <div className="mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                            <div className="flex items-start gap-2">
+                              <input
+                                type="text"
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                                placeholder="Type your reply..."
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                              />
+                              <button
+                                onClick={() => handleSendReply(alert.id)}
+                                className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+                              >
+                                Send
+                              </button>
+                              <button
+                                onClick={() => setActiveAlertId(null)}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
