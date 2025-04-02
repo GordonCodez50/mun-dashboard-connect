@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -453,6 +454,7 @@ export const realtimeService = {
       const newMessageRef = push(alertsRef);
       await set(newMessageRef, {
         ...messageData,
+        type: 'Message from Admin',
         id: newMessageRef.key,
         timestamp: Date.now(),
         status: 'pending'

@@ -15,6 +15,7 @@ export type Alert = {
   timestamp: Date;
   status: 'pending' | 'acknowledged' | 'resolved';
   priority: 'normal' | 'urgent';
+  chairReply?: string;
 };
 
 type AlertItemProps = {
@@ -110,6 +111,14 @@ export const AlertItem = ({ alert, user }: AlertItemProps) => {
           <p className="text-xs text-gray-500 mt-1">
             From: {alert.chairName}
           </p>
+          
+          {alert.chairReply && (
+            <div className="mt-2 p-2 bg-blue-50 rounded-md">
+              <p className="text-xs text-gray-800">
+                <span className="font-medium">Reply from {alert.chairName}:</span> {alert.chairReply}
+              </p>
+            </div>
+          )}
         </div>
         
         {activeAlertId === alert.id ? (

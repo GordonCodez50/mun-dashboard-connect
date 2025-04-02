@@ -5,7 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
 import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
-import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send } from 'lucide-react';
+import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send, MessageSquare } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,8 @@ type Alert = {
   message: string;
   timestamp: Date;
   status: 'pending' | 'acknowledged' | 'resolved';
+  reply?: string;
+  admin?: string;
 };
 
 const ChairDashboard = () => {
@@ -23,6 +25,8 @@ const ChairDashboard = () => {
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
@@ -35,13 +39,16 @@ const ChairDashboard = () => {
     if (alertsData && Array.isArray(alertsData)) {
       // Filter alerts for this user's council
       const userAlerts = alertsData
-        .filter(alert => alert.council === user?.council)
+        .filter(alert => alert.council === user?.council || 
+                         (alert.type === 'DirectMessage' && alert.toCouncil === user?.council))
         .map(alert => ({
           id: alert.id,
-          type: alert.type,
+          type: alert.type === 'DirectMessage' ? 'Message from Admin' : alert.type,
           message: alert.message,
           timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
           status: alert.status,
+          reply: alert.reply,
+          admin: alert.admin
         }))
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, 5); // Show only the 5 most recent alerts
@@ -157,6 +164,36 @@ const ChairDashboard = () => {
     }
   };
 
+  // Add function to handle sending a reply
+  const handleSendReply = async (alertId: string) => {
+    if (!replyMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    
+    try {
+      await realtimeService.updateAlertStatus(alertId, 'acknowledged', {
+        chairReply: replyMessage,
+        chairName: user?.name || 'Chair',
+        replyTimestamp: Date.now()
+      });
+      
+      toast.success('Reply sent to admin');
+      setReplyMessage('');
+      setActiveAlertId(null);
+      
+      // Update local alert data
+      setRecentAlerts(prev => prev.map(alert => 
+        alert.id === alertId 
+          ? { ...alert, status: 'acknowledged' }
+          : alert
+      ));
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      toast.error('Failed to send reply');
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
@@ -265,7 +302,14 @@ const ChairDashboard = () => {
                             </span>
                           </div>
                           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
-                          <div className="mt-2">
+                          
+                          {alert.admin && alert.reply && (
+                            <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                              <span className="font-medium">{alert.admin}:</span> {alert.reply}
+                            </div>
+                          )}
+                          
+                          <div className="mt-2 flex justify-between items-center">
                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                               alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
                               alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
@@ -273,7 +317,43 @@ const ChairDashboard = () => {
                             }`}>
                               {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
                             </span>
+                            
+                            {alert.status !== 'resolved' && activeAlertId !== alert.id && (
+                              <button 
+                                onClick={() => setActiveAlertId(alert.id)}
+                                className="text-xs text-accent flex items-center gap-1"
+                              >
+                                <MessageSquare size={12} />
+                                Reply
+                              </button>
+                            )}
                           </div>
+                          
+                          {activeAlertId === alert.id && (
+                            <div className="mt-2">
+                              <div className="flex items-start gap-2">
+                                <input
+                                  type="text"
+                                  value={replyMessage}
+                                  onChange={(e) => setReplyMessage(e.target.value)}
+                                  placeholder="Type your reply..."
+                                  className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent"
+                                />
+                                <button
+                                  onClick={() => handleSendReply(alert.id)}
+                                  className="px-2 py-1 bg-accent text-white text-xs rounded-md hover:bg-accent/90"
+                                >
+                                  Send
+                                </button>
+                                <button
+                                  onClick={() => setActiveAlertId(null)}
+                                  className="px-2 py-1 bg-gray-200 text-gray-800 text-xs rounded-md hover:bg-gray-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
