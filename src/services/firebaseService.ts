@@ -444,6 +444,24 @@ export const realtimeService = {
       toast.error('Failed to update timer');
       return false;
     }
+  },
+  
+  // Add this new method for direct messages
+  createDirectMessage: async (messageData: any): Promise<boolean> => {
+    try {
+      const directMessageRef = ref(realtimeDb, 'DIRECT_MESSAGES');
+      const newMessageRef = push(directMessageRef);
+      await set(newMessageRef, {
+        ...messageData,
+        id: newMessageRef.key
+      });
+      
+      console.log('Direct message sent successfully');
+      return true;
+    } catch (error) {
+      console.error('Error sending direct message:', error);
+      return false;
+    }
   }
 };
 
