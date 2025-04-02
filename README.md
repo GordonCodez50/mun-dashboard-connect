@@ -97,6 +97,10 @@ service cloud.firestore {
       "$timerId": {
         ".write": "auth != null"
       }
+    },
+    "DIRECT_MESSAGES": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

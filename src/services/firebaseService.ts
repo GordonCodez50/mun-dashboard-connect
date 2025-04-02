@@ -449,11 +449,13 @@ export const realtimeService = {
   // Add this new method for direct messages
   createDirectMessage: async (messageData: any): Promise<boolean> => {
     try {
-      const directMessageRef = ref(realtimeDb, 'DIRECT_MESSAGES');
-      const newMessageRef = push(directMessageRef);
+      const alertsRef = ref(realtimeDb, 'alerts');
+      const newMessageRef = push(alertsRef);
       await set(newMessageRef, {
         ...messageData,
-        id: newMessageRef.key
+        id: newMessageRef.key,
+        timestamp: Date.now(),
+        status: 'pending'
       });
       
       console.log('Direct message sent successfully');
