@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
 import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
-import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send, MessageSquare } from 'lucide-react';
+import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -110,9 +110,8 @@ const ChairDashboard = () => {
   const getAlertMessage = (type: string): string => {
     switch (type) {
       case 'IT Support': return 'Technical assistance needed';
-      case 'Mic Issue': return 'Microphone not working properly';
-      case 'Security': return 'Security assistance required';
-      case 'Break': return 'Motion for a break proposed';
+      case 'Press & Coverage': return 'Press team or media coverage needed';
+      case 'Logistics & Assistance': return 'Logistical assistance required';
       case 'Custom': return customAlert;
       default: return '';
     }
@@ -199,7 +198,7 @@ const ChairDashboard = () => {
           
           <div className="mb-8">
             <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <AlertButton
                 icon={<Wrench size={24} />}
                 label="IT Support"
@@ -207,23 +206,16 @@ const ChairDashboard = () => {
                 loading={loadingAlert === 'IT Support'}
               />
               <AlertButton
-                icon={<Mic size={24} />}
-                label="Mic Issue"
-                onClick={() => handleAlert('Mic Issue')}
-                loading={loadingAlert === 'Mic Issue'}
+                icon={<MessagesSquare size={24} />}
+                label="Press & Coverage"
+                onClick={() => handleAlert('Press & Coverage')}
+                loading={loadingAlert === 'Press & Coverage'}
               />
               <AlertButton
-                icon={<ShieldAlert size={24} />}
-                label="Security"
-                onClick={() => handleAlert('Security')}
-                variant="urgent"
-                loading={loadingAlert === 'Security'}
-              />
-              <AlertButton
-                icon={<Coffee size={24} />}
-                label="Break Motion"
-                onClick={() => handleAlert('Break')}
-                loading={loadingAlert === 'Break'}
+                icon={<Truck size={24} />}
+                label="Logistics & Assistance"
+                onClick={() => handleAlert('Logistics & Assistance')}
+                loading={loadingAlert === 'Logistics & Assistance'}
               />
             </div>
           </div>

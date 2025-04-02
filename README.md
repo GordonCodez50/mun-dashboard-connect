@@ -1,3 +1,4 @@
+
 # ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
@@ -26,14 +27,14 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 1. Go to the Firebase console and click on "Authentication"
 2. Click on "Add User" and create accounts based on these formats:
    - Chair accounts: `chair-COUNCILNAME@isbmun.com` (e.g., chair-ecosoc@isbmun.com)
-   - Admin accounts: `admin@isbmun.com` or any email starting with "admin"
-   - Press accounts: `press@isbmun.com` or any email starting with "press"
+   - Admin accounts: `admin-NAME@isbmun.com` or `admin@isbmun.com` if no name
+   - Press accounts: `press-NAME@isbmun.com` or `press@isbmun.com` if no name
 3. Set their passwords
 
 The system automatically recognizes:
 - Emails starting with "chair-" as chair accounts (with council name extracted from email)
-- Emails starting with "admin" as admin accounts
-- Emails starting with "press" as press accounts (with same access as chairs)
+- Emails starting with "admin-" or "admin" as admin accounts (with name extracted if available)
+- Emails starting with "press-" or "press" as press accounts (with name extracted if available)
 
 ### Step 3: Firebase Rules Setup
 
@@ -141,7 +142,7 @@ To modify the quick action buttons that appear in the Chair Dashboard:
 
 2. **Locate the Quick Actions section** (around line 120) that looks like this:
    ```jsx
-   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
      <AlertButton
        icon={<Wrench size={24} />}
        label="IT Support"
@@ -157,7 +158,7 @@ To modify the quick action buttons that appear in the Chair Dashboard:
    - Change the icon, label, and alert type
    - Import any new icons at the top of the file:
      ```jsx
-     import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send, MessageSquare, YourNewIcon } from 'lucide-react';
+     import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare, YourNewIcon } from 'lucide-react';
      ```
 
 4. **To modify an existing alert button**:
@@ -191,20 +192,22 @@ This app uses a special system to determine user roles based on email addresses:
 - Chair users can only send alerts from their assigned council
 
 ### Admin Accounts
-- Format: Any email starting with "admin"
-- Example: `admin@isbmun.com`
+- Format: `admin-NAME@isbmun.com` or `admin@isbmun.com`
+- Example: `admin-john@isbmun.com`
 - Admins can see and manage all councils, alerts, and users
+- Name is extracted and capitalized for display if provided
 
 ### Press Accounts
-- Format: Any email starting with "press"
-- Example: `press@isbmun.com`
+- Format: `press-NAME@isbmun.com` or `press@isbmun.com`
+- Example: `press-sarah@isbmun.com`
 - Press users have similar access to chairs but are assigned to the "PRESS" council
+- Name is extracted and capitalized for display if provided
 
 ## Troubleshooting
 
 ### "Can't Log In" Problems
 - Make sure you've enabled Email/Password authentication in Firebase
-- Check if you're using the correct email format (chair-councilname@isbmun.com or admin@isbmun.com)
+- Check if you're using the correct email format (chair-councilname@isbmun.com or admin-name@isbmun.com)
 - Make sure the account exists in Firebase Authentication
 - Try using the demo accounts if nothing else works
 

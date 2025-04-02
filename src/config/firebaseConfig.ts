@@ -38,8 +38,8 @@ export const RTDB_PATHS = {
 // Email formats for role determination
 export const EMAIL_PATTERNS = {
   CHAIR_PREFIX: 'chair-',
-  ADMIN_PREFIX: 'admin',
-  PRESS_PREFIX: 'press',
+  ADMIN_PREFIX: 'admin-',
+  PRESS_PREFIX: 'press-',
   DOMAIN: '@isbmun.com'
 };
 
@@ -57,16 +57,36 @@ export const extractUserInfo = (email: string) => {
       username: council // Use council name as username
     };
   } else if (email.startsWith(EMAIL_PATTERNS.ADMIN_PREFIX)) {
+    // Extract name from admin-NAME@isbmun.com (if provided)
+    const namePart = email.substring(EMAIL_PATTERNS.ADMIN_PREFIX.length);
+    const name = namePart.split('@')[0];
     return {
       role: 'admin' as const,
       council: undefined,
-      username: 'Admin' // Default admin username
+      username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Admin' // Capitalize name or use default
     };
   } else if (email.startsWith(EMAIL_PATTERNS.PRESS_PREFIX)) {
+    // Extract name from press-NAME@isbmun.com (if provided)
+    const namePart = email.substring(EMAIL_PATTERNS.PRESS_PREFIX.length);
+    const name = namePart.split('@')[0];
     return {
       role: 'chair' as const, // Press users have same access as chair
       council: 'PRESS',
-      username: 'Press' // Default press username
+      username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Press' // Capitalize name or use default
+    };
+  } else if (email.startsWith('admin')) {
+    // Fallback for old admin format
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: 'Admin'
+    };
+  } else if (email.startsWith('press')) {
+    // Fallback for old press format
+    return {
+      role: 'chair' as const,
+      council: 'PRESS',
+      username: 'Press'
     };
   }
   
