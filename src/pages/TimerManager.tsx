@@ -100,7 +100,7 @@ const TimerManager = () => {
   const handleTimerComplete = () => {
     if (soundEnabled) {
       // Play sound when timer completes
-      const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+      const audio = new Audio('/notification.mp3');
       audio.play();
     }
     
