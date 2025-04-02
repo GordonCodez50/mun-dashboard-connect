@@ -58,6 +58,20 @@ export const Sidebar = () => {
                 <LayoutDashboard size={18} className="mr-3" />
                 Dashboard
               </NavLink>
+              
+              <NavLink 
+                to="/timer" 
+                className={({ isActive }) => 
+                  `flex items-center px-3 py-2 rounded-md mb-1 ${
+                    isActive 
+                      ? 'bg-accent/10 text-accent' 
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`
+                }
+              >
+                <Timer size={18} className="mr-3" />
+                Timer
+              </NavLink>
             </>
           ) : (
             <>
@@ -89,26 +103,6 @@ export const Sidebar = () => {
                 User Management
               </NavLink>
             </>
-          )}
-          
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
-            Common
-          </p>
-          
-          {user?.role === 'chair' && (
-            <NavLink 
-              to="/timer" 
-              className={({ isActive }) => 
-                `flex items-center px-3 py-2 rounded-md mb-1 ${
-                  isActive 
-                    ? 'bg-accent/10 text-accent' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`
-              }
-            >
-              <Timer size={18} className="mr-3" />
-              Timer
-            </NavLink>
           )}
           
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">

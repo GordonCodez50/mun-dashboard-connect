@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff } from 'lucide-react';
+import { AlertTriangle, CheckCircle, MessageSquare, Bell, BellOff, EyeOff, Eye } from 'lucide-react';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService, realtimeService } from '@/services/firebaseService';
 
@@ -28,10 +28,22 @@ type Council = {
 const AdminPanel = () => {
   const { user } = useAuth();
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
+  const [hideResolved, setHideResolved] = useState<boolean>(false);
   const [councils, setCouncils] = useState<Council[]>([]);
   const [alertsMuted, setAlertsMuted] = useState(false);
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
+  const notificationSound = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize notification sound
+  useEffect(() => {
+    notificationSound.current = new Audio("https://pixabay.com/sound-effects/notification-18-270129/");
+    return () => {
+      if (notificationSound.current) {
+        notificationSound.current = null;
+      }
+    };
+  }, []);
 
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
@@ -67,23 +79,28 @@ const AdminPanel = () => {
       
       setLiveAlerts(processedAlerts);
       
-      // Play sound for new urgent alerts if not muted
-      const newUrgentAlerts = processedAlerts.filter(
-        alert => alert.priority === 'urgent' && 
-        alert.status === 'pending' && 
-        !liveAlerts.some(a => a.id === alert.id)
+      // Play sound for new alerts if not muted
+      const newAlerts = processedAlerts.filter(
+        alert => !liveAlerts.some(a => a.id === alert.id)
       );
       
-      if (newUrgentAlerts.length > 0 && !alertsMuted) {
-        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alert-quick-chime-766.mp3');
-        audio.play();
+      if (newAlerts.length > 0 && !alertsMuted) {
+        // Play the notification sound
+        if (notificationSound.current) {
+          notificationSound.current.currentTime = 0;
+          notificationSound.current.play().catch(err => console.error("Error playing sound:", err));
+        }
         
-        newUrgentAlerts.forEach(alert => {
-          toast.info(`New urgent alert from ${alert.council}: ${alert.type}`, {
-            description: alert.message,
-            duration: 5000
+        // Show toast for urgent alerts
+        const newUrgentAlerts = newAlerts.filter(alert => alert.priority === 'urgent');
+        if (newUrgentAlerts.length > 0) {
+          newUrgentAlerts.forEach(alert => {
+            toast.info(`New urgent alert from ${alert.council}: ${alert.type}`, {
+              description: alert.message,
+              duration: 5000
+            });
           });
-        });
+        }
       }
     }
   }, [alertsData, alertsMuted, liveAlerts]);
@@ -153,6 +170,16 @@ const AdminPanel = () => {
     toast.success(alertsMuted ? 'Alerts unmuted' : 'Alerts muted');
   };
 
+  const toggleHideResolved = () => {
+    setHideResolved(!hideResolved);
+    toast.success(hideResolved ? 'Showing all alerts' : 'Hiding resolved alerts');
+  };
+
+  // Filter alerts based on hideResolved setting
+  const filteredAlerts = hideResolved 
+    ? liveAlerts.filter(alert => alert.status !== 'resolved')
+    : liveAlerts;
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -167,26 +194,49 @@ const AdminPanel = () => {
               </p>
             </div>
             
-            <button
-              onClick={toggleAlertsMute}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${
-                alertsMuted 
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                  : 'bg-accent text-white hover:bg-accent/90'
-              } button-transition`}
-            >
-              {alertsMuted ? (
-                <>
-                  <BellOff size={18} />
-                  Alerts Muted
-                </>
-              ) : (
-                <>
-                  <Bell size={18} />
-                  Mute Alerts
-                </>
-              )}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={toggleHideResolved}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${
+                  hideResolved
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                } button-transition`}
+              >
+                {hideResolved ? (
+                  <>
+                    <Eye size={18} />
+                    Show Resolved
+                  </>
+                ) : (
+                  <>
+                    <EyeOff size={18} />
+                    Hide Resolved
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={toggleAlertsMute}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${
+                  alertsMuted 
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                    : 'bg-accent text-white hover:bg-accent/90'
+                } button-transition`}
+              >
+                {alertsMuted ? (
+                  <>
+                    <BellOff size={18} />
+                    Alerts Muted
+                  </>
+                ) : (
+                  <>
+                    <Bell size={18} />
+                    Mute Alerts
+                  </>
+                )}
+              </button>
+            </div>
           </header>
           
           <div className="mb-8">
@@ -194,9 +244,9 @@ const AdminPanel = () => {
               Live Alerts
               <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
             </h2>
-            {liveAlerts.length > 0 ? (
+            {filteredAlerts.length > 0 ? (
               <div className="space-y-4">
-                {liveAlerts.map((alert) => (
+                {filteredAlerts.map((alert) => (
                   <div 
                     key={alert.id} 
                     className={`bg-white rounded-lg shadow-sm border ${
@@ -300,7 +350,9 @@ const AdminPanel = () => {
               </div>
             ) : (
               <div className="text-center p-8 bg-white rounded-lg shadow-sm border border-gray-100">
-                <p className="text-gray-500">No active alerts</p>
+                <p className="text-gray-500">
+                  {hideResolved ? 'No active alerts (resolved alerts are hidden)' : 'No active alerts'}
+                </p>
               </div>
             )}
           </div>
