@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { CountdownTimer } from '@/components/ui/CountdownTimer';
 import { TimeInput } from '@/components/ui/TimeInput';
+import { Play, Pause, RefreshCw } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { toast } from "sonner";
 
 interface TimerCardProps {
@@ -14,6 +16,8 @@ interface TimerCardProps {
     label: string;
     duration: number;
     isEditing: boolean;
+    isRunning?: boolean;
+    isPaused?: boolean;
   };
   onLabelChange: (timerId: string, newLabel: string) => void;
   onTimeChange: (minutes: number, seconds: number, timerId: string) => void;
@@ -21,6 +25,8 @@ interface TimerCardProps {
   onTimerComplete: () => void;
   onPresetSelect: (seconds: number, timerId: string) => void;
   onRemove: (timerId: string) => void;
+  onStartPause: (timerId: string) => void;
+  onReset: (timerId: string) => void;
   timePresets: Array<{ label: string; value: number }>;
   allowRemove: boolean;
 }
@@ -33,9 +39,28 @@ export const TimerCard: React.FC<TimerCardProps> = ({
   onTimerComplete,
   onPresetSelect,
   onRemove,
+  onStartPause,
+  onReset,
   timePresets,
   allowRemove
 }) => {
+  // Format time for display
+  const formatTime = (timeInSeconds: number): string => {
+    const minutes = Math.floor(timeInSeconds / 60);
+    const seconds = timeInSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Calculate progress percentage
+  const progress = Math.max(0, (timer.duration / (parseInt(timer.duration.toString()) || 300)) * 100);
+  
+  // Determine timer color based on remaining time
+  const getTimerColor = () => {
+    if (timer.duration <= 10) return "text-red-500";
+    if (timer.duration <= 30) return "text-amber-500";
+    return "text-primary dark:text-white";
+  };
+
   return (
     <Card className="border-gray-200 dark:border-gray-800 shadow-md dark:bg-gray-800 overflow-hidden">
       <CardHeader className="pb-0">
@@ -83,26 +108,53 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               />
             </div>
           ) : (
-            <div 
-              className="cursor-pointer relative" 
-              onClick={() => onEditingChange(timer.id, true)}
-            >
-              <CountdownTimer 
-                initialTime={timer.duration} 
-                onComplete={onTimerComplete} 
-                autoStart={false}
-                size="lg"
-                variant="minimal"
-              />
+            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md relative">
               <button 
-                className="absolute -top-2 -right-2 bg-accent text-white p-1 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditingChange(timer.id, true);
-                }}
+                className="absolute top-2 right-2 text-gray-400 hover:text-accent transition-colors"
+                onClick={() => onEditingChange(timer.id, true)}
               >
-                <Edit size={14} />
+                <Edit size={16} />
               </button>
+
+              <div 
+                className="flex justify-center mb-4 cursor-pointer"
+                onClick={() => onEditingChange(timer.id, true)}
+              >
+                <div className={`text-5xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
+                  {formatTime(timer.duration)}
+                </div>
+              </div>
+              
+              <Progress 
+                value={progress} 
+                className="w-full h-3 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
+              />
+              
+              <div className="flex justify-center gap-3">
+                <Button
+                  onClick={() => onStartPause(timer.id)}
+                  variant={timer.isRunning && !timer.isPaused ? "secondary" : "default"}
+                  className={`${!(timer.isRunning && !timer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-10 w-28`}
+                >
+                  {timer.isRunning && !timer.isPaused ? (
+                    <>
+                      <Pause size={18} className="mr-1" /> Pause
+                    </>
+                  ) : (
+                    <>
+                      <Play size={18} className="mr-1" /> Start
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  onClick={() => onReset(timer.id)}
+                  variant="outline"
+                  className="px-6 py-2 h-10 w-28"
+                >
+                  <RefreshCw size={18} className="mr-1" /> Reset
+                </Button>
+              </div>
             </div>
           )}
         </div>
