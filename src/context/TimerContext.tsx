@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 import { formatTime } from '@/utils/timeUtils';
@@ -72,7 +71,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   clearInterval(intervalRefs.current[t.id]!);
                   intervalRefs.current[t.id] = null;
                 }
-                handleTimerComplete();
+                handleTimerComplete(t.label);
                 return { ...t, duration: 0, isRunning: false };
               }
               return { ...t, duration: t.duration - 1 };
@@ -87,15 +86,15 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   }, [timers]);
   
-  // Handle timer completion
-  const handleTimerComplete = () => {
+  // Handle timer completion with timer name
+  const handleTimerComplete = (timerName: string) => {
     if (soundEnabled) {
       // Play sound when timer completes
       const audio = new Audio('/notification.mp3');
       audio.play();
     }
     
-    toast.info('Timer has ended!', {
+    toast.info(`${timerName} has ended!`, {
       style: {
         background: 'rgba(239, 68, 68, 0.9)',
         color: 'white',

@@ -65,9 +65,9 @@ const Login = () => {
               </svg>
             </div>
           )}
-          <h2 className="text-center text-3xl font-extrabold text-primary">ISB MUN</h2>
+          <h2 className="text-center text-3xl font-extrabold text-primary">ISBMUN'25</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Council Management Dashboard
+            Conference Dashboard
           </p>
         </div>
 
