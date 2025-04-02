@@ -1,11 +1,11 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { Play, Pause, RefreshCw, Edit } from 'lucide-react';
-import { toast } from 'sonner';
 import { Progress } from '@/components/ui/progress';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useTimers } from '@/context/TimerContext';
 
 interface QuickTimerWidgetProps {
   className?: string;
@@ -13,63 +13,12 @@ interface QuickTimerWidgetProps {
 
 export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = '' }) => {
   const isMobile = useIsMobile();
-  const [time, setTime] = useState<number>(120); // 2 minutes in seconds
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [inputMinutes, setInputMinutes] = useState<string>("2");
-  const [inputSeconds, setInputSeconds] = useState<string>("0");
+  const { soundEnabled, timers, handleStartPause, handleReset, handleTimeChange } = useTimers();
+  
+  // Use the main timer from context
+  const mainTimer = timers.find(t => t.id === 'main-timer') || timers[0];
+  
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [initialTime, setInitialTime] = useState<number>(120);
-  
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-  
-  // Timer functionality
-  useEffect(() => {
-    if (isRunning && time > 0) {
-      intervalRef.current = setInterval(() => {
-        setTime((prevTime) => prevTime - 1);
-      }, 1000);
-    } else if (time === 0 && isRunning) {
-      setIsRunning(false);
-      // Play sound when timer finishes
-      const audio = new Audio('/notification.mp3');
-      audio.play();
-      toast.info("Time's up!");
-    }
-    
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, time]);
-  
-  // Handle Start/Pause
-  const toggleTimer = () => {
-    setIsRunning(prev => !prev);
-  };
-  
-  // Handle Reset
-  const handleReset = () => {
-    setIsRunning(false);
-    // Convert input values to numbers and set time
-    setTime(initialTime);
-  };
-  
-  // Handle time update from the TimeInput component
-  const handleTimeChange = (minutes: number, seconds: number) => {
-    const totalSeconds = minutes * 60 + seconds;
-    setInputMinutes(minutes.toString());
-    setInputSeconds(seconds.toString());
-    setTime(totalSeconds);
-    setInitialTime(totalSeconds);
-    setIsEditing(false);
-  };
   
   // Format time for display
   const formatTime = (timeInSeconds: number): string => {
@@ -79,13 +28,19 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   };
 
   // Calculate progress percentage
-  const progress = Math.max(0, (time / initialTime) * 100);
+  const progress = Math.max(0, (mainTimer.duration / mainTimer.initialDuration) * 100);
   
   // Determine timer color based on remaining time
   const getTimerColor = () => {
-    if (time <= 10) return "text-red-500";
-    if (time <= 30) return "text-amber-500";
+    if (mainTimer.duration <= 10) return "text-red-500";
+    if (mainTimer.duration <= 30) return "text-amber-500";
     return "text-primary dark:text-white";
+  };
+
+  // Handle time update from the TimeInput component
+  const handleQuickTimeChange = (minutes: number, seconds: number) => {
+    handleTimeChange(minutes, seconds, mainTimer.id);
+    setIsEditing(false);
   };
   
   return (
@@ -93,9 +48,9 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
       {isEditing ? (
         <div className="py-2 max-w-[220px] mx-auto">
           <TimeInput 
-            minutes={Math.floor(time / 60)}
-            seconds={time % 60}
-            onTimeChange={handleTimeChange}
+            minutes={Math.floor(mainTimer.duration / 60)}
+            seconds={mainTimer.duration % 60}
+            onTimeChange={handleQuickTimeChange}
             onCancel={() => setIsEditing(false)}
           />
         </div>
@@ -114,7 +69,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
             onClick={() => setIsEditing(true)}
           >
             <div className={`text-6xl md:text-7xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
-              {formatTime(time)}
+              {formatTime(mainTimer.duration)}
             </div>
           </div>
           
@@ -125,12 +80,12 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           
           <div className="flex justify-center gap-4">
             <Button
-              onClick={toggleTimer}
-              variant={isRunning ? "secondary" : "default"}
+              onClick={() => handleStartPause(mainTimer.id)}
+              variant={mainTimer.isRunning && !mainTimer.isPaused ? "secondary" : "default"}
               size={isMobile ? "default" : "lg"}
-              className={`${!isRunning ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium`}
+              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium`}
             >
-              {isRunning ? (
+              {mainTimer.isRunning && !mainTimer.isPaused ? (
                 <>
                   <Pause size={20} className="mr-2" /> Pause
                 </>
@@ -142,7 +97,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
             </Button>
             
             <Button
-              onClick={handleReset}
+              onClick={() => handleReset(mainTimer.id)}
               variant="outline"
               size={isMobile ? "default" : "lg"}
               className="px-6 py-2 h-auto w-32 md:w-40 font-medium border-2"

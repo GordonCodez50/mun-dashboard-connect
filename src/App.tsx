@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useEffect } from "react";
+import { TimerProvider } from "./context/TimerContext";
 
 import Login from "./pages/Login";
 import ChairDashboard from "./pages/ChairDashboard";
@@ -104,7 +105,9 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AppWithAuth />
+          <TimerProvider>
+            <AppWithAuth />
+          </TimerProvider>
         </AuthProvider>
       </BrowserRouter>
       <Toaster />
