@@ -19,6 +19,8 @@ export const Sidebar = () => {
     navigate('/');
   };
   
+  const isPress = user?.council === 'PRESS';
+  
   return (
     <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 z-10 hidden md:block animate-fade-in">
       <div className="h-full flex flex-col py-6">
@@ -43,7 +45,7 @@ export const Sidebar = () => {
             Main
           </p>
           
-          {user?.role === 'chair' ? (
+          {user?.role === 'chair' && !isPress ? (
             <>
               <NavLink 
                 to="/chair-dashboard" 
@@ -73,6 +75,20 @@ export const Sidebar = () => {
                 Timer
               </NavLink>
             </>
+          ) : isPress ? (
+            <NavLink 
+              to="/press-dashboard" 
+              className={({ isActive }) => 
+                `flex items-center px-3 py-2 rounded-md mb-1 ${
+                  isActive 
+                    ? 'bg-accent/10 text-accent' 
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`
+              }
+            >
+              <LayoutDashboard size={18} className="mr-3" />
+              Press Dashboard
+            </NavLink>
           ) : (
             <>
               <NavLink 

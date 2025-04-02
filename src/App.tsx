@@ -9,6 +9,7 @@ import { useEffect } from "react";
 
 import Login from "./pages/Login";
 import ChairDashboard from "./pages/ChairDashboard";
+import PressDashboard from "./pages/PressDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import TimerManager from "./pages/TimerManager";
 import UserManagement from "./pages/UserManagement";
@@ -73,6 +74,12 @@ const AppWithAuth = () => {
         <Route
           path="/timer"
           element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
+        />
+
+        {/* Press Route */}
+        <Route
+          path="/press-dashboard"
+          element={<ProtectedRoute element={<PressDashboard />} requiredRole="chair" />}
         />
 
         {/* Admin Routes */}

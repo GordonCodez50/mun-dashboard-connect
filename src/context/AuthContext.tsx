@@ -64,10 +64,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const allUsers = await authService.getUsers();
       setUsers(allUsers);
       
-      // Navigate based on role
+      // Navigate based on role and council
       if (loggedInUser.role === 'chair') {
-        navigate('/chair-dashboard');
-        toast.success(`Welcome, ${loggedInUser.name}`);
+        if (loggedInUser.council === 'PRESS') {
+          navigate('/press-dashboard');
+          toast.success(`Welcome, ${loggedInUser.name}`);
+        } else {
+          navigate('/chair-dashboard');
+          toast.success(`Welcome, ${loggedInUser.name}`);
+        }
       } else {
         navigate('/admin-panel');
         toast.success(`Welcome, ${loggedInUser.name}`);
