@@ -39,6 +39,14 @@ The timer sound notifications can be customized:
 2. Make sure to keep the same filename or update the reference in `QuickTimerWidget.tsx`
 3. For more extensive timer customization, edit `src/components/ui/QuickTimerWidget.tsx`
 
+### Alert Sound Notifications
+
+Admin panel alert sounds can be configured:
+
+1. Replace the notification sound file in `/public/notification.mp3` with your preferred sound
+2. To toggle notifications, use the "Mute Alerts" button in the Admin Panel header
+3. You can edit the sound behavior in `src/hooks/useAlertsSound.tsx`
+
 ### User Email Formats
 
 User roles are determined by email prefixes:

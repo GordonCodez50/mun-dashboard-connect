@@ -8,7 +8,7 @@ export const useAlertsSound = (alerts: Alert[], alertsMuted: boolean) => {
 
   // Initialize notification sound
   useEffect(() => {
-    notificationSound.current = new Audio("https://pixabay.com/sound-effects/notification-18-270129/");
+    notificationSound.current = new Audio("/notification.mp3");
     return () => {
       if (notificationSound.current) {
         notificationSound.current = null;
