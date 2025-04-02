@@ -1,5 +1,3 @@
-
-
 # ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
@@ -124,14 +122,10 @@ For the timer notification sounds to work correctly, follow these steps:
    - After uploading, click on each sound file
    - Copy the "Public URL" from the file details panel
 
-3. **Replace the Sound URLs in the code:**
-   - In the `TimerManager.tsx` and `ChairDashboard.tsx` files, replace the existing URLs with your new public URLs
-   - Look for these lines:
-     ```javascript
-     const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
-     // and
-     notificationSound.current = new Audio("https://pixabay.com/sound-effects/notification-18-270129/");
-     ```
+3. **Alternative Method: Use Local Sound Files:**
+   - You can also place sound files directly in the `/public` folder of your project
+   - The QuickTimerWidget is configured to use `/notification.mp3` from the public folder
+   - Simply replace this file with your preferred sound, keeping the same filename
 
 4. **Recommended Sound Files:**
    - Timer completion sound: A clear alarm sound (5-10 seconds)
@@ -139,7 +133,45 @@ For the timer notification sounds to work correctly, follow these steps:
 
 With these steps, the timer sounds will work reliably across all browsers and devices.
 
-### Step 5: Deploy to Vercel (Super Easy!)
+### Step 5: Customizing Quick Actions in Chair Dashboard
+
+To modify the quick action buttons that appear in the Chair Dashboard:
+
+1. **Open the ChairDashboard.tsx file** located at `src/pages/ChairDashboard.tsx`
+
+2. **Locate the Quick Actions section** (around line 120) that looks like this:
+   ```jsx
+   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+     <AlertButton
+       icon={<Wrench size={24} />}
+       label="IT Support"
+       onClick={() => handleAlert('IT Support')}
+       loading={loadingAlert === 'IT Support'}
+     />
+     // Other alert buttons...
+   </div>
+   ```
+
+3. **To add a new alert button**:
+   - Copy an existing AlertButton component
+   - Change the icon, label, and alert type
+   - Import any new icons at the top of the file:
+     ```jsx
+     import { Wrench, Mic, ShieldAlert, Coffee, AlertTriangle, Send, MessageSquare, YourNewIcon } from 'lucide-react';
+     ```
+
+4. **To modify an existing alert button**:
+   - Change the icon, label, or alert type as needed
+   - For urgent alerts, add the `variant="urgent"` prop
+
+5. **To remove an alert button**:
+   - Simply delete the entire AlertButton component
+
+6. **If you need to modify what happens when alerts are sent**, locate the `handleAlert` function (around line 70) and update the messaging or priority logic.
+
+These customizations don't require any backend changes, as the alert system is already set up to handle custom alert types.
+
+### Step 6: Deploy to Vercel (Super Easy!)
 
 1. Create a Vercel account if you don't have one: https://vercel.com/signup
 2. Install the Vercel CLI: `npm install -g vercel`
@@ -197,4 +229,3 @@ This app uses a special system to determine user roles based on email addresses:
 - Try running `vercel --prod` to force a production build
 
 Need more help? Ask your teacher or IT support person!
-

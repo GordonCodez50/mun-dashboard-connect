@@ -293,8 +293,11 @@ const ChairDashboard = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
                         
                         {alert.admin && alert.reply && (
-                          <div className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                            <span className="font-medium">{alert.admin}:</span> {alert.reply}
+                          <div className="mt-2 mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100 dark:border-blue-800">
+                            <p className="font-medium text-sm text-blue-700 dark:text-blue-300">
+                              {alert.admin}:
+                            </p>
+                            <p className="text-sm text-blue-800 dark:text-blue-200">{alert.reply}</p>
                           </div>
                         )}
                         
@@ -310,7 +313,7 @@ const ChairDashboard = () => {
                           {alert.status !== 'resolved' && activeAlertId !== alert.id && (
                             <button 
                               onClick={() => setActiveAlertId(alert.id)}
-                              className="flex items-center justify-center gap-1 px-3 py-1 text-sm bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+                              className="flex items-center justify-center gap-1 px-4 py-2 text-sm bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
                             >
                               <MessageSquare size={16} />
                               Reply
