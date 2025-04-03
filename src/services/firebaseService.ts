@@ -22,7 +22,7 @@ import {
   Timestamp, 
   onSnapshot,
   setDoc as firestoreSetDoc,
-  FirebaseError
+  FirestoreError
 } from 'firebase/firestore';
 import { 
   getDatabase, 
@@ -35,6 +35,7 @@ import {
   remove 
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
+import { FirebaseError } from 'firebase/app';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
