@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -73,6 +72,14 @@ const DEMO_USERS = [
     council: 'PRESS',
     email: 'press@isbmun.com',
     createdAt: new Date(2023, 0, 1)
+  },
+  {
+    id: 'admin2',
+    username: 'Admin2',
+    name: 'Second Admin',
+    role: 'admin' as UserRole,
+    email: 'admin2@isbmun.com',
+    createdAt: new Date(2023, 0, 1)
   }
 ];
 
@@ -118,8 +125,8 @@ export const authService = {
                 lastLogin: Timestamp.now()
               };
               
-              // Only add council field if it's defined
-              if (council) {
+              // Only add council field if it's defined and user is chair
+              if (council && role === 'chair') {
                 newUserData.council = council;
               }
               
@@ -177,6 +184,9 @@ export const authService = {
         });
         
         userData = userDoc.data();
+        
+        // Enhanced logging to debug admin user sign-in
+        console.log('User sign-in from Firestore:', userData);
       } else {
         // Create new user document based on email
         if (firebaseUser.email) {
@@ -191,12 +201,13 @@ export const authService = {
             lastLogin: Timestamp.now()
           };
           
-          // Only add council field if it's defined
-          if (council) {
+          // Only add council field if it's defined and user is chair
+          if (council && role === 'chair') {
             userData.council = council;
           }
           
           await firestoreSetDoc(userDocRef, userData);
+          console.log('Created new user in Firestore:', userData);
         } else {
           throw new Error('No email associated with this account');
         }
@@ -245,7 +256,11 @@ export const authService = {
     
     try {
       // Create user in Firebase Auth
-      const email = userData.email || `${userData.username}@isbmun.com`;
+      // For admin users, ensure we have a valid email
+      const email = userData.role === 'admin' 
+        ? (userData.email || `${userData.username}@isbmun.com`)
+        : `${userData.username}@isbmun.com`;
+        
       const userCredential = await createUserWithEmailAndPassword(auth, email, userData.password);
       const firebaseUser = userCredential.user;
       
@@ -254,15 +269,28 @@ export const authService = {
         displayName: userData.name
       });
       
-      // Add user data to Firestore
-      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
-      await firestoreSetDoc(userDocRef, {
+      // Prepare user data for Firestore
+      const firestoreData: any = {
         username: userData.username,
         name: userData.name,
         role: userData.role,
-        council: userData.role === 'chair' ? userData.council : null,
         email: email,
         createdAt: Timestamp.now()
+      };
+      
+      // Only add council field for chair users
+      if (userData.role === 'chair' && userData.council) {
+        firestoreData.council = userData.council;
+      }
+      
+      // Add user data to Firestore
+      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
+      await firestoreSetDoc(userDocRef, firestoreData);
+      
+      console.log('Created new user in Auth and Firestore:', {
+        role: userData.role,
+        username: userData.username,
+        id: firebaseUser.uid
       });
       
       // Return the new user

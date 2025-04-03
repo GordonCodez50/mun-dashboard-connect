@@ -88,7 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           navigate('/chair-dashboard');
           toast.success(`Welcome, ${loggedInUser.name}`);
         }
-      } else {
+      } else if (loggedInUser.role === 'admin') {
+        // Enhanced logging for admin users to help debug
+        console.log('Navigating admin user to admin panel:', loggedInUser);
         navigate('/admin-panel');
         toast.success(`Welcome, ${loggedInUser.name}`);
       }
@@ -102,6 +104,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Create user function (admin only)
   const createUser = async (userData: UserFormData): Promise<boolean> => {
     try {
+      // Add additional validation for admin users
+      if (userData.role === 'admin' && (!userData.username || !userData.email)) {
+        toast.error('Admin users require both username and email');
+        return false;
+      }
+      
       const newUser = await authService.createUser(userData);
       
       // Update users list

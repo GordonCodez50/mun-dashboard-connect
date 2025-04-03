@@ -46,6 +46,11 @@ const UserManagement = () => {
       return;
     }
     
+    // For admin users, email is recommended
+    if (newUserData.role === 'admin' && !newUserData.email) {
+      toast.warning('Email is recommended for admin users, but will be auto-generated if not provided');
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -184,7 +189,7 @@ const UserManagement = () => {
                 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
+                    Email {newUserData.role === 'admin' && '(Recommended)'}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
