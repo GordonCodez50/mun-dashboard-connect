@@ -28,6 +28,8 @@ const ChairDashboard = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   const [alertsMuted, setAlertsMuted] = useState<boolean>(false);
+  const [lastAlertTime, setLastAlertTime] = useState<number>(0);
+  const [isOnCooldown, setIsOnCooldown] = useState<boolean>(false);
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
@@ -74,6 +76,16 @@ const ChairDashboard = () => {
     }
   }, [alertStatusData]);
 
+  useEffect(() => {
+    if (isOnCooldown) {
+      const cooldownTimer = setTimeout(() => {
+        setIsOnCooldown(false);
+      }, 1000);
+      
+      return () => clearTimeout(cooldownTimer);
+    }
+  }, [isOnCooldown]);
+
   const getAlertMessage = (type: string): string => {
     switch (type) {
       case 'IT Support': return 'Technical assistance needed';
@@ -90,7 +102,18 @@ const ChairDashboard = () => {
       return;
     }
     
+    const now = Date.now();
+    if (now - lastAlertTime < 1000) {
+      toast.warning('Please wait before sending another alert', {
+        description: 'You can send alerts once per second',
+        duration: 2000
+      });
+      return;
+    }
+    
     setLoadingAlert(alertType);
+    setIsOnCooldown(true);
+    setLastAlertTime(now);
     
     try {
       const message = getAlertMessage(alertType);
@@ -129,7 +152,18 @@ const ChairDashboard = () => {
       return;
     }
     
+    const now = Date.now();
+    if (now - lastAlertTime < 1000) {
+      toast.warning('Please wait before sending another alert', {
+        description: 'You can send alerts once per second',
+        duration: 2000
+      });
+      return;
+    }
+    
     setLoadingAlert('Custom');
+    setIsOnCooldown(true);
+    setLastAlertTime(now);
     
     try {
       await realtimeService.createAlert({
