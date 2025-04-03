@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from "sonner";
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -47,70 +51,83 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="min-h-screen w-full flex flex-col items-center justify-center py-12 sm:px-6 lg:px-8 animate-fade-in">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="absolute top-0 right-0 w-full h-full pointer-events-none overflow-hidden">
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-accent/10 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-primary/5 blur-3xl"></div>
+      </div>
+      
+      <div className="w-full max-w-md px-4 animate-fade-in z-10">
+        <div className="text-center mb-8">
           {logoExists ? (
-            <img 
-              src="/logo.png" 
-              alt="Logo" 
-              className="mx-auto w-24 h-24 object-contain mb-4 shadow-lg rounded-full"
-            />
+            <div className="relative w-24 h-24 mx-auto mb-4 rounded-full bg-white shadow-lg flex items-center justify-center p-2 border-4 border-white">
+              <img 
+                src="/logo.png" 
+                alt="Logo" 
+                className="w-full h-full object-contain rounded-full"
+              />
+            </div>
           ) : (
-            <div className="mx-auto w-24 h-24 bg-primary rounded-full flex items-center justify-center mb-4 shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-300 border-4 border-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 9h.01"></path>
                 <rect x="3" y="3" width="18" height="18" rx="2"></rect>
                 <circle cx="12" cy="15" r="3"></circle>
               </svg>
             </div>
           )}
-          <h2 className="text-center text-3xl font-extrabold text-primary">ISBMUN'25</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Conference Dashboard
-          </p>
+          <h1 className="text-3xl font-bold text-primary tracking-tight mb-1">ISBMUN'25</h1>
+          <p className="text-base text-gray-600">Conference Dashboard</p>
         </div>
 
-        <div className="w-full sm:max-w-md">
-          <div className="bg-white py-8 px-6 sm:px-10 shadow-xl rounded-xl border border-gray-100">
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-primary">
+        <Card className="border-none shadow-xl bg-white/90 backdrop-blur-sm">
+          <CardHeader className="space-y-1 pb-2">
+            <CardTitle className="text-2xl font-semibold text-center">Sign in</CardTitle>
+            <CardDescription className="text-center text-gray-500">
+              Enter your credentials to access your account
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   Email Address
-                </label>
-                <div className="mt-1">
-                  <input
+                </Label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <Input
                     id="email"
-                    name="email"
                     type="email"
-                    autoComplete="email"
-                    required
+                    placeholder="chair-ecosoc@isbmun.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                    placeholder="Enter your email address"
+                    className="pl-10 focus-visible:ring-accent"
+                    required
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Example: chair-ecosoc@isbmun.com or admin@isbmun.com
-                </p>
               </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-primary">
-                  Password
-                </label>
-                <div className="mt-1 relative">
-                  <input
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    Password
+                  </Label>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <Input
                     id="password"
-                    name="password"
                     type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    required
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                    placeholder="Enter your password"
+                    className="pl-10 focus-visible:ring-accent"
+                    required
                   />
                   <button
                     type="button"
@@ -125,39 +142,39 @@ const Login = () => {
                   </button>
                 </div>
               </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
-                    isLoading ? 'opacity-70 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {isLoading ? (
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    'Log in'
-                  )}
-                </button>
-              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full bg-accent hover:bg-accent/90 text-white font-medium py-2 rounded-md flex items-center justify-center gap-2 transition-all"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    Sign in 
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
             </form>
-
+            
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
                 For demo, use "chair-ecosoc@isbmun.com" or "admin@isbmun.com" with password "password"
               </p>
             </div>
-          </div>
+          </CardContent>
           
-          <div className="mt-4 text-center">
-            <a href="#" className="text-sm text-accent hover:text-accent/80">
+          <CardFooter className="flex justify-center pb-6">
+            <button className="text-sm text-accent hover:text-accent/80 hover:underline transition-colors">
               Forgot your password?
-            </a>
-          </div>
+            </button>
+          </CardFooter>
+        </Card>
+
+        <div className="text-center mt-8 text-sm text-gray-500">
+          <p>© {new Date().getFullYear()} ISBMUN. All rights reserved.</p>
         </div>
       </div>
     </div>
