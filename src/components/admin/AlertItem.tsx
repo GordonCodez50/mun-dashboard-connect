@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare } from 'lucide-react';
-import { realtimeService } from '@/services/firebase';
+import { realtimeService } from '@/services/firebaseService';
 import { Button } from '@/components/ui/button';
 import { User } from '@/types/auth';
 

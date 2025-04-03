@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { toast } from "sonner";
-import { MessageSquare, Users } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import { User } from '@/types/auth';
 
@@ -17,36 +17,11 @@ type CouncilListProps = {
   user: User | null;
 };
 
-type PressUser = {
-  id: string;
-  name: string;
-};
-
 export const CouncilList = ({ councils, user }: CouncilListProps) => {
   const [activeChairId, setActiveChairId] = useState<string | null>(null);
   const [directMessage, setDirectMessage] = useState('');
   const [showPressMessages, setShowPressMessages] = useState(false);
   const [pressMessage, setPressMessage] = useState('');
-  const [pressMembers, setPressMembers] = useState<PressUser[]>([]);
-  const [activePressMember, setActivePressMember] = useState<string | null>(null);
-  const [directPressMessage, setDirectPressMessage] = useState('');
-
-  // Load press members when component mounts
-  useEffect(() => {
-    const loadPressMembers = async () => {
-      try {
-        const members = await realtimeService.getPressMembers();
-        setPressMembers(members.map(member => ({
-          id: member.id,
-          name: member.name
-        })));
-      } catch (error) {
-        console.error('Error loading press members:', error);
-      }
-    };
-    
-    loadPressMembers();
-  }, []);
 
   const handleSendDirectMessage = async (councilId: string, councilName: string, chairName: string) => {
     if (!directMessage.trim()) {
@@ -87,36 +62,13 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
     
     try {
-      // Send message to all press members
-      await realtimeService.sendMessageToAllPress(
-        pressMessage,
-        user?.name || 'Admin',
-        user?.id || 'admin'
-      );
-      
-      toast.success('Message sent to all Press Team members');
-      setPressMessage('');
-      setShowPressMessages(false);
-    } catch (error) {
-      console.error('Error sending press message:', error);
-      toast.error('Failed to send message');
-    }
-  };
-
-  const handleSendDirectPressMessage = async (pressId: string, pressName: string) => {
-    if (!directPressMessage.trim()) {
-      toast.error('Please enter a message');
-      return;
-    }
-    
-    try {
-      // Create a direct message alert for individual press member
+      // Create a press message alert
       const messageData = {
-        type: 'DIRECT_MESSAGE',
-        message: directPressMessage,
+        type: 'PRESS_MESSAGE',
+        message: pressMessage,
         council: 'PRESS',
-        chairName: pressName,
-        councilId: pressId,
+        chairName: 'Press Team',
+        councilId: 'press',
         admin: user?.name || 'Admin',
         adminId: user?.id,
         timestamp: Date.now(),
@@ -126,11 +78,11 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
       
       await realtimeService.createDirectMessage(messageData);
       
-      toast.success(`Message sent to ${pressName}`);
-      setDirectPressMessage('');
-      setActivePressMember(null);
+      toast.success('Message sent to Press Team');
+      setPressMessage('');
+      setShowPressMessages(false);
     } catch (error) {
-      console.error('Error sending direct message to press:', error);
+      console.error('Error sending press message:', error);
       toast.error('Failed to send message');
     }
   };
@@ -200,20 +152,17 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         </table>
       </div>
       
-      {/* Press Team Section */}
+      {/* Press Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <Users size={20} className="text-accent" />
-            <h3 className="text-md font-medium text-primary">Press Team</h3>
-          </div>
+          <h3 className="text-md font-medium text-primary">Press Team</h3>
           {!showPressMessages ? (
             <button
               onClick={() => setShowPressMessages(true)}
               className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
             >
               <MessageSquare size={16} />
-              Message All Press
+              Message Press
             </button>
           ) : null}
         </div>
@@ -224,7 +173,7 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
               <textarea
                 value={pressMessage}
                 onChange={(e) => setPressMessage(e.target.value)}
-                placeholder="Type your message to all Press Team members..."
+                placeholder="Type your message to the Press Team..."
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
               />
               <div className="flex justify-end gap-2">
@@ -238,62 +187,14 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
                   onClick={handleSendPressMessage}
                   className="px-3 py-2 bg-accent text-white text-sm rounded-md hover:bg-accent/90 button-transition"
                 >
-                  Send to All Press
+                  Send to Press
                 </button>
               </div>
             </div>
           </div>
         )}
-        
-        {/* Individual Press Members List */}
-        <div className="p-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Individual Press Members</h4>
-          
-          {pressMembers.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {pressMembers.map((member) => (
-                <div key={member.id} className="py-3 flex justify-between items-center">
-                  <span className="text-sm text-gray-800">{member.name}</span>
-                  
-                  {activePressMember === member.id ? (
-                    <div className="flex items-center gap-2 flex-1 ml-4">
-                      <input
-                        type="text"
-                        value={directPressMessage}
-                        onChange={(e) => setDirectPressMessage(e.target.value)}
-                        placeholder="Type your message..."
-                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent"
-                      />
-                      <button
-                        onClick={() => handleSendDirectPressMessage(member.id, member.name)}
-                        className="px-3 py-2 bg-accent text-white text-sm rounded-md hover:bg-accent/90 button-transition"
-                      >
-                        Send
-                      </button>
-                      <button
-                        onClick={() => setActivePressMember(null)}
-                        className="px-3 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 button-transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setActivePressMember(member.id)}
-                      className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
-                    >
-                      <MessageSquare size={16} />
-                      Message
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 italic">No press members found</p>
-          )}
-        </div>
       </div>
     </div>
   );
 };
+

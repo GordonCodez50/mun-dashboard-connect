@@ -5,7 +5,7 @@ import { AlertButton } from '@/components/ui/AlertButton';
 import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
 import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare } from 'lucide-react';
-import { realtimeService } from '@/services/firebase';
+import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
