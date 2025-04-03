@@ -6,6 +6,7 @@ import { Play, Pause, RefreshCw, Edit } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useTimers } from '@/context/TimerContext';
+import { toast } from 'sonner';
 
 interface QuickTimerWidgetProps {
   className?: string;
@@ -41,7 +42,19 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   const handleQuickTimeChange = (minutes: number, seconds: number) => {
     handleTimeChange(minutes, seconds, mainTimer.id);
     setIsEditing(false);
+    
+    // Show feedback to user
+    toast.success(`Timer set to ${minutes}:${seconds.toString().padStart(2, '0')}`);
   };
+  
+  // Add effect to notify when timer reaches 0
+  useEffect(() => {
+    if (mainTimer.duration === 0 && mainTimer.isRunning) {
+      toast.info("Time's up!", {
+        description: "The timer has reached zero."
+      });
+    }
+  }, [mainTimer.duration, mainTimer.isRunning]);
   
   return (
     <div className={`w-full ${className}`}>

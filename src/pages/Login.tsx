@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Navigate } from 'react-router-dom';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [logoExists, setLogoExists] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   // Check if custom logo exists
   useEffect(() => {
@@ -31,6 +32,12 @@ const Login = () => {
     checkLogoExists();
   }, []);
 
+  // Redirect if already logged in
+  if (isAuthenticated) {
+    const redirectPath = user?.role === 'admin' ? '/admin-panel' : '/chair-dashboard';
+    return <Navigate to={redirectPath} replace />;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -43,8 +50,10 @@ const Login = () => {
     
     try {
       await login(email, password);
-    } catch (error) {
-      // Error is handled in the login function
+      // Success message will be handled in the auth context
+    } catch (error: any) {
+      // Error handling is in the login function
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -106,6 +115,7 @@ const Login = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 focus-visible:ring-accent"
                     required
+                    autoComplete="email"
                   />
                 </div>
               </div>
@@ -128,11 +138,13 @@ const Login = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 focus-visible:ring-accent"
                     required
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -167,7 +179,14 @@ const Login = () => {
           </CardContent>
           
           <CardFooter className="flex justify-center pb-6">
-            <button className="text-sm text-accent hover:text-accent/80 hover:underline transition-colors">
+            <button 
+              type="button"
+              className="text-sm text-accent hover:text-accent/80 hover:underline transition-colors"
+              onClick={() => toast.info("Password reset functionality", {
+                description: "Please contact your MUN organizers to reset your password",
+                duration: 5000
+              })}
+            >
               Forgot your password?
             </button>
           </CardFooter>

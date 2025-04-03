@@ -22,7 +22,8 @@ import {
   orderBy, 
   Timestamp, 
   onSnapshot,
-  setDoc as firestoreSetDoc
+  setDoc as firestoreSetDoc,
+  FirestoreError
 } from 'firebase/firestore';
 import { 
   getDatabase, 
@@ -35,6 +36,7 @@ import {
   remove 
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
+import { FirebaseError } from 'firebase/app';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
@@ -326,6 +328,11 @@ export const authService = {
       });
     } catch (error) {
       console.error('Error getting users:', error);
+      // Handle permission errors gracefully
+      if (error instanceof FirebaseError && error.code === 'permission-denied') {
+        console.log('Permission denied when fetching users. This is expected for non-admin users.');
+        return [];
+      }
       throw error;
     }
   }
@@ -523,6 +530,11 @@ export const firestoreService = {
       return councils;
     } catch (error) {
       console.error('Error getting councils:', error);
+      // Handle permission errors gracefully
+      if (error instanceof FirebaseError && error.code === 'permission-denied') {
+        console.log('Permission denied when fetching councils. This is expected for non-admin users.');
+        return [];
+      }
       throw error;
     }
   },
@@ -581,6 +593,11 @@ export const firestoreService = {
       });
     } catch (error) {
       console.error('Error getting documents:', error);
+      // Handle permission errors gracefully
+      if (error instanceof FirebaseError && error.code === 'permission-denied') {
+        console.log('Permission denied when fetching documents. This is expected for non-admin users.');
+        return [];
+      }
       throw error;
     }
   },

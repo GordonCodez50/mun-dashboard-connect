@@ -5,17 +5,27 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { TimerProvider } from "./context/TimerContext";
 
+// Eager loading critical components
 import Login from "./pages/Login";
-import ChairDashboard from "./pages/ChairDashboard";
-import PressDashboard from "./pages/PressDashboard";
-import AdminPanel from "./pages/AdminPanel";
-import TimerManager from "./pages/TimerManager";
-import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
+
+// Lazy loading less critical components for code splitting
+const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
+const PressDashboard = lazy(() => import("./pages/PressDashboard"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const TimerManager = lazy(() => import("./pages/TimerManager"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+
+// Setup loading fallback
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+  </div>
+);
 
 // Initialize query client with production settings
 const queryClient = new QueryClient({
@@ -36,7 +46,12 @@ const ProtectedRoute = ({
   element: React.ReactNode; 
   requiredRole?: 'chair' | 'admin' | 'both';
 }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  
+  // Show loading indicator while authentication is being checked
+  if (loading) {
+    return <LoadingFallback />;
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;
@@ -48,7 +63,7 @@ const ProtectedRoute = ({
     }
   }
   
-  return <>{element}</>;
+  return <Suspense fallback={<LoadingFallback />}>{element}</Suspense>;
 };
 
 // App wrapper to handle auth context
@@ -92,6 +107,9 @@ const AppWithAuth = () => {
           path="/user-management"
           element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
         />
+
+        {/* Index route redirect */}
+        <Route path="/index" element={<Navigate to="/" replace />} />
 
         {/* Catch All */}
         <Route path="*" element={<NotFound />} />

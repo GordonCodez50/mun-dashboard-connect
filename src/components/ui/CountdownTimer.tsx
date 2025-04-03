@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RefreshCw } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { toast } from 'sonner';
 
 export type CountdownTimerProps = {
   initialTime: number; // in seconds
@@ -16,7 +17,7 @@ export type CountdownTimerProps = {
   className?: string;
 };
 
-export const CountdownTimer: React.FC<CountdownTimerProps> = ({
+export const CountdownTimer: React.FC<CountdownTimerProps> = memo(({
   initialTime,
   onComplete,
   autoStart = true,
@@ -92,6 +93,10 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
           if (prev <= 1) {
             if (timerRef.current) clearInterval(timerRef.current);
             setIsRunning(false);
+            
+            // Notify user when timer completes
+            toast.info("Timer complete!");
+            
             if (onComplete) onComplete();
             
             // Notify via Firebase if this is the admin timer
@@ -289,4 +294,6 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
       </div>
     </div>
   );
-};
+});
+
+CountdownTimer.displayName = "CountdownTimer";
