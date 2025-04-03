@@ -124,18 +124,6 @@ export const Sidebar = () => {
           Press Dashboard
         </Link>
       )}
-
-      {/* Logout button for mobile */}
-      <button
-        onClick={() => {
-          setMobileMenuOpen(false);
-          logout();
-        }}
-        className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors mt-4"
-      >
-        <LogOut size={18} />
-        Logout
-      </button>
     </>
   );
 
@@ -180,6 +168,17 @@ export const Sidebar = () => {
                   <nav className="flex-1 mt-4 space-y-2">
                     {navigationLinks()}
                   </nav>
+                  
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors mt-4"
+                  >
+                    <LogOut size={18} />
+                    Logout
+                  </button>
                 </div>
               </DrawerContent>
             </Drawer>
@@ -215,7 +214,7 @@ export const Sidebar = () => {
         </nav>
 
         {/* Sidebar footer */}
-        <div className="px-4 mt-6">
+        <div className="px-4 mt-auto">
           <button
             onClick={logout}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors"
@@ -228,3 +227,5 @@ export const Sidebar = () => {
     </aside>
   );
 };
+
+export default Sidebar;

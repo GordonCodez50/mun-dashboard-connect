@@ -12,7 +12,6 @@ import { TimerProvider } from "./context/TimerContext";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
-import { Sidebar } from "./components/layout/Sidebar";
 
 // Lazy loading less critical components for code splitting
 const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
@@ -20,6 +19,7 @@ const PressDashboard = lazy(() => import("./pages/PressDashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const TimerManager = lazy(() => import("./pages/TimerManager"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
+const Sidebar = lazy(() => import("./components/layout/Sidebar").then(module => ({ default: module.Sidebar })));
 
 // Setup loading fallback
 const LoadingFallback = () => (
@@ -66,7 +66,9 @@ const ProtectedRoute = ({
   
   return (
     <div className="flex flex-col md:flex-row min-h-screen">
-      <Sidebar />
+      <Suspense fallback={<LoadingFallback />}>
+        <Sidebar />
+      </Suspense>
       <div className="flex-1">
         <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
       </div>
