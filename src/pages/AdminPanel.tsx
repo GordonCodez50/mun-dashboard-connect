@@ -16,15 +16,32 @@ import { useAlertsSound } from '@/hooks/useAlertsSound';
 const AdminPanel = () => {
   const { user } = useAuth();
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
-  const [hideResolved, setHideResolved] = useState<boolean>(false);
+  const [hideResolved, setHideResolved] = useState<boolean>(() => {
+    // Initialize from localStorage if available
+    const savedPreference = localStorage.getItem('hideResolvedAlerts');
+    return savedPreference ? JSON.parse(savedPreference) : false;
+  });
   const [councils, setCouncils] = useState<Council[]>([]);
-  const [alertsMuted, setAlertsMuted] = useState(false);
+  const [alertsMuted, setAlertsMuted] = useState(() => {
+    // Also persist the alerts muted preference
+    const savedMuted = localStorage.getItem('alertsMuted');
+    return savedMuted ? JSON.parse(savedMuted) : false;
+  });
 
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   
   // Initialize sound hook
   useAlertsSound(liveAlerts, alertsMuted);
+
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('hideResolvedAlerts', JSON.stringify(hideResolved));
+  }, [hideResolved]);
+
+  useEffect(() => {
+    localStorage.setItem('alertsMuted', JSON.stringify(alertsMuted));
+  }, [alertsMuted]);
 
   // Load councils from Firestore
   useEffect(() => {
