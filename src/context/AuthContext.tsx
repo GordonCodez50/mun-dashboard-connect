@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
-import { authService } from '@/services/firebaseService';
+import { authService } from '@/services/firebase';
 import { extractUserInfo } from '@/config/firebaseConfig';
 
 // Auth context type

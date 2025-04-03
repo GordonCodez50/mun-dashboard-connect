@@ -15,7 +15,7 @@ import AdminPanel from "./pages/AdminPanel";
 import TimerManager from "./pages/TimerManager";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
-import { initializeFirebase } from "./services/firebaseService";
+import { initializeFirebase } from "./services/firebase";
 
 // Initialize query client with production settings
 const queryClient = new QueryClient({

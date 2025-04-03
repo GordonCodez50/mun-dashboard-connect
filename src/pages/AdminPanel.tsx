@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { toast } from "sonner";
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
-import { firestoreService } from '@/services/firebaseService';
+import { firestoreService } from '@/services/firebase';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';

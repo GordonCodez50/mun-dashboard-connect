@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { realtimeService } from '@/services/firebaseService';
+import { realtimeService } from '@/services/firebase';
 
 // Define event types
 export type RealtimeEventType = 'NEW_ALERT' | 'ALERT_STATUS_UPDATE' | 'TIMER_SYNC';
