@@ -102,6 +102,10 @@ service cloud.firestore {
     "DIRECT_MESSAGES": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "press_messages": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'press')",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'"
     }
   }
 }

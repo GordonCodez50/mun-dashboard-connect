@@ -70,7 +70,7 @@ export const extractUserInfo = (email: string) => {
     const namePart = email.substring(EMAIL_PATTERNS.PRESS_PREFIX.length);
     const name = namePart.split('@')[0];
     return {
-      role: 'chair' as const, // Press users have same access as chair
+      role: 'press' as const, // Press users now have their own role
       council: 'PRESS',
       username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Press' // Capitalize name or use default
     };
@@ -84,7 +84,7 @@ export const extractUserInfo = (email: string) => {
   } else if (email.startsWith('press')) {
     // Fallback for old press format
     return {
-      role: 'chair' as const,
+      role: 'press' as const,
       council: 'PRESS',
       username: 'Press'
     };
@@ -110,7 +110,7 @@ export const RECOMMENDED_SECURITY_RULES = {
           allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
         }
         
-        // Allow chair users to read all documents
+        // Allow chair and press users to read all documents
         match /{document=**} {
           allow read: if request.auth != null;
         }
@@ -126,10 +126,11 @@ export const RECOMMENDED_SECURITY_RULES = {
                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
         }
         
-        // Allow chair users to create alerts
+        // Allow chair and press users to create alerts
         match /alerts/{alertId} {
           allow create: if request.auth != null && 
-                         request.resource.data.council == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council;
+                         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chair' ||
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'press');
         }
         
         // Allow users to read documents
@@ -169,6 +170,17 @@ export const RECOMMENDED_SECURITY_RULES = {
           "$timerId": {
             ".read": "auth != null",
             ".write": "auth != null"
+          }
+        },
+        
+        "press_messages": {
+          // Allow admin to read/write press messages
+          ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() == 'admin'",
+          
+          "$messageId": {
+            // Press members can read their messages
+            ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() == 'admin' || root.child('users').child(auth.uid).child('role').val() == 'press')"
           }
         }
       }

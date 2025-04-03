@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -464,6 +463,81 @@ export const realtimeService = {
       return true;
     } catch (error) {
       console.error('Error sending direct message:', error);
+      return false;
+    }
+  },
+  
+  // New method to get all press members
+  getPressMembers: async (): Promise<User[]> => {
+    if (FIREBASE_CONFIG.demoMode) {
+      // Return demo press members
+      return [
+        {
+          id: 'press1',
+          username: 'Press1',
+          name: 'Press Team 1',
+          role: 'press',
+          council: 'PRESS',
+          email: 'press1@isbmun.com',
+          createdAt: new Date()
+        },
+        {
+          id: 'press2',
+          username: 'Press2',
+          name: 'Press Team 2',
+          role: 'press',
+          council: 'PRESS',
+          email: 'press2@isbmun.com',
+          createdAt: new Date()
+        }
+      ];
+    }
+    
+    try {
+      const usersRef = collection(firestore, FIRESTORE_COLLECTIONS.users);
+      const q = query(usersRef, where("role", "==", "press"));
+      const querySnapshot = await getDocs(q);
+      
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          username: data.username,
+          name: data.name,
+          role: data.role,
+          council: data.council,
+          email: data.email,
+          createdAt: data.createdAt ? (data.createdAt as Timestamp).toDate() : new Date(),
+          lastLogin: data.lastLogin ? (data.lastLogin as Timestamp).toDate() : undefined
+        };
+      });
+    } catch (error) {
+      console.error('Error getting press members:', error);
+      return [];
+    }
+  },
+  
+  // New method to send a message to all press members
+  sendMessageToAllPress: async (message: string, adminName: string, adminId: string): Promise<boolean> => {
+    try {
+      const alertsRef = ref(realtimeDb, 'alerts');
+      const newMessageRef = push(alertsRef);
+      await set(newMessageRef, {
+        type: 'ALL_PRESS_MESSAGE',
+        message: message,
+        council: 'PRESS',
+        chairName: 'All Press Members',
+        councilId: 'press-all',
+        admin: adminName || 'Admin',
+        adminId: adminId,
+        timestamp: Date.now(),
+        priority: 'normal',
+        status: 'pending'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending message to all press:', error);
       return false;
     }
   }

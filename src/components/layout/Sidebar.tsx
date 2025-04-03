@@ -6,7 +6,6 @@ import {
   LayoutDashboard, 
   Timer, 
   LogOut, 
-  Users,
   UserPlus,
 } from 'lucide-react';
 
@@ -19,7 +18,7 @@ export const Sidebar = () => {
     navigate('/');
   };
   
-  const isPress = user?.council === 'PRESS';
+  const isPress = user?.role === 'press';
   
   return (
     <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 z-10 hidden md:block animate-fade-in">
@@ -45,7 +44,7 @@ export const Sidebar = () => {
             Main
           </p>
           
-          {user?.role === 'chair' && !isPress ? (
+          {user?.role === 'chair' ? (
             <>
               <NavLink 
                 to="/chair-dashboard" 

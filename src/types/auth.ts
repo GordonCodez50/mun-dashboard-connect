@@ -1,5 +1,5 @@
 
-export type UserRole = 'chair' | 'admin';
+export type UserRole = 'chair' | 'admin' | 'press';
 
 export type User = {
   id: string;
