@@ -1,4 +1,3 @@
-
 # ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
@@ -180,6 +179,31 @@ These customizations don't require any backend changes, as the alert system is a
 4. Then run: `vercel`
 5. Follow the prompts (mostly just press Enter for the default options)
 6. Your app is deployed! 🎉
+
+## Customizing the Navigation Menu
+
+### Changing the External Resources Button
+
+To modify the external resources button in the chair panel navigation menu:
+
+1. Open the file `src/config/navigationConfig.ts`
+2. Find the `externalNavButton` object
+3. Modify the following properties:
+   - `text`: The text to display on the button (e.g., "Resources")
+   - `url`: The URL the button should link to (e.g., "https://isbmun.com/resources")
+   - `openInNewTab`: Whether the link should open in a new tab (true/false)
+
+Example:
+
+```typescript
+export const externalNavButton: NavButtonConfig = {
+  text: "Documentation",
+  url: "https://isbmun.com/docs",
+  openInNewTab: true
+};
+```
+
+After making changes, save the file and rebuild the application.
 
 ## Using Email-Based Role Recognition
 

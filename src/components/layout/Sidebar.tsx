@@ -10,8 +10,10 @@ import {
   Timer,
   LayoutDashboard,
   FileText,
-  AlertCircle
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
+import { externalNavButton } from '@/config/navigationConfig';
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -100,6 +102,16 @@ export const Sidebar = () => {
                 <Timer size={18} />
                 Timer
               </Link>
+              {/* External resources button - configurable */}
+              <a
+                href={externalNavButton.url}
+                target={externalNavButton.openInNewTab ? "_blank" : "_self"}
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors text-gray-600 hover:bg-gray-100"
+              >
+                <ExternalLink size={18} />
+                {externalNavButton.text}
+              </a>
             </>
           )}
 
