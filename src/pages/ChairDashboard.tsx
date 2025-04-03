@@ -330,7 +330,7 @@ const ChairDashboard = () => {
             <CardContent className="pt-2">
               {recentAlerts.length > 0 ? (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {recentAlerts.slice(0, 3).map((alert) => (
+                  {recentAlerts.map((alert) => (
                     <div key={alert.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
                       <span className="mt-0.5 text-accent">
                         <AlertTriangle size={16} />
