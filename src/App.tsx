@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useState } from "react";
 import { TimerProvider } from "./context/TimerContext";
 
 import Login from "./pages/Login";
@@ -81,21 +81,54 @@ const ProtectedRoute = ({
   return <>{element}</>;
 };
 
-// App wrapper to handle auth context
+// App wrapper to handle auth context and Firebase initialization
 const AppWithAuth = () => {
+  const [firebaseInitialized, setFirebaseInitialized] = useState(false);
+  const [initError, setInitError] = useState<Error | null>(null);
+  
   // Initialize Firebase when the app mounts
   useEffect(() => {
     const initFirebase = async () => {
       try {
-        await initializeFirebase();
-        console.log("Firebase initialized successfully");
+        const success = await initializeFirebase();
+        setFirebaseInitialized(true);
+        if (!success) {
+          setInitError(new Error("Firebase initialization returned false"));
+        }
       } catch (error) {
         console.error("Firebase initialization error:", error);
+        setInitError(error instanceof Error ? error : new Error("Unknown initialization error"));
+        setFirebaseInitialized(true); // Still set to true so the app can render and show error state
       }
     };
     
     initFirebase();
   }, []);
+  
+  // Show loading state while Firebase is initializing
+  if (!firebaseInitialized) {
+    return <LoadingFallback />;
+  }
+  
+  // Show error state if Firebase failed to initialize
+  if (initError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="bg-red-50 border border-red-200 rounded-md p-6 max-w-md">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Connection Error</h2>
+          <p className="text-gray-700 mb-4">
+            We couldn't connect to the server. Please try again or contact support.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <>

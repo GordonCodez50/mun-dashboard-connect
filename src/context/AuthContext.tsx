@@ -49,12 +49,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        // Load all users for admin functions
-        const allUsers = await authService.getUsers();
-        setUsers(allUsers);
+        // Try to load all users for admin functions but don't fail if permissions are insufficient
+        try {
+          const allUsers = await authService.getUsers();
+          setUsers(allUsers);
+        } catch (error) {
+          console.error('Error loading users list (non-critical):', error);
+          // For non-admin users, this is expected to fail, so we'll just set an empty array
+          setUsers([]);
+        }
         
       } catch (error) {
         console.error('Error loading initial data:', error);
+        // Handle authentication errors gracefully
+        toast.error('Session expired. Please log in again.');
+        navigate('/', { replace: true });
       } finally {
         setIsLoading(false);
       }
@@ -72,9 +81,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const loggedInUser = await authService.signIn(email, password);
       setUser(loggedInUser);
       
-      // Reload users list
-      const allUsers = await authService.getUsers();
-      setUsers(allUsers);
+      // Try to reload users list for admins
+      if (loggedInUser.role === 'admin') {
+        try {
+          const allUsers = await authService.getUsers();
+          setUsers(allUsers);
+        } catch (error) {
+          console.error('Failed to load users list (non-critical):', error);
+          // Set empty array if we can't load users
+          setUsers([]);
+        }
+      }
       
       // Navigate based on role and council
       if (loggedInUser.role === 'chair') {

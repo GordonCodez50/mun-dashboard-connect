@@ -21,7 +21,8 @@ import {
   orderBy, 
   Timestamp, 
   onSnapshot,
-  setDoc as firestoreSetDoc
+  setDoc as firestoreSetDoc,
+  FirebaseError
 } from 'firebase/firestore';
 import { 
   getDatabase, 
@@ -39,7 +40,13 @@ import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
+
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const realtimeDb = getDatabase(app);
@@ -337,6 +344,7 @@ export const authService = {
     }
     
     try {
+      // Try to get all users from Firestore
       const usersSnapshot = await getDocs(collection(firestore, FIRESTORE_COLLECTIONS.users));
       
       return usersSnapshot.docs.map(doc => {
@@ -353,6 +361,13 @@ export const authService = {
         };
       });
     } catch (error) {
+      // Check if this is a permission error
+      if (error instanceof FirebaseError && error.code === 'permission-denied') {
+        console.error('Permission denied when fetching users. This is expected for non-admin users.');
+        // Return empty array instead of failing
+        return [];
+      }
+      
       console.error('Error getting users:', error);
       throw error;
     }
