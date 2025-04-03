@@ -86,7 +86,12 @@ const AppWithAuth = () => {
   // Initialize Firebase when the app mounts
   useEffect(() => {
     const initFirebase = async () => {
-      await initializeFirebase();
+      try {
+        await initializeFirebase();
+        console.log("Firebase initialized successfully");
+      } catch (error) {
+        console.error("Firebase initialization error:", error);
+      }
     };
     
     initFirebase();

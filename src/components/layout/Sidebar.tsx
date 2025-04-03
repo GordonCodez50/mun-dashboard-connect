@@ -14,9 +14,14 @@ export const Sidebar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      await logout();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
   
   const isPress = user?.council === 'PRESS';
@@ -49,6 +54,7 @@ export const Sidebar = () => {
             <>
               <NavLink 
                 to="/chair-dashboard" 
+                end
                 className={({ isActive }) => 
                   `flex items-center px-3 py-2 rounded-md mb-1 ${
                     isActive 
@@ -63,6 +69,7 @@ export const Sidebar = () => {
               
               <NavLink 
                 to="/timer" 
+                end
                 className={({ isActive }) => 
                   `flex items-center px-3 py-2 rounded-md mb-1 ${
                     isActive 
@@ -78,6 +85,7 @@ export const Sidebar = () => {
           ) : isPress ? (
             <NavLink 
               to="/press-dashboard" 
+              end
               className={({ isActive }) => 
                 `flex items-center px-3 py-2 rounded-md mb-1 ${
                   isActive 
@@ -93,6 +101,7 @@ export const Sidebar = () => {
             <>
               <NavLink 
                 to="/admin-panel" 
+                end
                 className={({ isActive }) => 
                   `flex items-center px-3 py-2 rounded-md mb-1 ${
                     isActive 
@@ -107,6 +116,7 @@ export const Sidebar = () => {
               
               <NavLink 
                 to="/user-management" 
+                end
                 className={({ isActive }) => 
                   `flex items-center px-3 py-2 rounded-md mb-1 ${
                     isActive 

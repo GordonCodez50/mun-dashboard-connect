@@ -11,7 +11,7 @@ type AuthContextType = {
   user: User | null;
   users: User[];
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   createUser: (userData: UserFormData) => Promise<boolean>;
   deleteUser: (userId: string) => Promise<boolean>;
   isAuthenticated: boolean;
@@ -40,12 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (currentUser.role === 'chair') {
             if (currentUser.council && currentUser.council.toUpperCase() === 'PRESS') {
               console.log('Auto-navigating existing press user to press dashboard:', currentUser);
-              navigate('/press-dashboard');
+              navigate('/press-dashboard', { replace: true });
             } else {
-              navigate('/chair-dashboard');
+              navigate('/chair-dashboard', { replace: true });
             }
           } else if (currentUser.role === 'admin') {
-            navigate('/admin-panel');
+            navigate('/admin-panel', { replace: true });
           }
         }
         
@@ -82,16 +82,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Note: Make this case-insensitive for robustness
         if (loggedInUser.council && loggedInUser.council.toUpperCase() === 'PRESS') {
           console.log('Navigating to press dashboard for user:', loggedInUser);
-          navigate('/press-dashboard');
+          navigate('/press-dashboard', { replace: true });
           toast.success(`Welcome, ${loggedInUser.name}`);
         } else {
-          navigate('/chair-dashboard');
+          navigate('/chair-dashboard', { replace: true });
           toast.success(`Welcome, ${loggedInUser.name}`);
         }
       } else if (loggedInUser.role === 'admin') {
         // Enhanced logging for admin users to help debug
         console.log('Navigating admin user to admin panel:', loggedInUser);
-        navigate('/admin-panel');
+        navigate('/admin-panel', { replace: true });
         toast.success(`Welcome, ${loggedInUser.name}`);
       }
     } catch (error: any) {
@@ -146,14 +146,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Logout function
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       await authService.signOut();
       setUser(null);
-      navigate('/');
+      navigate('/', { replace: true });
       toast.info('You have been logged out');
     } catch (error) {
       toast.error('Error signing out');
+      throw error; // Re-throw to allow handling in the Sidebar
     }
   };
 
