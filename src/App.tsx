@@ -12,6 +12,7 @@ import { TimerProvider } from "./context/TimerContext";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
+import { Sidebar } from "./components/layout/Sidebar";
 
 // Lazy loading less critical components for code splitting
 const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
@@ -63,7 +64,14 @@ const ProtectedRoute = ({
     }
   }
   
-  return <Suspense fallback={<LoadingFallback />}>{element}</Suspense>;
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen">
+      <Sidebar />
+      <div className="flex-1">
+        <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
+      </div>
+    </div>
+  );
 };
 
 // App wrapper to handle auth context

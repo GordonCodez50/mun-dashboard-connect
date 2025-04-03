@@ -62,3 +62,11 @@ These patterns are defined in `src/config/firebaseConfig.ts` and can be modified
 - Chairs see the Chair Dashboard and Timer pages
 - Press users see only the Press Dashboard (no Timer page)
 - Admins see the Admin Panel and User Management pages
+
+### Mobile Navigation
+
+The application features a responsive design with a hamburger menu for mobile users:
+- On mobile devices, a hamburger menu icon appears in the top-right corner
+- Tapping this icon opens a drawer with all navigation options
+- The same links and functionality are available on mobile as on desktop
+
