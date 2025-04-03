@@ -19,7 +19,6 @@ const PressDashboard = lazy(() => import("./pages/PressDashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const TimerManager = lazy(() => import("./pages/TimerManager"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
-const Sidebar = lazy(() => import("./components/layout/Sidebar").then(module => ({ default: module.Sidebar })));
 
 // Setup loading fallback
 const LoadingFallback = () => (
@@ -64,16 +63,7 @@ const ProtectedRoute = ({
     }
   }
   
-  return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <Suspense fallback={<LoadingFallback />}>
-        <Sidebar />
-      </Suspense>
-      <div className="flex-1">
-        <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
-      </div>
-    </div>
-  );
+  return <Suspense fallback={<LoadingFallback />}>{element}</Suspense>;
 };
 
 // App wrapper to handle auth context
