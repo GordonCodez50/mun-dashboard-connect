@@ -1,28 +1,30 @@
 
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  LayoutDashboard, 
-  Timer, 
-  LogOut, 
+import {
+  LogOut,
+  Settings,
   Users,
-  UserPlus,
+  Timer,
+  LayoutDashboard,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 
 export const Sidebar = () => {
+  const location = useLocation();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const isAdmin = user?.role === 'admin';
+  const isPress = user?.role === 'chair' && user?.council === 'PRESS';
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
-  
-  const isPress = user?.council === 'PRESS';
-  
+
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 z-10 hidden md:block animate-fade-in">
+    <aside className="hidden md:flex md:w-64 h-screen bg-white border-r border-gray-200 flex-col z-10">
       <div className="h-full flex flex-col py-6">
         <div className="px-6 mb-8">
           <div className="flex items-center justify-center">
@@ -39,113 +41,94 @@ export const Sidebar = () => {
             {user?.role === 'admin' ? 'Admin Panel' : user?.council}
           </p>
         </div>
-        
-        <nav className="flex-1 px-3">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
-            Main
-          </p>
-          
-          {user?.role === 'chair' && !isPress ? (
+
+        <nav className="flex-1 px-4 space-y-1">
+          {/* Admin Routes */}
+          {isAdmin && (
             <>
-              <NavLink 
-                to="/chair-dashboard" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
+              <Link
+                to="/admin-panel"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/admin-panel")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
               >
-                <LayoutDashboard size={18} className="mr-3" />
+                <LayoutDashboard size={18} />
                 Dashboard
-              </NavLink>
-              
-              <NavLink 
-                to="/timer" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
+              </Link>
+              <Link
+                to="/user-management"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/user-management")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
               >
-                <Timer size={18} className="mr-3" />
-                Timer
-              </NavLink>
-            </>
-          ) : isPress ? (
-            <NavLink 
-              to="/press-dashboard" 
-              className={({ isActive }) => 
-                `flex items-center px-3 py-2 rounded-md mb-1 ${
-                  isActive 
-                    ? 'bg-accent/10 text-accent' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`
-              }
-            >
-              <LayoutDashboard size={18} className="mr-3" />
-              Press Dashboard
-            </NavLink>
-          ) : (
-            <>
-              <NavLink 
-                to="/admin-panel" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <LayoutDashboard size={18} className="mr-3" />
-                Dashboard
-              </NavLink>
-              
-              <NavLink 
-                to="/user-management" 
-                className={({ isActive }) => 
-                  `flex items-center px-3 py-2 rounded-md mb-1 ${
-                    isActive 
-                      ? 'bg-accent/10 text-accent' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`
-                }
-              >
-                <UserPlus size={18} className="mr-3" />
+                <Users size={18} />
                 User Management
-              </NavLink>
+              </Link>
             </>
           )}
-          
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2 mt-6">
-            Account
-          </p>
-          
+
+          {/* Chair Routes */}
+          {!isAdmin && !isPress && (
+            <>
+              <Link
+                to="/chair-dashboard"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/chair-dashboard")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <LayoutDashboard size={18} />
+                Dashboard
+              </Link>
+              <Link
+                to="/timer"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/timer")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <Timer size={18} />
+                Timer
+              </Link>
+            </>
+          )}
+
+          {/* Press Routes */}
+          {isPress && (
+            <Link
+              to="/press-dashboard"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                isActive("/press-dashboard")
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-gray-600 hover:bg-gray-100"
+              )}
+            >
+              <LayoutDashboard size={18} />
+              Press Dashboard
+            </Link>
+          )}
+        </nav>
+
+        {/* Sidebar footer */}
+        <div className="px-4 mt-6">
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center px-3 py-2 rounded-md mb-1 text-gray-700 hover:bg-gray-100 text-left"
+            onClick={logout}
+            className="flex items-center gap-3 px-3 py-2 w-full rounded-md text-sm text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <LogOut size={18} className="mr-3" />
+            <LogOut size={18} />
             Logout
           </button>
-        </nav>
-        
-        <div className="px-3 mt-6">
-          <div className="bg-gray-50 rounded-md p-3 border border-gray-200">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-medium">
-                {user?.name?.charAt(0)}
-              </div>
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="text-sm font-medium text-primary truncate">{user?.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user?.role}</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </aside>

@@ -10,6 +10,7 @@ import { extractUserInfo } from '@/config/firebaseConfig';
 type AuthContextType = {
   user: User | null;
   users: User[];
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   createUser: (userData: UserFormData) => Promise<boolean>;
@@ -24,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Load users and check authentication state on mount
@@ -44,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
@@ -54,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string) => {
     // Simulate network request
-    setIsLoading(true);
+    setLoading(true);
     
     try {
       const loggedInUser = await authService.signIn(email, password);
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       toast.error(error.message || 'Invalid username or password');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -139,13 +140,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
       user, 
       users,
+      loading,
       login, 
       logout,
       createUser,
       deleteUser, 
       isAuthenticated: !!user 
     }}>
-      {!isLoading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

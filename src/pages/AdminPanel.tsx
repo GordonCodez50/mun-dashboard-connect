@@ -14,7 +14,7 @@ import { Council } from '@/components/admin/CouncilList';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
 
 const AdminPanel = () => {
-  const { user } = useAuth();
+  const { user, users } = useAuth();
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
   const [hideResolved, setHideResolved] = useState<boolean>(() => {
     // Initialize from localStorage if available
@@ -43,26 +43,51 @@ const AdminPanel = () => {
     localStorage.setItem('alertsMuted', JSON.stringify(alertsMuted));
   }, [alertsMuted]);
 
-  // Load councils from Firestore
+  // Load councils from Firestore and match with chair users
   useEffect(() => {
     const loadCouncils = async () => {
       try {
+        // First get all council data
         const councilsData = await firestoreService.getCouncils();
-        const formattedCouncils = councilsData.map(council => ({
-          id: council.id,
-          name: council.name,
-          chairName: `${council.name} Chair`,
+        
+        // Get chair users to match with councils
+        const chairUsers = users.filter(u => u.role === 'chair' && u.council && u.council !== 'PRESS');
+        
+        // Map councils with their chair information
+        const formattedCouncils = councilsData.map(council => {
+          // Find the chair for this council
+          const chairUser = chairUsers.find(user => user.council === council.name);
+          
+          return {
+            id: council.id,
+            name: council.name,
+            chairName: chairUser ? chairUser.name : `${council.name} Chair`,
+            lastUpdate: new Date()
+          };
+        });
+        
+        // Add any councils that exist in user records but not in council collection
+        const existingCouncilNames = formattedCouncils.map(c => c.name);
+        const missedChairUsers = chairUsers.filter(user => !existingCouncilNames.includes(user.council || ''));
+        
+        const additionalCouncils = missedChairUsers.map(chairUser => ({
+          id: chairUser.id,
+          name: chairUser.council || '',
+          chairName: chairUser.name,
           lastUpdate: new Date()
         }));
-        setCouncils(formattedCouncils);
+        
+        setCouncils([...formattedCouncils, ...additionalCouncils]);
       } catch (error) {
         console.error('Error loading councils:', error);
         toast.error('Failed to load councils');
       }
     };
     
-    loadCouncils();
-  }, []);
+    if (users.length > 0) {
+      loadCouncils();
+    }
+  }, [users]);
 
   // Process alert data from Firebase
   useEffect(() => {
