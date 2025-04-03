@@ -46,7 +46,7 @@ const ProtectedRoute = ({
   element: React.ReactNode; 
   requiredRole?: 'chair' | 'admin' | 'both';
 }) => {
-  const { isAuthenticated, user, loading } = useAuth();
+  const { isAuthenticated, user, loading = false } = useAuth();
   
   // Show loading indicator while authentication is being checked
   if (loading) {

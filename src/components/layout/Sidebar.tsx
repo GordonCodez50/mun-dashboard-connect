@@ -26,15 +26,15 @@ export const Sidebar = () => {
       <div className="h-full flex flex-col py-6">
         <div className="px-6 mb-8">
           <div className="flex items-center justify-center">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 9h.01"></path>
-                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                <circle cx="12" cy="15" r="3"></circle>
-              </svg>
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <img 
+                src="/logo.png" 
+                alt="ISBMUN Logo" 
+                className="w-10 h-10 object-contain"
+              />
             </div>
           </div>
-          <h2 className="text-xl font-bold text-primary text-center mt-3">MUN Dashboard</h2>
+          <h2 className="text-xl font-bold text-primary text-center mt-3">ISBMUN Dashboard</h2>
           <p className="text-sm text-gray-500 text-center mt-1 truncate">
             {user?.role === 'admin' ? 'Admin Panel' : user?.council}
           </p>
