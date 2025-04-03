@@ -14,6 +14,13 @@ export const AlertsSection = ({ alerts, hideResolved, user }: AlertsSectionProps
   const filteredAlerts = hideResolved 
     ? alerts.filter(alert => alert.status !== 'resolved')
     : alerts;
+    
+  // Sort alerts by timestamp, latest first
+  const sortedAlerts = [...filteredAlerts].sort((a, b) => {
+    const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+    const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+    return timeB - timeA; // Descending order (latest first)
+  });
 
   return (
     <div className="mb-8">
@@ -21,9 +28,9 @@ export const AlertsSection = ({ alerts, hideResolved, user }: AlertsSectionProps
         Live Alerts
         <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
       </h2>
-      {filteredAlerts.length > 0 ? (
+      {sortedAlerts.length > 0 ? (
         <div className="space-y-4">
-          {filteredAlerts.map((alert) => (
+          {sortedAlerts.map((alert) => (
             <AlertItem key={alert.id} alert={alert} user={user} />
           ))}
         </div>
