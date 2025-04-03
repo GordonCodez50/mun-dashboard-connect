@@ -32,19 +32,39 @@ const queryClient = new QueryClient({
 const ProtectedRoute = ({ 
   element, 
   requiredRole,
+  requiredCouncil,
 }: { 
   element: React.ReactNode; 
   requiredRole?: 'chair' | 'admin' | 'both';
+  requiredCouncil?: string;
 }) => {
   const { isAuthenticated, user } = useAuth();
   
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/" replace />;
   }
   
+  // Check if this is a press route that requires PRESS council
+  if (requiredCouncil === 'PRESS') {
+    if (!user?.council || user.council.toUpperCase() !== 'PRESS') {
+      console.log('User does not have PRESS council, redirecting:', user);
+      return <Navigate to={user?.role === 'chair' ? '/chair-dashboard' : '/admin-panel'} replace />;
+    }
+    return <>{element}</>;
+  }
+  
+  // Check other role requirements
   if (requiredRole && requiredRole !== 'both') {
     if (user?.role !== requiredRole) {
+      console.log('User does not have required role, redirecting:', user);
       return <Navigate to={user?.role === 'chair' ? '/chair-dashboard' : '/admin-panel'} replace />;
+    }
+    
+    // Special case for press users trying to access chair routes
+    if (requiredRole === 'chair' && user?.council && user.council.toUpperCase() === 'PRESS') {
+      console.log('Press user trying to access chair route, redirecting to press dashboard:', user);
+      return <Navigate to="/press-dashboard" replace />;
     }
   }
   
@@ -80,7 +100,7 @@ const AppWithAuth = () => {
         {/* Press Route */}
         <Route
           path="/press-dashboard"
-          element={<ProtectedRoute element={<PressDashboard />} requiredRole="chair" />}
+          element={<ProtectedRoute element={<PressDashboard />} requiredCouncil="PRESS" />}
         />
 
         {/* Admin Routes */}

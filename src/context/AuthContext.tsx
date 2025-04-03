@@ -35,6 +35,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
+          
+          // Auto-navigate based on role and council
+          if (currentUser.role === 'chair') {
+            if (currentUser.council && currentUser.council.toUpperCase() === 'PRESS') {
+              console.log('Auto-navigating existing press user to press dashboard:', currentUser);
+              navigate('/press-dashboard');
+            } else {
+              navigate('/chair-dashboard');
+            }
+          } else if (currentUser.role === 'admin') {
+            navigate('/admin-panel');
+          }
         }
         
         // Load all users for admin functions
@@ -49,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     
     loadInitialData();
-  }, []);
+  }, [navigate]);
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -66,7 +78,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Navigate based on role and council
       if (loggedInUser.role === 'chair') {
-        if (loggedInUser.council === 'PRESS') {
+        // Check if the user is press by looking at their council
+        // Note: Make this case-insensitive for robustness
+        if (loggedInUser.council && loggedInUser.council.toUpperCase() === 'PRESS') {
           console.log('Navigating to press dashboard for user:', loggedInUser);
           navigate('/press-dashboard');
           toast.success(`Welcome, ${loggedInUser.name}`);
