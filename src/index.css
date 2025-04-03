@@ -33,7 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   * {
@@ -43,8 +43,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background-image: radial-gradient(circle at center, rgba(240, 245, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 70%);
-    background-attachment: fixed;
   }
 }
 
@@ -82,7 +80,7 @@
   }
 
   .alert-button {
-    @apply flex flex-col items-center justify-center p-6 bg-white rounded-xl border border-gray-200 shadow-card hover:shadow-card-hover hover:border-accent/30 transition-all;
+    @apply flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow hover:border-accent/30 button-transition;
   }
   
   .alert-button-urgent {
@@ -108,42 +106,6 @@
   .status-badge-technical-issue {
     @apply bg-red-100 text-red-800;
   }
-  
-  .dashboard-layout {
-    @apply grid gap-6 md:gap-8;
-  }
-  
-  .card-hover {
-    @apply hover:shadow-card-hover transition-shadow duration-300 hover:border-accent/30;
-  }
-  
-  .card-gradient {
-    @apply bg-gradient-to-br from-white to-gray-50;
-  }
-  
-  .dashboard-heading {
-    @apply text-3xl font-bold text-primary leading-tight;
-  }
-  
-  .dashboard-subheading {
-    @apply text-lg font-medium text-primary;
-  }
-  
-  .icon-container {
-    @apply flex items-center justify-center h-12 w-12 rounded-full bg-accent/10 text-accent;
-  }
-  
-  .form-card {
-    @apply bg-white backdrop-blur-sm rounded-xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-all;
-  }
-  
-  .input-focus {
-    @apply focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none;
-  }
-  
-  .custom-scrollbar {
-    @apply scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100;
-  }
 }
 
 @keyframes slideUp {
@@ -155,24 +117,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
 }
