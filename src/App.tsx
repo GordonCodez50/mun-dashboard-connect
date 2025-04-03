@@ -5,8 +5,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect, Suspense, lazy, ErrorBoundary } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { TimerProvider } from "./context/TimerContext";
+import { toast } from "sonner";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Eager loading critical components
 import Login from "./pages/Login";
@@ -53,7 +55,7 @@ const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: false,
       staleTime: 30000,
-      cacheTime: 60000,
+      gcTime: 60000, // Changed from cacheTime to gcTime
       onError: (error) => {
         console.error('Query error:', error);
       },
