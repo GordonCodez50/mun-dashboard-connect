@@ -56,14 +56,18 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 30000,
       gcTime: 60000, // Changed from cacheTime to gcTime
-      onError: (error) => {
-        console.error('Query error:', error);
+      meta: {
+        onError: (error: Error) => {
+          console.error('Query error:', error);
+        },
       },
     },
     mutations: {
       retry: 1,
-      onError: (error) => {
-        console.error('Mutation error:', error);
+      meta: {
+        onError: (error: Error) => {
+          console.error('Mutation error:', error);
+        },
       },
     },
   },
