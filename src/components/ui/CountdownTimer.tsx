@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, RefreshCw } from 'lucide-react';
@@ -69,20 +69,20 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const progress = (timeLeft / initialTime) * 100;
 
   // Timer animation class based on time left
-  const getTimerClass = () => {
+  const getTimerClass = useCallback(() => {
     if (timeLeft <= 10) return "text-destructive transition-colors duration-300";
     if (timeLeft <= 30) return "text-amber-500 transition-colors duration-300";
     return "text-primary transition-colors duration-300";
-  };
+  }, [timeLeft]);
 
   // Size classes
-  const getSizeClasses = () => {
+  const getSizeClasses = useCallback(() => {
     switch (size) {
       case 'sm': return "text-2xl md:text-3xl";
       case 'lg': return "text-5xl md:text-6xl";
       default: return "text-3xl md:text-4xl";
     }
-  };
+  }, [size]);
   
   // Start timer
   useEffect(() => {
@@ -124,7 +124,7 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
   }, [isRunning, isPaused, onComplete, isAdmin, timerId, sendTimerUpdate]);
   
   // Start/Resume timer
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
     setIsRunning(true);
     setIsPaused(false);
     
@@ -135,10 +135,10 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         timeLeft
       });
     }
-  };
+  }, [isAdmin, sendTimerUpdate, timeLeft, timerId]);
   
   // Pause timer
-  const pauseTimer = () => {
+  const pauseTimer = useCallback(() => {
     setIsPaused(true);
     
     // Notify via Firebase if this is the admin timer
@@ -147,10 +147,10 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         action: 'pause'
       });
     }
-  };
+  }, [isAdmin, sendTimerUpdate, timerId]);
   
   // Reset timer
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     setTimeLeft(initialTime);
     setIsRunning(false);
@@ -163,14 +163,14 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         timeLeft: initialTime
       });
     }
-  };
+  }, [initialTime, isAdmin, sendTimerUpdate, timerId]);
 
   // Get progress bar color based on time left
-  const getProgressBarColor = () => {
+  const getProgressBarColor = useCallback(() => {
     if (timeLeft <= 10) return "bg-destructive";
     if (timeLeft <= 30) return "bg-amber-500";
     return "bg-accent";
-  };
+  }, [timeLeft]);
 
   // Render the default variant
   if (variant === 'default') {

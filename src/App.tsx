@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { TimerProvider } from "./context/TimerContext";
 
 import Login from "./pages/Login";
@@ -27,6 +27,16 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-pulse flex flex-col items-center gap-4">
+      <div className="w-12 h-12 rounded-full bg-accent/20"></div>
+      <div className="h-2 w-24 bg-accent/20 rounded"></div>
+    </div>
+  </div>
+);
 
 // Protected route component
 const ProtectedRoute = ({ 
@@ -84,38 +94,40 @@ const AppWithAuth = () => {
   
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Login />} />
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/" element={<Login />} />
 
-        {/* Chair Routes */}
-        <Route
-          path="/chair-dashboard"
-          element={<ProtectedRoute element={<ChairDashboard />} requiredRole="chair" />}
-        />
-        <Route
-          path="/timer"
-          element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
-        />
+          {/* Chair Routes */}
+          <Route
+            path="/chair-dashboard"
+            element={<ProtectedRoute element={<ChairDashboard />} requiredRole="chair" />}
+          />
+          <Route
+            path="/timer"
+            element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
+          />
 
-        {/* Press Route */}
-        <Route
-          path="/press-dashboard"
-          element={<ProtectedRoute element={<PressDashboard />} requiredCouncil="PRESS" />}
-        />
+          {/* Press Route */}
+          <Route
+            path="/press-dashboard"
+            element={<ProtectedRoute element={<PressDashboard />} requiredCouncil="PRESS" />}
+          />
 
-        {/* Admin Routes */}
-        <Route
-          path="/admin-panel"
-          element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
-        />
-        <Route
-          path="/user-management"
-          element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
-        />
+          {/* Admin Routes */}
+          <Route
+            path="/admin-panel"
+            element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
+          />
+          <Route
+            path="/user-management"
+            element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
+          />
 
-        {/* Catch All */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* Catch All */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </>
   );
 };

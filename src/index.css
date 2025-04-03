@@ -44,6 +44,10 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
+  
+  ::selection {
+    @apply bg-accent/30 text-accent-foreground;
+  }
 }
 
 @layer components {
@@ -56,7 +60,7 @@
   }
 
   .glass-card {
-    @apply bg-white/95 backdrop-blur-sm shadow-md border border-gray-100;
+    @apply bg-white/95 backdrop-blur-sm shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300;
   }
 
   .focus-ring {
@@ -106,6 +110,23 @@
   .status-badge-technical-issue {
     @apply bg-red-100 text-red-800;
   }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px];
+  }
+  
+  .input-focus {
+    @apply focus:ring-2 focus:ring-accent/50 focus:border-accent;
+  }
+  
+  .btn-pulse {
+    @apply relative overflow-hidden;
+  }
+  
+  .btn-pulse::after {
+    @apply content-[''] absolute inset-0 bg-white opacity-0;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
 }
 
 @keyframes slideUp {
@@ -116,5 +137,14 @@
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 0; 
+  }
+  50% { 
+    opacity: 0.3; 
   }
 }

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { Play, Pause, RefreshCw, Edit } from 'lucide-react';
@@ -13,7 +13,7 @@ interface QuickTimerWidgetProps {
 
 export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = '' }) => {
   const isMobile = useIsMobile();
-  const { soundEnabled, timers, handleStartPause, handleReset, handleTimeChange } = useTimers();
+  const { timers, handleStartPause, handleReset, handleTimeChange } = useTimers();
   
   // Use the main timer from context
   const mainTimer = timers.find(t => t.id === 'main-timer') || timers[0];
@@ -46,7 +46,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   return (
     <div className={`w-full ${className}`}>
       {isEditing ? (
-        <div className="py-2 max-w-[220px] mx-auto">
+        <div className="py-2 max-w-[220px] mx-auto animate-fade-in">
           <TimeInput 
             minutes={Math.floor(mainTimer.duration / 60)}
             seconds={mainTimer.duration % 60}
@@ -55,7 +55,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           />
         </div>
       ) : (
-        <div className="w-full p-6 md:p-8 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative">
+        <div className="w-full p-6 md:p-8 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative card-hover">
           <button 
             className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1"
             onClick={() => setIsEditing(true)}
@@ -83,7 +83,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
               onClick={() => handleStartPause(mainTimer.id)}
               variant={mainTimer.isRunning && !mainTimer.isPaused ? "secondary" : "default"}
               size={isMobile ? "default" : "lg"}
-              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium`}
+              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium ${mainTimer.isRunning && !mainTimer.isPaused ? "" : "btn-pulse"}`}
             >
               {mainTimer.isRunning && !mainTimer.isPaused ? (
                 <>
