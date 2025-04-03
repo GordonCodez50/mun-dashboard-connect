@@ -5,13 +5,31 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect, Suspense, lazy } from "react";
+import { useEffect, Suspense, lazy, ErrorBoundary } from "react";
 import { TimerProvider } from "./context/TimerContext";
 
 // Eager loading critical components
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
+
+// Error boundary fallback component
+const ErrorFallback = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+      <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+      <p className="text-gray-700 mb-4">
+        We're sorry, but there was an error loading this page. Please try refreshing.
+      </p>
+      <button
+        onClick={() => window.location.reload()}
+        className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded"
+      >
+        Refresh Page
+      </button>
+    </div>
+  </div>
+);
 
 // Lazy loading less critical components for code splitting
 const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
@@ -24,6 +42,7 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 const LoadingFallback = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+    <span className="ml-3 text-gray-600">Loading...</span>
   </div>
 );
 
@@ -31,9 +50,19 @@ const LoadingFallback = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 2,
       refetchOnWindowFocus: false,
       staleTime: 30000,
+      cacheTime: 60000,
+      onError: (error) => {
+        console.error('Query error:', error);
+      },
+    },
+    mutations: {
+      retry: 1,
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      },
     },
   },
 });
@@ -63,7 +92,11 @@ const ProtectedRoute = ({
     }
   }
   
-  return <Suspense fallback={<LoadingFallback />}>{element}</Suspense>;
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>
+      <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
+    </ErrorBoundary>
+  );
 };
 
 // App wrapper to handle auth context
@@ -71,7 +104,12 @@ const AppWithAuth = () => {
   // Initialize Firebase when the app mounts
   useEffect(() => {
     const initFirebase = async () => {
-      await initializeFirebase();
+      try {
+        await initializeFirebase();
+      } catch (error) {
+        console.error('Failed to initialize Firebase:', error);
+        toast.error('Failed to connect to the server. Please refresh and try again.');
+      }
     };
     
     initFirebase();
@@ -118,20 +156,25 @@ const AppWithAuth = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <TimerProvider>
-            <AppWithAuth />
-          </TimerProvider>
-        </AuthProvider>
-      </BrowserRouter>
-      <Toaster />
-      <Sonner />
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Add error handling for the entire app
+  return (
+    <ErrorBoundary fallback={<ErrorFallback />}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <TimerProvider>
+                <AppWithAuth />
+              </TimerProvider>
+            </AuthProvider>
+          </BrowserRouter>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

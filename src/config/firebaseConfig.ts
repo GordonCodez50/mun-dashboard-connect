@@ -1,4 +1,3 @@
-
 // Firebase configuration for the MUN Conference Dashboard
 
 // Firebase configuration object
@@ -16,8 +15,7 @@ export const firebaseConfig = {
 
 // Feature flags and configuration
 export const FIREBASE_CONFIG = {
-  // If true, use demo mode with predefined data
-  // You can set this to false once you've set up your Firebase project
+  // Set to false for production to use real Firebase database
   demoMode: import.meta.env.VITE_FIREBASE_DEMO_MODE === 'true' || false,
 };
 

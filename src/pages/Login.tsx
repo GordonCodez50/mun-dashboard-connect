@@ -74,6 +74,10 @@ const Login = () => {
                 src="/logo.png" 
                 alt="Logo" 
                 className="w-full h-full object-contain rounded-full"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  setLogoExists(false);
+                }}
               />
             </div>
           ) : (
@@ -110,7 +114,7 @@ const Login = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="chair-ecosoc@isbmun.com"
+                    placeholder="youremail@isbmun.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 focus-visible:ring-accent"
@@ -170,12 +174,6 @@ const Login = () => {
                 )}
               </Button>
             </form>
-            
-            <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">
-                For demo, use "chair-ecosoc@isbmun.com" or "admin@isbmun.com" with password "password"
-              </p>
-            </div>
           </CardContent>
           
           <CardFooter className="flex justify-center pb-6">
