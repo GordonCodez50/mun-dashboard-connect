@@ -228,16 +228,25 @@ export const authService = {
         displayName: userData.name
       });
       
-      // Add user data to Firestore
-      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
-      await firestoreSetDoc(userDocRef, {
+      // Prepare user data for Firestore
+      const userDataForFirestore: any = {
         username: userData.username,
         name: userData.name,
         role: userData.role,
-        council: userData.role === 'chair' ? userData.council : null,
         email: email,
         createdAt: Timestamp.now()
-      });
+      };
+      
+      // Add council field based on role
+      if (userData.role === 'chair') {
+        userDataForFirestore.council = userData.council;
+      } else if (userData.role === 'press') {
+        userDataForFirestore.council = 'PRESS';
+      }
+      
+      // Add user data to Firestore
+      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
+      await firestoreSetDoc(userDocRef, userDataForFirestore);
       
       // Return the new user
       return {
@@ -245,7 +254,7 @@ export const authService = {
         username: userData.username,
         name: userData.name,
         role: userData.role,
-        council: userData.role === 'chair' ? userData.council : undefined,
+        council: (userData.role === 'chair' || userData.role === 'press') ? userData.council : undefined,
         email: email,
         createdAt: new Date()
       };

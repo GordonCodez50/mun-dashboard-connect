@@ -46,6 +46,11 @@ const UserManagement = () => {
       return;
     }
     
+    // Make sure press members have PRESS as their council
+    if (newUserData.role === 'press') {
+      newUserData.council = 'PRESS';
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -220,6 +225,7 @@ const UserManagement = () => {
                     >
                       <option value="chair">Chair</option>
                       <option value="admin">Admin</option>
+                      <option value="press">Press</option>
                     </select>
                   </div>
                 </div>
@@ -312,13 +318,15 @@ const UserManagement = () => {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             user.role === 'admin' 
                               ? 'bg-purple-100 text-purple-800' 
-                              : 'bg-blue-100 text-blue-800'
+                              : user.role === 'press'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-blue-100 text-blue-800'
                           }`}>
                             {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {user.role === 'chair' ? user.council : user.email || '—'}
+                          {user.role === 'chair' || user.role === 'press' ? user.council : user.email || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {user.lastLogin 
