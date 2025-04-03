@@ -8,6 +8,7 @@ import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare } fro
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAlertsSound } from '@/hooks/useAlertsSound';
 
 type Alert = {
   id: string;
@@ -26,9 +27,12 @@ const ChairDashboard = () => {
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
+  const [alertsMuted, setAlertsMuted] = useState<boolean>(false);
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
+
+  useAlertsSound(recentAlerts, alertsMuted);
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -70,6 +74,16 @@ const ChairDashboard = () => {
     }
   }, [alertStatusData]);
 
+  const getAlertMessage = (type: string): string => {
+    switch (type) {
+      case 'IT Support': return 'Technical assistance needed';
+      case 'Press & Coverage': return 'Press team or media coverage needed';
+      case 'Logistics & Assistance': return 'Logistical assistance required';
+      case 'Custom': return customAlert;
+      default: return '';
+    }
+  };
+
   const handleAlert = async (alertType: string) => {
     if (!user?.council) {
       toast.error('Your council information is missing');
@@ -104,16 +118,6 @@ const ChairDashboard = () => {
       toast.error('Failed to send alert');
     } finally {
       setLoadingAlert(null);
-    }
-  };
-
-  const getAlertMessage = (type: string): string => {
-    switch (type) {
-      case 'IT Support': return 'Technical assistance needed';
-      case 'Press & Coverage': return 'Press team or media coverage needed';
-      case 'Logistics & Assistance': return 'Logistical assistance required';
-      case 'Custom': return customAlert;
-      default: return '';
     }
   };
 
@@ -189,11 +193,33 @@ const ChairDashboard = () => {
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
-          <header className="mb-8">
-            <h1 className="text-3xl font-bold text-primary dark:text-white">Chair Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Welcome back, {user?.name}
-            </p>
+          <header className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-primary dark:text-white">Chair Dashboard</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Welcome back, {user?.name}
+              </p>
+            </div>
+            <button
+              onClick={() => setAlertsMuted(!alertsMuted)}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              title={alertsMuted ? "Unmute Notifications" : "Mute Notifications"}
+            >
+              {alertsMuted ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                  <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              )}
+            </button>
           </header>
           
           <div className="mb-8">
