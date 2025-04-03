@@ -67,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Navigate based on role and council
       if (loggedInUser.role === 'chair') {
         if (loggedInUser.council === 'PRESS') {
+          console.log('Navigating to press dashboard for user:', loggedInUser);
           navigate('/press-dashboard');
           toast.success(`Welcome, ${loggedInUser.name}`);
         } else {
