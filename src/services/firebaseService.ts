@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -21,8 +22,7 @@ import {
   orderBy, 
   Timestamp, 
   onSnapshot,
-  setDoc as firestoreSetDoc,
-  FirestoreError
+  setDoc as firestoreSetDoc
 } from 'firebase/firestore';
 import { 
   getDatabase, 
@@ -35,19 +35,12 @@ import {
   remove 
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
-import { FirebaseError } from 'firebase/app';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 
 // Initialize Firebase
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-}
-
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 const realtimeDb = getDatabase(app);
@@ -79,14 +72,6 @@ const DEMO_USERS = [
     role: 'chair' as UserRole,
     council: 'PRESS',
     email: 'press@isbmun.com',
-    createdAt: new Date(2023, 0, 1)
-  },
-  {
-    id: 'admin2',
-    username: 'Admin2',
-    name: 'Second Admin',
-    role: 'admin' as UserRole,
-    email: 'admin2@isbmun.com',
     createdAt: new Date(2023, 0, 1)
   }
 ];
@@ -133,8 +118,8 @@ export const authService = {
                 lastLogin: Timestamp.now()
               };
               
-              // Only add council field if it's defined and user is chair
-              if (council && role === 'chair') {
+              // Only add council field if it's defined
+              if (council) {
                 newUserData.council = council;
               }
               
@@ -192,9 +177,6 @@ export const authService = {
         });
         
         userData = userDoc.data();
-        
-        // Enhanced logging to debug admin user sign-in
-        console.log('User sign-in from Firestore:', userData);
       } else {
         // Create new user document based on email
         if (firebaseUser.email) {
@@ -209,13 +191,12 @@ export const authService = {
             lastLogin: Timestamp.now()
           };
           
-          // Only add council field if it's defined and user is chair
-          if (council && role === 'chair') {
+          // Only add council field if it's defined
+          if (council) {
             userData.council = council;
           }
           
           await firestoreSetDoc(userDocRef, userData);
-          console.log('Created new user in Firestore:', userData);
         } else {
           throw new Error('No email associated with this account');
         }
@@ -264,11 +245,7 @@ export const authService = {
     
     try {
       // Create user in Firebase Auth
-      // For admin users, ensure we have a valid email
-      const email = userData.role === 'admin' 
-        ? (userData.email || `${userData.username}@isbmun.com`)
-        : `${userData.username}@isbmun.com`;
-        
+      const email = userData.email || `${userData.username}@isbmun.com`;
       const userCredential = await createUserWithEmailAndPassword(auth, email, userData.password);
       const firebaseUser = userCredential.user;
       
@@ -277,28 +254,15 @@ export const authService = {
         displayName: userData.name
       });
       
-      // Prepare user data for Firestore
-      const firestoreData: any = {
+      // Add user data to Firestore
+      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
+      await firestoreSetDoc(userDocRef, {
         username: userData.username,
         name: userData.name,
         role: userData.role,
+        council: userData.role === 'chair' ? userData.council : null,
         email: email,
         createdAt: Timestamp.now()
-      };
-      
-      // Only add council field for chair users
-      if (userData.role === 'chair' && userData.council) {
-        firestoreData.council = userData.council;
-      }
-      
-      // Add user data to Firestore
-      const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, firebaseUser.uid);
-      await firestoreSetDoc(userDocRef, firestoreData);
-      
-      console.log('Created new user in Auth and Firestore:', {
-        role: userData.role,
-        username: userData.username,
-        id: firebaseUser.uid
       });
       
       // Return the new user
@@ -345,7 +309,6 @@ export const authService = {
     }
     
     try {
-      // Try to get all users from Firestore
       const usersSnapshot = await getDocs(collection(firestore, FIRESTORE_COLLECTIONS.users));
       
       return usersSnapshot.docs.map(doc => {
@@ -362,13 +325,6 @@ export const authService = {
         };
       });
     } catch (error) {
-      // Check if this is a permission error
-      if (error instanceof FirebaseError && error.code === 'permission-denied') {
-        console.error('Permission denied when fetching users. This is expected for non-admin users.');
-        // Return empty array instead of failing
-        return [];
-      }
-      
       console.error('Error getting users:', error);
       throw error;
     }

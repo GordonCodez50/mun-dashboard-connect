@@ -11,7 +11,7 @@ type AuthContextType = {
   user: User | null;
   users: User[];
   login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   createUser: (userData: UserFormData) => Promise<boolean>;
   deleteUser: (userId: string) => Promise<boolean>;
   isAuthenticated: boolean;
@@ -35,42 +35,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
-          
-          // Auto-navigate based on role and council
-          if (currentUser.role === 'chair') {
-            if (currentUser.council && currentUser.council.toUpperCase() === 'PRESS') {
-              console.log('Auto-navigating existing press user to press dashboard:', currentUser);
-              navigate('/press-dashboard', { replace: true });
-            } else {
-              navigate('/chair-dashboard', { replace: true });
-            }
-          } else if (currentUser.role === 'admin') {
-            navigate('/admin-panel', { replace: true });
-          }
         }
         
-        // Try to load all users for admin functions but don't fail if permissions are insufficient
-        try {
-          const allUsers = await authService.getUsers();
-          setUsers(allUsers);
-        } catch (error) {
-          console.error('Error loading users list (non-critical):', error);
-          // For non-admin users, this is expected to fail, so we'll just set an empty array
-          setUsers([]);
-        }
+        // Load all users for admin functions
+        const allUsers = await authService.getUsers();
+        setUsers(allUsers);
         
       } catch (error) {
         console.error('Error loading initial data:', error);
-        // Handle authentication errors gracefully
-        toast.error('Session expired. Please log in again.');
-        navigate('/', { replace: true });
       } finally {
         setIsLoading(false);
       }
     };
     
     loadInitialData();
-  }, [navigate]);
+  }, []);
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -81,34 +60,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const loggedInUser = await authService.signIn(email, password);
       setUser(loggedInUser);
       
-      // Try to reload users list for admins
-      if (loggedInUser.role === 'admin') {
-        try {
-          const allUsers = await authService.getUsers();
-          setUsers(allUsers);
-        } catch (error) {
-          console.error('Failed to load users list (non-critical):', error);
-          // Set empty array if we can't load users
-          setUsers([]);
-        }
-      }
+      // Reload users list
+      const allUsers = await authService.getUsers();
+      setUsers(allUsers);
       
       // Navigate based on role and council
       if (loggedInUser.role === 'chair') {
-        // Check if the user is press by looking at their council
-        // Note: Make this case-insensitive for robustness
-        if (loggedInUser.council && loggedInUser.council.toUpperCase() === 'PRESS') {
-          console.log('Navigating to press dashboard for user:', loggedInUser);
-          navigate('/press-dashboard', { replace: true });
+        if (loggedInUser.council === 'PRESS') {
+          navigate('/press-dashboard');
           toast.success(`Welcome, ${loggedInUser.name}`);
         } else {
-          navigate('/chair-dashboard', { replace: true });
+          navigate('/chair-dashboard');
           toast.success(`Welcome, ${loggedInUser.name}`);
         }
-      } else if (loggedInUser.role === 'admin') {
-        // Enhanced logging for admin users to help debug
-        console.log('Navigating admin user to admin panel:', loggedInUser);
-        navigate('/admin-panel', { replace: true });
+      } else {
+        navigate('/admin-panel');
         toast.success(`Welcome, ${loggedInUser.name}`);
       }
     } catch (error: any) {
@@ -121,12 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Create user function (admin only)
   const createUser = async (userData: UserFormData): Promise<boolean> => {
     try {
-      // Add additional validation for admin users
-      if (userData.role === 'admin' && (!userData.username || !userData.email)) {
-        toast.error('Admin users require both username and email');
-        return false;
-      }
-      
       const newUser = await authService.createUser(userData);
       
       // Update users list
@@ -163,15 +123,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Logout function
-  const logout = async (): Promise<void> => {
+  const logout = async () => {
     try {
       await authService.signOut();
       setUser(null);
-      navigate('/', { replace: true });
+      navigate('/');
       toast.info('You have been logged out');
     } catch (error) {
       toast.error('Error signing out');
-      throw error; // Re-throw to allow handling in the Sidebar
     }
   };
 
