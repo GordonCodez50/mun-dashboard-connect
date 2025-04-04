@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useEffect, Suspense, lazy } from "react";
 import { TimerProvider } from "./context/TimerContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -17,15 +18,15 @@ import { initializeFirebase } from "./services/firebaseService";
 
 // Error boundary fallback component
 const ErrorFallback = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-      <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
-      <p className="text-gray-700 mb-4">
+  <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full">
+      <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">Something went wrong</h2>
+      <p className="text-gray-700 dark:text-gray-300 mb-4">
         We're sorry, but there was an error loading this page. Please try refreshing.
       </p>
       <button
         onClick={() => window.location.reload()}
-        className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded"
+        className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded dark:bg-blue-600 dark:hover:bg-blue-700"
       >
         Refresh Page
       </button>
@@ -42,9 +43,9 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 
 // Setup loading fallback
 const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-    <span className="ml-3 text-gray-600">Loading...</span>
+  <div className="min-h-screen flex items-center justify-center bg-background dark:bg-gray-900">
+    <div className="animate-spin h-8 w-8 border-4 border-primary dark:border-blue-500 border-t-transparent rounded-full"></div>
+    <span className="ml-3 text-gray-600 dark:text-gray-300">Loading...</span>
   </div>
 );
 
@@ -169,11 +170,13 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <BrowserRouter>
-            <AuthProvider>
-              <TimerProvider>
-                <AppWithAuth />
-              </TimerProvider>
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <TimerProvider>
+                  <AppWithAuth />
+                </TimerProvider>
+              </AuthProvider>
+            </ThemeProvider>
           </BrowserRouter>
           <Toaster />
           <Sonner />
