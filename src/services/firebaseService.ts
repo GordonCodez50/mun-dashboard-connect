@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -460,16 +461,16 @@ export const realtimeService = {
       const newMessageRef = push(alertsRef);
       await set(newMessageRef, {
         ...messageData,
-        type: messageData.type || 'Message from Admin',
+        type: 'Message from Admin',
         id: newMessageRef.key,
         timestamp: Date.now(),
-        status: messageData.status || 'pending'
+        status: 'pending'
       });
       
-      console.log('Message sent successfully:', messageData.type);
+      console.log('Direct message sent successfully');
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending direct message:', error);
       return false;
     }
   }
