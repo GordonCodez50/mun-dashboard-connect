@@ -20,67 +20,38 @@ export default {
 		},
 		extend: {
 			colors: {
-				border: {
-					DEFAULT: 'hsl(var(--border))',
-					dark: 'hsl(var(--border-dark))'
-				},
-				input: {
-					DEFAULT: 'hsl(var(--input))',
-					dark: 'hsl(var(--input-dark))'
-				},
-				ring: {
-					DEFAULT: 'hsl(var(--ring))',
-					dark: 'hsl(var(--ring-dark))'
-				},
-				background: {
-					DEFAULT: 'hsl(var(--background))',
-					dark: 'hsl(var(--background-dark))'
-				},
-				foreground: {
-					DEFAULT: 'hsl(var(--foreground))',
-					dark: 'hsl(var(--foreground-dark))'
-				},
+				border: 'hsl(var(--border))',
+				input: 'hsl(var(--input))',
+				ring: 'hsl(var(--ring))',
+				background: 'hsl(var(--background))',
+				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: '#1A2544',
-					foreground: '#FFFFFF',
-					dark: '#1A2544',
-					'dark-foreground': '#FFFFFF'
+					foreground: '#FFFFFF'
 				},
 				secondary: {
 					DEFAULT: '#1F2020',
-					foreground: '#FFFFFF',
-					dark: '#181818',
-					'dark-foreground': '#FFFFFF'
+					foreground: '#FFFFFF'
 				},
 				accent: {
 					DEFAULT: '#4581B6',
-					foreground: '#FFFFFF',
-					dark: '#5A92C7',
-					'dark-foreground': '#FFFFFF'
+					foreground: '#FFFFFF'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))',
-					dark: 'hsl(var(--destructive-dark))',
-					'dark-foreground': 'hsl(var(--destructive-foreground-dark))'
+					foreground: 'hsl(var(--destructive-foreground))'
 				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))',
-					dark: 'hsl(var(--muted-dark))',
-					'dark-foreground': 'hsl(var(--muted-foreground-dark))'
+					foreground: 'hsl(var(--muted-foreground))'
 				},
 				popover: {
 					DEFAULT: '#FFFFFF',
-					foreground: '#1A2544',
-					dark: '#1A1F2C',
-					'dark-foreground': '#FFFFFF'
+					foreground: '#1A2544'
 				},
 				card: {
 					DEFAULT: '#FFFFFF',
-					foreground: '#1A2544',
-					dark: '#1A1F2C',
-					'dark-foreground': '#FFFFFF'
+					foreground: '#1A2544'
 				},
 				sidebar: {
 					DEFAULT: '#1A2544',
@@ -90,9 +61,7 @@ export default {
 					accent: '#1F2020',
 					'accent-foreground': '#FFFFFF',
 					border: '#2a3656',
-					ring: '#4581B6',
-					dark: '#15192A',
-					'dark-foreground': '#FFFFFF'
+					ring: '#4581B6'
 				}
 			},
 			borderRadius: {
