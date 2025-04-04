@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -450,6 +449,25 @@ export const realtimeService = {
     } catch (error) {
       console.error('Error updating timer:', error);
       toast.error('Failed to update timer');
+      return false;
+    }
+  },
+  
+  // Add broadcast message function
+  createBroadcastMessage: async (messageData: any): Promise<boolean> => {
+    try {
+      const db = getDatabase();
+      const messagesRef = ref(db, 'broadcast-messages');
+      const newMessageRef = push(messagesRef);
+      
+      await set(newMessageRef, {
+        ...messageData,
+        id: newMessageRef.key
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error creating broadcast message:', error);
       return false;
     }
   },
