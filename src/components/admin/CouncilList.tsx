@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { toast } from "sonner";
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Users } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import { User } from '@/types/auth';
+import { Textarea } from '@/components/ui/textarea';
 
 export type Council = {
   id: string;
@@ -22,6 +23,10 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
   const [directMessage, setDirectMessage] = useState('');
   const [showPressMessages, setShowPressMessages] = useState(false);
   const [pressMessage, setPressMessage] = useState('');
+  const [showBroadcastMessage, setShowBroadcastMessage] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastTarget, setBroadcastTarget] = useState<'chairs' | 'all' | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const handleSendDirectMessage = async (councilId: string, councilName: string, chairName: string) => {
     if (!directMessage.trim()) {
@@ -87,8 +92,157 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
   };
 
+  const handleSendBroadcastMessage = async () => {
+    if (!broadcastMessage.trim() || !broadcastTarget) {
+      toast.error('Please enter a message and select a target audience');
+      return;
+    }
+
+    setIsSending(true);
+    
+    try {
+      // Send broadcast to all chairs
+      if (broadcastTarget === 'chairs' || broadcastTarget === 'all') {
+        // Send to each council chair individually using existing mechanism
+        for (const council of councils) {
+          const messageData = {
+            type: 'DIRECT_MESSAGE',
+            message: broadcastMessage,
+            council: council.name,
+            chairName: council.chairName,
+            councilId: council.id,
+            admin: user?.name || 'Admin',
+            adminId: user?.id,
+            timestamp: Date.now(),
+            priority: 'normal',
+            status: 'pending',
+            isBroadcast: true
+          };
+          
+          await realtimeService.createDirectMessage(messageData);
+        }
+        
+        toast.success(`Message sent to all chairs`);
+      }
+      
+      // Send to press if target is 'all'
+      if (broadcastTarget === 'all') {
+        const pressMessageData = {
+          type: 'PRESS_MESSAGE',
+          message: broadcastMessage,
+          council: 'PRESS',
+          chairName: 'Press Team',
+          councilId: 'press',
+          admin: user?.name || 'Admin',
+          adminId: user?.id,
+          timestamp: Date.now(),
+          priority: 'normal',
+          status: 'pending',
+          isBroadcast: true
+        };
+        
+        await realtimeService.createDirectMessage(pressMessageData);
+        
+        toast.success('Message also sent to Press Team');
+      }
+      
+      // Reset the form
+      setBroadcastMessage('');
+      setShowBroadcastMessage(false);
+      setBroadcastTarget(null);
+    } catch (error) {
+      console.error('Error sending broadcast message:', error);
+      toast.error('Failed to send broadcast');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const toggleBroadcastForm = (target: 'chairs' | 'all' | null = null) => {
+    if (target) {
+      setShowBroadcastMessage(true);
+      setBroadcastTarget(target);
+    } else {
+      setShowBroadcastMessage(!showBroadcastMessage);
+      if (!showBroadcastMessage) {
+        setBroadcastTarget(null);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Broadcast Messages Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-4">
+        <div className="p-4 flex flex-wrap gap-3 items-center justify-between border-b border-gray-100">
+          <h3 className="text-md font-medium text-primary">Broadcast Messages</h3>
+          <div className="flex flex-wrap gap-2">
+            {!showBroadcastMessage ? (
+              <>
+                <button
+                  onClick={() => toggleBroadcastForm('chairs')}
+                  className="text-accent hover:text-accent/80 inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-accent/30 rounded-md"
+                >
+                  <MessageSquare size={16} />
+                  Message All Chairs
+                </button>
+                <button
+                  onClick={() => toggleBroadcastForm('all')}
+                  className="text-accent hover:text-accent/80 inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-accent/30 rounded-md"
+                >
+                  <Users size={16} />
+                  Message All Chairs & Press
+                </button>
+              </>
+            ) : null}
+          </div>
+        </div>
+        
+        {showBroadcastMessage && (
+          <div className="p-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Message to: {broadcastTarget === 'chairs' ? 'All Chairs' : 'All Chairs & Press'}
+                </label>
+                <Textarea
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  placeholder={`Type your message to ${broadcastTarget === 'chairs' ? 'all chairs' : 'all chairs and press'}...`}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => toggleBroadcastForm()}
+                  className="px-3 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 button-transition"
+                  disabled={isSending}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendBroadcastMessage}
+                  className="px-3 py-2 bg-accent text-white text-sm rounded-md hover:bg-accent/90 button-transition"
+                  disabled={isSending}
+                >
+                  {isSending ? (
+                    <span className="flex items-center gap-1">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : (
+                    `Send to ${broadcastTarget === 'chairs' ? 'All Chairs' : 'All Chairs & Press'}`
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -197,4 +351,3 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     </div>
   );
 };
-
