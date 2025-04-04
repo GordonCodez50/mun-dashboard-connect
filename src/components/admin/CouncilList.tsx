@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { toast } from "sonner";
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Users, UserPlus } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import { User } from '@/types/auth';
+import { Button } from '@/components/ui/button';
 
 export type Council = {
   id: string;
@@ -22,6 +23,10 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
   const [directMessage, setDirectMessage] = useState('');
   const [showPressMessages, setShowPressMessages] = useState(false);
   const [pressMessage, setPressMessage] = useState('');
+  const [showBroadcastMessages, setShowBroadcastMessages] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [broadcastTarget, setBroadcastTarget] = useState<'chairs' | 'chairsAndPress'>('chairs');
 
   const handleSendDirectMessage = async (councilId: string, councilName: string, chairName: string) => {
     if (!directMessage.trim()) {
@@ -87,8 +92,129 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
   };
 
+  const handleSendBroadcastMessage = async () => {
+    if (!broadcastMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const isIncludePress = broadcastTarget === 'chairsAndPress';
+      let successCount = 0;
+      const targetCouncils = [...councils];
+      
+      // Add press team if needed
+      if (isIncludePress) {
+        targetCouncils.push({
+          id: 'press',
+          name: 'PRESS',
+          chairName: 'Press Team'
+        });
+      }
+      
+      // Send message to each council/chair
+      for (const council of targetCouncils) {
+        const messageData = {
+          type: 'BROADCAST_MESSAGE',
+          message: broadcastMessage,
+          council: council.name,
+          chairName: council.chairName,
+          councilId: council.id,
+          admin: user?.name || 'Admin',
+          adminId: user?.id,
+          timestamp: Date.now(),
+          priority: 'normal',
+          status: 'resolved', // Mark as resolved immediately
+          broadcast: true,
+          broadcastType: isIncludePress ? 'ALL' : 'CHAIRS'
+        };
+        
+        await realtimeService.createDirectMessage(messageData);
+        successCount++;
+      }
+      
+      const targetText = isIncludePress ? 'all Chairs and Press Team' : 'all Chairs';
+      toast.success(`Broadcast message sent to ${targetText} (${successCount} recipients)`);
+      setBroadcastMessage('');
+      setShowBroadcastMessages(false);
+    } catch (error) {
+      console.error('Error sending broadcast message:', error);
+      toast.error('Failed to send broadcast message');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Broadcast section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-4 flex justify-between items-center border-b border-gray-100">
+          <h3 className="text-md font-medium text-primary">Broadcast Messages</h3>
+          {!showBroadcastMessages ? (
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setShowBroadcastMessages(true);
+                  setBroadcastTarget('chairs');
+                }}
+                className="text-white bg-accent hover:bg-accent/90 inline-flex items-center gap-1"
+                size="sm"
+              >
+                <Users size={16} />
+                Message All Chairs
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowBroadcastMessages(true);
+                  setBroadcastTarget('chairsAndPress');
+                }}
+                className="text-white bg-accent hover:bg-accent/90 inline-flex items-center gap-1"
+                size="sm"
+              >
+                <UserPlus size={16} />
+                Message All Chairs & Press
+              </Button>
+            </div>
+          ) : null}
+        </div>
+        
+        {showBroadcastMessages && (
+          <div className="p-4">
+            <div className="flex flex-col gap-3">
+              <div className="text-sm font-medium text-gray-700">
+                {broadcastTarget === 'chairs' ? 'Message to All Chairs' : 'Message to All Chairs & Press'}
+              </div>
+              <textarea
+                value={broadcastMessage}
+                onChange={(e) => setBroadcastMessage(e.target.value)}
+                placeholder={`Type your message to ${broadcastTarget === 'chairs' ? 'all chairs' : 'all chairs and press team'}...`}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
+                disabled={loading}
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  onClick={() => setShowBroadcastMessages(false)}
+                  variant="outline"
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendBroadcastMessage}
+                  disabled={loading || !broadcastMessage.trim()}
+                  className="bg-accent text-white hover:bg-accent/90"
+                >
+                  {loading ? 'Sending...' : 'Send Broadcast'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Council List table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -197,4 +323,3 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     </div>
   );
 };
-
