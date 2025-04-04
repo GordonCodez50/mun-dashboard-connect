@@ -29,7 +29,7 @@ const AdminPanel = () => {
   });
 
   // Use Firebase Realtime Database for alerts
-  const { data: alertsData, sendMessage: updateAlertInFirebase } = useFirebaseRealtime<any[]>('NEW_ALERT');
+  const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   
   // Initialize sound hook
   useAlertsSound(liveAlerts, alertsMuted);
@@ -129,39 +129,6 @@ const AdminPanel = () => {
     toast.success(hideResolved ? 'Showing all alerts' : 'Hiding resolved alerts');
   };
 
-  // New function to resolve all alerts
-  const resolveAllAlerts = async () => {
-    const pendingAlerts = liveAlerts.filter(alert => alert.status !== 'resolved');
-    
-    if (pendingAlerts.length === 0) {
-      toast.info('No pending alerts to resolve');
-      return;
-    }
-    
-    // Show confirmation toast
-    toast.info(`Resolving ${pendingAlerts.length} alert${pendingAlerts.length > 1 ? 's' : ''}...`);
-    
-    try {
-      // Update each alert in Firebase
-      const updatePromises = pendingAlerts.map(alert => {
-        return updateAlertInFirebase({
-          id: alert.id,
-          status: 'resolved',
-          resolvedBy: user?.name || 'Admin',
-          resolvedAt: Date.now()
-        });
-      });
-      
-      // Wait for all updates to complete
-      await Promise.all(updatePromises);
-      
-      toast.success(`Successfully resolved ${pendingAlerts.length} alert${pendingAlerts.length > 1 ? 's' : ''}`);
-    } catch (error) {
-      console.error('Error resolving all alerts:', error);
-      toast.error('Failed to resolve all alerts');
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -174,7 +141,6 @@ const AdminPanel = () => {
             alertsMuted={alertsMuted}
             toggleHideResolved={toggleHideResolved}
             toggleAlertsMute={toggleAlertsMute}
-            resolveAllAlerts={resolveAllAlerts}
           />
           
           <AlertsSection 

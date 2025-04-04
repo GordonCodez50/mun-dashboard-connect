@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Bell, Volume2, VolumeX, Eye, EyeOff, Check } from 'lucide-react';
 import { User } from '@/types/auth';
+import { Badge } from '@/components/ui/badge';
+import { Eye, EyeOff, Bell, BellOff } from 'lucide-react';
 
 type AdminHeaderProps = {
   user: User | null;
@@ -9,58 +10,49 @@ type AdminHeaderProps = {
   alertsMuted: boolean;
   toggleHideResolved: () => void;
   toggleAlertsMute: () => void;
-  resolveAllAlerts?: () => void; // Added new prop for resolving all alerts
 };
 
-export const AdminHeader = ({
-  user,
-  hideResolved,
+export const AdminHeader = ({ 
+  user, 
+  hideResolved, 
   alertsMuted,
   toggleHideResolved,
-  toggleAlertsMute,
-  resolveAllAlerts
+  toggleAlertsMute
 }: AdminHeaderProps) => {
   return (
-    <div className="flex flex-col md:flex-row justify-between mb-8 p-5 rounded-lg bg-white shadow-sm border border-gray-100">
+    <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
       <div>
-        <h1 className="text-2xl font-bold text-primary mb-1">
-          Admin Dashboard
-        </h1>
-        <p className="text-gray-500">
-          Welcome back, {user?.name || 'Admin'}
+        <h1 className="text-3xl font-bold text-primary">Admin Panel</h1>
+        <p className="text-gray-600 mt-1">
+          Welcome, {user?.name}
         </p>
       </div>
       
-      <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0">
-        <button
-          onClick={toggleHideResolved}
-          className="px-3 py-1.5 flex items-center gap-2 text-sm rounded-md bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-          title={hideResolved ? "Show all alerts" : "Hide resolved alerts"}
-        >
-          {hideResolved ? <Eye size={16} /> : <EyeOff size={16} />}
-          {hideResolved ? "Show Resolved" : "Hide Resolved"}
-        </button>
-        
+      <div className="flex items-center gap-2 mt-4 md:mt-0">
         <button
           onClick={toggleAlertsMute}
-          className="px-3 py-1.5 flex items-center gap-2 text-sm rounded-md bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
-          title={alertsMuted ? "Unmute alerts" : "Mute alerts"}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+            alertsMuted
+              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+          }`}
         >
-          {alertsMuted ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          {alertsMuted ? "Unmute Alerts" : "Mute Alerts"}
+          {alertsMuted ? <BellOff size={16} /> : <Bell size={16} />}
+          {alertsMuted ? 'Unmute Alerts' : 'Mute Alerts'}
         </button>
         
-        {resolveAllAlerts && (
-          <button
-            onClick={resolveAllAlerts}
-            className="px-3 py-1.5 flex items-center gap-2 text-sm rounded-md bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors"
-            title="Resolve all pending alerts"
-          >
-            <Check size={16} />
-            Resolve All Alerts
-          </button>
-        )}
+        <button
+          onClick={toggleHideResolved}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors ${
+            hideResolved
+              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+          }`}
+        >
+          {hideResolved ? <Eye size={16} /> : <EyeOff size={16} />}
+          {hideResolved ? 'Show All' : 'Hide Resolved'}
+        </button>
       </div>
-    </div>
+    </header>
   );
 };
