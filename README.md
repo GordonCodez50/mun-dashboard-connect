@@ -1,4 +1,3 @@
-
 # ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
@@ -98,10 +97,6 @@ service cloud.firestore {
       "$timerId": {
         ".write": "auth != null"
       }
-    },
-    "broadcast-messages": {
-      ".read": "auth != null",
-      ".write": "auth != null"
     },
     "DIRECT_MESSAGES": {
       ".read": "auth != null",
@@ -249,13 +244,6 @@ This app uses a special system to determine user roles based on email addresses:
 - Check your Firebase rules to make sure they allow reading/writing
 - Make sure `VITE_FIREBASE_DEMO_MODE` is set to `false`
 - Check the browser console for errors (press F12 to open developer tools)
-- Ensure that the 'broadcast-messages' node has proper read/write permissions
-
-### "Broadcast Messages Not Working" Problems
-- Verify that broadcast-messages node exists in Firebase Realtime Database
-- Check that Firebase rules allow access to the broadcast-messages node
-- Ensure all users have proper permissions to receive broadcast messages
-- Try sending a test message and check the browser console for any errors
 
 ### "Timer Sounds Not Working" Problems
 - Check if your browser allows autoplay of audio

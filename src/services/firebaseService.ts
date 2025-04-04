@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -451,64 +452,6 @@ export const realtimeService = {
       toast.error('Failed to update timer');
       return false;
     }
-  },
-  
-  // Add broadcast message function - improved implementation
-  createBroadcastMessage: async (messageData: any): Promise<boolean> => {
-    try {
-      const db = getDatabase();
-      const messagesRef = ref(db, 'broadcast-messages');
-      const newMessageRef = push(messagesRef);
-      
-      // Add the message to broadcast-messages node
-      await set(newMessageRef, {
-        ...messageData,
-        id: newMessageRef.key,
-        timestamp: Date.now()
-      });
-      
-      // Also add to alerts collection so it shows up in alerts feed
-      const alertsRef = ref(db, 'alerts');
-      const newAlertRef = push(alertsRef);
-      await set(newAlertRef, {
-        type: messageData.type,
-        message: messageData.message,
-        targetGroup: messageData.targetGroup,
-        admin: messageData.admin,
-        adminId: messageData.adminId,
-        id: newAlertRef.key,
-        timestamp: Date.now(),
-        status: 'pending',
-        priority: messageData.priority || 'normal'
-      });
-      
-      console.log('Broadcast message sent successfully');
-      return true;
-    } catch (error) {
-      console.error('Error creating broadcast message:', error);
-      return false;
-    }
-  },
-  
-  // Listen for broadcast messages
-  onBroadcastMessages: (callback: (messages: any) => void) => {
-    const messagesRef = ref(realtimeDb, 'broadcast-messages');
-    onValue(messagesRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Convert object to array
-        const messages = Object.entries(data).map(([id, value]) => ({
-          id,
-          ...(value as any)
-        }));
-        callback(messages);
-      } else {
-        callback([]);
-      }
-    });
-    
-    // Return unsubscribe function
-    return () => off(messagesRef);
   },
   
   // Add this new method for direct messages
