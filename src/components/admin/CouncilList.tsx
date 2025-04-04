@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { MessageSquare, Users, Send } from 'lucide-react';
@@ -48,11 +47,15 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         status: 'pending'
       };
       
-      await realtimeService.createDirectMessage(messageData);
+      const success = await realtimeService.createDirectMessage(messageData);
       
-      toast.success(`Message sent to ${chairName}`);
-      setDirectMessage('');
-      setActiveChairId(null);
+      if (success) {
+        toast.success(`Message sent to ${chairName}`);
+        setDirectMessage('');
+        setActiveChairId(null);
+      } else {
+        toast.error('Failed to send message');
+      }
     } catch (error) {
       console.error('Error sending direct message:', error);
       toast.error('Failed to send message');
@@ -80,11 +83,15 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         status: 'pending'
       };
       
-      await realtimeService.createDirectMessage(messageData);
+      const success = await realtimeService.createDirectMessage(messageData);
       
-      toast.success('Message sent to Press Team');
-      setPressMessage('');
-      setShowPressMessages(false);
+      if (success) {
+        toast.success('Message sent to Press Team');
+        setPressMessage('');
+        setShowPressMessages(false);
+      } else {
+        toast.error('Failed to send message');
+      }
     } catch (error) {
       console.error('Error sending press message:', error);
       toast.error('Failed to send message');
@@ -110,11 +117,15 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         status: 'pending'
       };
       
-      await realtimeService.createBroadcastMessage(messageData);
+      const success = await realtimeService.createBroadcastMessage(messageData);
       
-      toast.success('Message sent to all chairs');
-      setAllChairsMessage('');
-      setShowAllChairsMessage(false);
+      if (success) {
+        toast.success('Message sent to all chairs');
+        setAllChairsMessage('');
+        setShowAllChairsMessage(false);
+      } else {
+        toast.error('Failed to send message to all chairs');
+      }
     } catch (error) {
       console.error('Error sending message to all chairs:', error);
       toast.error('Failed to send message');
@@ -140,11 +151,15 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         status: 'pending'
       };
       
-      await realtimeService.createBroadcastMessage(messageData);
+      const success = await realtimeService.createBroadcastMessage(messageData);
       
-      toast.success('Message sent to all chairs and press');
-      setAllChairsAndPressMessage('');
-      setShowAllChairsAndPressMessage(false);
+      if (success) {
+        toast.success('Message sent to all chairs and press');
+        setAllChairsAndPressMessage('');
+        setShowAllChairsAndPressMessage(false);
+      } else {
+        toast.error('Failed to send message to all chairs and press');
+      }
     } catch (error) {
       console.error('Error sending message to all chairs and press:', error);
       toast.error('Failed to send message');
