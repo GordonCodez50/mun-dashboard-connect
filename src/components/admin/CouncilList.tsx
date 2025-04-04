@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { MessageSquare, Users } from 'lucide-react';
@@ -35,7 +34,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
     
     try {
-      // Create a direct message alert
       const messageData = {
         type: 'DIRECT_MESSAGE',
         message: directMessage,
@@ -67,7 +65,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
     
     try {
-      // Create a press message alert
       const messageData = {
         type: 'PRESS_MESSAGE',
         message: pressMessage,
@@ -101,9 +98,7 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     setIsSending(true);
     
     try {
-      // Send broadcast to all chairs
       if (broadcastTarget === 'chairs' || broadcastTarget === 'all') {
-        // Send to each council chair individually using existing mechanism
         for (const council of councils) {
           const messageData = {
             type: 'DIRECT_MESSAGE',
@@ -115,7 +110,7 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
             adminId: user?.id,
             timestamp: Date.now(),
             priority: 'normal',
-            status: 'pending',
+            status: 'resolved',
             isBroadcast: true
           };
           
@@ -125,7 +120,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         toast.success(`Message sent to all chairs`);
       }
       
-      // Send to press if target is 'all'
       if (broadcastTarget === 'all') {
         const pressMessageData = {
           type: 'PRESS_MESSAGE',
@@ -137,7 +131,7 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'pending',
+          status: 'resolved',
           isBroadcast: true
         };
         
@@ -146,7 +140,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         toast.success('Message also sent to Press Team');
       }
       
-      // Reset the form
       setBroadcastMessage('');
       setShowBroadcastMessage(false);
       setBroadcastTarget(null);
@@ -172,7 +165,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Broadcast Messages Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-4">
         <div className="p-4 flex flex-wrap gap-3 items-center justify-between border-b border-gray-100">
           <h3 className="text-md font-medium text-primary">Broadcast Messages</h3>
@@ -306,7 +298,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         </table>
       </div>
       
-      {/* Press Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h3 className="text-md font-medium text-primary">Press Team</h3>
