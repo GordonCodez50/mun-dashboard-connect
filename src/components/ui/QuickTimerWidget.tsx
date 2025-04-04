@@ -38,6 +38,12 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
     return "text-primary dark:text-white";
   };
 
+  // Determine if timer should have warning animation
+  const getTimerAnimation = () => {
+    if (mainTimer.duration <= 10 && mainTimer.isRunning && !mainTimer.isPaused) return "time-warning";
+    return "";
+  };
+
   // Handle time update from the TimeInput component
   const handleQuickTimeChange = (minutes: number, seconds: number) => {
     handleTimeChange(minutes, seconds, mainTimer.id);
@@ -68,9 +74,15 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           />
         </div>
       ) : (
-        <div className="w-full p-6 md:p-8 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative">
+        <div className="w-full p-6 md:p-8 border border-gray-100 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden">
+          {/* Background decorative elements */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-accent rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-accent rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
+          </div>
+          
           <button 
-            className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1"
+            className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={() => setIsEditing(true)}
             aria-label="Edit timer"
           >
@@ -78,25 +90,27 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           </button>
 
           <div 
-            className="flex justify-center mb-6 cursor-pointer"
+            className={`flex justify-center mb-6 cursor-pointer ${getTimerAnimation()}`}
             onClick={() => setIsEditing(true)}
           >
-            <div className={`text-6xl md:text-7xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
+            <div className={`text-6xl md:text-7xl font-mono font-bold timer-display ${getTimerColor()}`}>
               {formatTime(mainTimer.duration)}
             </div>
           </div>
           
-          <Progress 
-            value={progress} 
-            className="w-full h-4 md:h-5 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
-          />
+          <div className="timer-progress-bg mb-8">
+            <div 
+              className="timer-progress"
+              style={{ width: `${progress}%` }} 
+            />
+          </div>
           
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-5">
             <Button
               onClick={() => handleStartPause(mainTimer.id)}
               variant={mainTimer.isRunning && !mainTimer.isPaused ? "secondary" : "default"}
               size={isMobile ? "default" : "lg"}
-              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-auto w-32 md:w-40 font-medium`}
+              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-12 w-36 md:w-40 font-medium timer-button`}
             >
               {mainTimer.isRunning && !mainTimer.isPaused ? (
                 <>
@@ -113,11 +127,19 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
               onClick={() => handleReset(mainTimer.id)}
               variant="outline"
               size={isMobile ? "default" : "lg"}
-              className="px-6 py-2 h-auto w-32 md:w-40 font-medium border-2"
+              className="px-6 py-2 h-12 w-36 md:w-40 font-medium border-2 timer-button"
             >
               <RefreshCw size={20} className="mr-2" /> Reset
             </Button>
           </div>
+          
+          {/* Show pulsing indicator when timer is running */}
+          {mainTimer.isRunning && !mainTimer.isPaused && (
+            <div className="mt-4 flex items-center justify-center">
+              <div className="w-2 h-2 rounded-full bg-accent/80 pulse-animation mr-2"></div>
+              <span className="text-xs text-gray-500">Running</span>
+            </div>
+          )}
         </div>
       )}
     </div>

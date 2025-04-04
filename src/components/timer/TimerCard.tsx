@@ -61,8 +61,25 @@ export const TimerCard: React.FC<TimerCardProps> = ({
     return "text-primary dark:text-white";
   };
 
+  // Determine if timer should have warning animation
+  const getTimerAnimation = () => {
+    if (timer.duration <= 10 && timer.isRunning && !timer.isPaused) return "time-warning";
+    return "";
+  };
+
+  // Determine if timer should show glow effect
+  const getGlowEffect = () => {
+    if (timer.isRunning && !timer.isPaused) return "timer-glow";
+    return "";
+  };
+
+  // Get active preset if any matches current timer duration
+  const getActivePreset = (presetValue: number) => {
+    return timer.duration === presetValue ? "preset-button-active" : "";
+  };
+
   return (
-    <Card className="border-gray-200 dark:border-gray-800 shadow-md dark:bg-gray-800 overflow-hidden">
+    <Card className="timer-card">
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -86,7 +103,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                className="h-8 w-8 rounded-full"
+                className="h-8 w-8 rounded-full hover:bg-red-50 hover:text-red-500 hover:border-red-200"
                 onClick={() => onRemove(timer.id)}
               >
                 <Trash2 size={14} className="text-destructive" />
@@ -108,33 +125,35 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               />
             </div>
           ) : (
-            <div className="w-full p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md relative">
+            <div className={`w-full p-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-300 relative ${getGlowEffect()}`}>
               <button 
-                className="absolute top-2 right-2 text-gray-400 hover:text-accent transition-colors"
+                className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                 onClick={() => onEditingChange(timer.id, true)}
               >
                 <Edit size={16} />
               </button>
 
               <div 
-                className="flex justify-center mb-4 cursor-pointer"
+                className={`flex justify-center mb-6 cursor-pointer ${getTimerAnimation()}`}
                 onClick={() => onEditingChange(timer.id, true)}
               >
-                <div className={`text-5xl font-mono font-semibold ${getTimerColor()} transition-colors duration-300`}>
+                <div className={`text-5xl font-mono font-bold ${getTimerColor()} transition-colors duration-300 timer-display`}>
                   {formatTime(timer.duration)}
                 </div>
               </div>
               
-              <Progress 
-                value={progress} 
-                className="w-full h-3 mb-6 rounded-full bg-gray-200 dark:bg-gray-700" 
-              />
+              <div className="timer-progress-bg mb-6">
+                <div
+                  className="timer-progress"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
               
-              <div className="flex justify-center gap-3">
+              <div className="flex justify-center gap-4">
                 <Button
                   onClick={() => onStartPause(timer.id)}
                   variant={timer.isRunning && !timer.isPaused ? "secondary" : "default"}
-                  className={`${!(timer.isRunning && !timer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-10 w-28`}
+                  className={`${!(timer.isRunning && !timer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-11 w-32 timer-button`}
                 >
                   {timer.isRunning && !timer.isPaused ? (
                     <>
@@ -150,7 +169,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                 <Button
                   onClick={() => onReset(timer.id)}
                   variant="outline"
-                  className="px-6 py-2 h-10 w-28"
+                  className="px-6 py-2 h-11 w-32 timer-button"
                 >
                   <RefreshCw size={18} className="mr-1" /> Reset
                 </Button>
@@ -160,18 +179,17 @@ export const TimerCard: React.FC<TimerCardProps> = ({
         </div>
         
         {/* Preset Times */}
-        <div className="mt-6">
+        <div className="mt-8">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">Preset Times</h3>
           <div className="grid grid-cols-5 gap-2">
             {timePresets.map((preset) => (
-              <Button
+              <button
                 key={preset.value}
                 onClick={() => onPresetSelect(preset.value, timer.id)}
-                variant="outline"
-                className="py-2 h-auto text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-accent/10 hover:text-accent dark:hover:bg-accent/20"
+                className={`preset-button ${getActivePreset(preset.value)}`}
               >
                 {preset.label}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
