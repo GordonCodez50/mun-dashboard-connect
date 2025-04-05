@@ -7,7 +7,8 @@ import { notificationService } from './services/notificationService';
 import { 
   isNotificationSupported,
   getNotificationPermissionStatus,
-  isAndroid 
+  isAndroid,
+  isChrome 
 } from '@/utils/notificationPermission';
 
 // Global error handler for unhandled errors
@@ -20,7 +21,7 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Register service worker for FCM
+// Register service worker for FCM with better error handling
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/firebase-messaging-sw.js')
     .then(registration => {
@@ -28,6 +29,11 @@ if ('serviceWorker' in navigator) {
     })
     .catch(err => {
       console.error('Service Worker registration failed:', err);
+      
+      // If we're on Android Chrome and service worker failed, log detailed info
+      if (isAndroid() && isChrome()) {
+        console.warn('Android Chrome detected with service worker failure. This may affect notifications.');
+      }
     });
 }
 
@@ -37,6 +43,7 @@ const notificationStatus = {
   permission: getNotificationPermissionStatus(),
   platform: {
     isAndroid: isAndroid(),
+    isChrome: isChrome(),
     userAgent: navigator.userAgent
   }
 };

@@ -4,7 +4,7 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import firebaseService from '@/services/firebaseService';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { toast } from 'sonner';
-import { isAndroid } from '@/utils/notificationPermission';
+import { isAndroid, isChrome } from '@/utils/notificationPermission';
 
 // Get the exported Firebase instances
 const { firestore, auth } = firebaseService;
@@ -25,6 +25,7 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
     // Log platform information for debugging
     console.log('Platform info:', {
       isAndroid: isAndroid(),
+      isChrome: isChrome(),
       userAgent: navigator.userAgent,
       notificationPermission: Notification.permission
     });
@@ -35,11 +36,25 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
       return null;
     }
     
+    // For Android Chrome, ensure the service worker is registered before requesting token
+    if (isAndroid() && isChrome()) {
+      console.log('Android Chrome detected, ensuring service worker is registered');
+      try {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('Service worker registered or updated:', registration.scope);
+      } catch (swError) {
+        console.error('Service worker registration failed:', swError);
+        // Continue anyway as it might already be registered
+      }
+    }
+    
     const messaging = getMessaging();
+    console.log('Requesting FCM token with VAPID key:', VAPID_KEY.substring(0, 10) + '...');
+    
     const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
     
     if (currentToken) {
-      console.log('FCM token available');
+      console.log('FCM token available:', currentToken.substring(0, 10) + '...');
       
       // Save token to localStorage for easier access
       localStorage.setItem('fcmToken', currentToken);
@@ -51,7 +66,8 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
           const userDocRef = doc(firestore, FIRESTORE_COLLECTIONS.users, currentUser.uid);
           await updateDoc(userDocRef, {
             fcmToken: currentToken,
-            lastTokenUpdate: Timestamp.now()
+            lastTokenUpdate: Timestamp.now(),
+            userAgent: navigator.userAgent // Store user agent for debugging
           });
           console.log('FCM token saved to Firestore');
         } catch (firestoreError) {
@@ -66,6 +82,35 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
       // On Android, might need special handling
       if (isAndroid() && Notification.permission === 'granted') {
         console.warn('Android detected: Permission is granted but no token was returned');
+        
+        // Try refreshing the service worker registration
+        if ('serviceWorker' in navigator) {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            console.log('Current service worker registrations:', registrations.length);
+            
+            if (registrations.length > 0) {
+              // Unregister existing service workers
+              await Promise.all(registrations.map(reg => reg.unregister()));
+              console.log('Unregistered existing service workers');
+            }
+            
+            // Register a new one
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            console.log('New service worker registered:', registration.scope);
+            
+            // Try getting token again
+            const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+            if (retryToken) {
+              console.log('FCM token obtained after service worker refresh');
+              localStorage.setItem('fcmToken', retryToken);
+              return retryToken;
+            }
+          } catch (swError) {
+            console.error('Service worker refresh error:', swError);
+          }
+        }
+        
         toast.error('Unable to register for notifications on this device');
       }
       return null;

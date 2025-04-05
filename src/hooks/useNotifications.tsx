@@ -4,10 +4,12 @@ import { notificationService } from '@/services/notificationService';
 import { toast } from 'sonner';
 import { 
   isAndroid, 
+  isChrome,
   isNotificationSupported, 
   getNotificationPermissionStatus,
   requestNotificationPermission,
-  getNotificationSettingsInstructions 
+  getNotificationSettingsInstructions,
+  testNotification
 } from '@/utils/notificationPermission';
 
 export const useNotifications = () => {
@@ -15,6 +17,7 @@ export const useNotifications = () => {
   const [isSupported, setIsSupported] = useState<boolean>(false);
   const [permissionChecked, setPermissionChecked] = useState<boolean>(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [requestInProgress, setRequestInProgress] = useState<boolean>(false);
 
   // Check notification support on mount
   useEffect(() => {
@@ -25,6 +28,7 @@ export const useNotifications = () => {
       // Check if we already have permission
       const hasPermission = notificationService.hasPermission();
       setPermissionGranted(hasPermission);
+      console.log('Initial permission check:', hasPermission);
     }
     
     setPermissionChecked(true);
@@ -38,8 +42,21 @@ export const useNotifications = () => {
     }
     
     try {
+      // Prevent multiple concurrent requests
+      if (requestInProgress) {
+        console.log('Permission request already in progress');
+        return false;
+      }
+      
+      setRequestInProgress(true);
+      
       // Clear any previous errors
       setPermissionError(null);
+
+      console.log('Requesting notification permission, Android:', isAndroid(), 'Chrome:', isChrome());
+      
+      // Show a toast to let the user know what's happening
+      toast.info("Requesting notification permission...");
 
       // Use enhanced permission request function
       const result = await requestNotificationPermission();
@@ -48,12 +65,39 @@ export const useNotifications = () => {
       if (result.success) {
         toast.success("Notification permission granted!");
         
+        // Try to show a test notification
+        const notificationShown = await testNotification();
+        if (!notificationShown) {
+          console.warn('Test notification failed despite permission granted');
+        }
+        
         // After permission is granted, try to get FCM token
         if (notificationService.isFcmSupported()) {
           try {
             const token = await notificationService.requestFcmToken();
             if (!token) {
               console.warn('Failed to obtain FCM token even with permission granted');
+              
+              // For Android Chrome, this could be due to service worker issues
+              if (isAndroid() && isChrome()) {
+                console.log('Android Chrome detected, trying service worker refresh');
+                
+                // Re-register the service worker
+                if ('serviceWorker' in navigator) {
+                  try {
+                    await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                    console.log('Service worker re-registered');
+                    
+                    // Try getting token again
+                    const secondToken = await notificationService.requestFcmToken();
+                    if (!secondToken) {
+                      console.warn('Second attempt to get FCM token failed');
+                    }
+                  } catch (swError) {
+                    console.error('Service worker registration error:', swError);
+                  }
+                }
+              }
             }
           } catch (fcmError) {
             console.error('Error getting FCM token:', fcmError);
@@ -84,8 +128,10 @@ export const useNotifications = () => {
       toast.error(errorMsg);
       setPermissionError(errorMsg);
       return false;
+    } finally {
+      setRequestInProgress(false);
     }
-  }, [isSupported]);
+  }, [isSupported, requestInProgress]);
 
   // Show a reply notification
   const showReplyNotification = useCallback((
@@ -113,16 +159,38 @@ export const useNotifications = () => {
     return hasPermission;
   }, [isSupported]);
 
+  // Test FCM functionality
+  const testFcm = useCallback(async () => {
+    if (!permissionGranted || !isSupported) {
+      toast.error("Notification permission not granted");
+      return false;
+    }
+    
+    toast.info("Testing FCM notifications...");
+    const result = await notificationService.testFcm();
+    
+    if (result) {
+      toast.success("FCM test successful!");
+    } else {
+      toast.error("FCM test failed. Check console for details.");
+    }
+    
+    return result;
+  }, [permissionGranted, isSupported]);
+
   return {
     isSupported,
     permissionGranted,
     permissionChecked,
     permissionError,
     isAndroid: isAndroid(),
+    isChrome: isChrome(),
     requestPermission,
     checkPermission,
     showReplyNotification,
     showNotificationPrompt: permissionChecked && !permissionGranted && isSupported,
-    getSettingsInstructions: getNotificationSettingsInstructions
+    getSettingsInstructions: getNotificationSettingsInstructions,
+    testFcm,
+    requestInProgress
   };
 };

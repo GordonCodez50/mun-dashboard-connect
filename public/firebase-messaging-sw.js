@@ -4,6 +4,9 @@
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
+// Log successful service worker initialization
+console.log('Firebase messaging service worker initialized');
+
 // Initialize the Firebase app in the service worker
 firebase.initializeApp({
   apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
@@ -18,6 +21,21 @@ firebase.initializeApp({
 
 // Retrieve an instance of Firebase Messaging
 const messaging = firebase.messaging();
+console.log('Firebase messaging instance created in service worker');
+
+// Log service worker activation
+self.addEventListener('install', (event) => {
+  console.log('Firebase messaging service worker installed');
+  // Force activation without waiting for tabs to close
+  self.skipWaiting();
+});
+
+// Log service worker activation
+self.addEventListener('activate', (event) => {
+  console.log('Firebase messaging service worker activated');
+  // Take control of all clients immediately
+  event.waitUntil(clients.claim());
+});
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
@@ -28,12 +46,15 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.notification.body || '',
     icon: '/logo.png',
     badge: '/logo.png',
-    data: payload.data,
+    data: payload.data || {},
     vibrate: [200, 100, 200],
     requireInteraction: payload.data?.requireInteraction === 'true'
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  // Create and show the notification
+  self.registration.showNotification(notificationTitle, notificationOptions)
+    .then(() => console.log('Notification shown successfully'))
+    .catch(error => console.error('Error showing notification:', error));
 });
 
 // Handle notification click
@@ -60,4 +81,16 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
+});
+
+// Add message handlers to communicate with the page
+self.addEventListener('message', (event) => {
+  console.log('[firebase-messaging-sw.js] Message received', event.data);
+  
+  if (event.data && event.data.type === 'PING') {
+    // Respond to ping message to verify service worker is running
+    if (event.source && event.source.postMessage) {
+      event.source.postMessage({ type: 'PONG' });
+    }
+  }
 });
