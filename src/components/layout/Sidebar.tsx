@@ -31,8 +31,11 @@ export const Sidebar = () => {
   // Handle navigation for mobile devices
   const handleNavigation = (path: string) => {
     if (isMobile) {
-      // For mobile: navigate to the path
-      navigate(path);
+      // For mobile: navigate to the path and force a slight delay
+      // This ensures the navigation happens after the click event is fully processed
+      setTimeout(() => {
+        navigate(path);
+      }, 10);
     }
   };
 
