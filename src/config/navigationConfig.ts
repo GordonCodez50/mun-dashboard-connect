@@ -12,8 +12,18 @@ interface NavButtonConfig {
   openInNewTab?: boolean;
 }
 
+// External navigation button for chair dashboard
 export const externalNavButton: NavButtonConfig = {
   text: "Resources",
   url: "https://isbmun.com/resources",
   openInNewTab: true
+};
+
+// Page titles for mobile headers
+export const pageTitles = {
+  admin: "Admin Panel",
+  chair: "Chair Dashboard",
+  press: "Press Dashboard",
+  timer: "Timer Management",
+  userManagement: "User Management"
 };
