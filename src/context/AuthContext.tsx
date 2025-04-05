@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { authService } from '@/services/firebaseService';
 import { extractUserInfo } from '@/config/firebaseConfig';
+import { notificationService } from '@/services/notificationService';
 
 // Auth context type
 type AuthContextType = {
@@ -64,6 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Reload users list
       const allUsers = await authService.getUsers();
       setUsers(allUsers);
+      
+      // Request notification permission for chairs and press users
+      if (loggedInUser.role === 'chair' && notificationService.isNotificationSupported()) {
+        // Only request permissions for chairs - we'll prompt in the UI for admins
+        notificationService.requestPermission().catch(err => {
+          console.warn('Error requesting notification permission:', err);
+        });
+      }
       
       // Navigate based on role and council
       if (loggedInUser.role === 'chair') {

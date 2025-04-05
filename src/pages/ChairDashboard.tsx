@@ -4,11 +4,12 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
 import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
-import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare } from 'lucide-react';
+import { Wrench, MessagesSquare, Truck, AlertTriangle, Send, MessageSquare, BellRing } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
+import { useNotifications } from '@/hooks/useNotifications';
 
 type Alert = {
   id: string;
@@ -30,11 +31,28 @@ const ChairDashboard = () => {
   const [alertsMuted, setAlertsMuted] = useState<boolean>(false);
   const [lastAlertTime, setLastAlertTime] = useState<number>(0);
   const [isOnCooldown, setIsOnCooldown] = useState<boolean>(false);
+  const { isSupported, permissionGranted, requestPermission } = useNotifications();
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
   useAlertsSound(recentAlerts, alertsMuted);
+
+  useEffect(() => {
+    if (isSupported && !permissionGranted) {
+      toast.info(
+        "Enable notifications to stay updated",
+        {
+          description: "Get notified about important updates even when the app is in the background.",
+          duration: 8000,
+          action: {
+            label: "Enable",
+            onClick: () => requestPermission()
+          }
+        }
+      );
+    }
+  }, [isSupported, permissionGranted, requestPermission]);
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -234,26 +252,37 @@ const ChairDashboard = () => {
                 Welcome back, {user?.name}
               </p>
             </div>
-            <button
-              onClick={() => setAlertsMuted(!alertsMuted)}
-              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              title={alertsMuted ? "Unmute Notifications" : "Mute Notifications"}
-            >
-              {alertsMuted ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-                  <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
+            <div className="flex items-center gap-2">
+              {isSupported && !permissionGranted && (
+                <button
+                  onClick={() => requestPermission()}
+                  className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  title="Enable Notifications"
+                >
+                  <BellRing size={20} />
+                </button>
               )}
-            </button>
+              <button
+                onClick={() => setAlertsMuted(!alertsMuted)}
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                title={alertsMuted ? "Unmute Notifications" : "Mute Notifications"}
+              >
+                {alertsMuted ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+                    <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                )}
+              </button>
+            </div>
           </header>
           
           <div className="mb-8">

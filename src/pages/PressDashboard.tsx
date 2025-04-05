@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
 import { toast } from "sonner";
-import { MapPin, Send, HelpCircle, MessageSquare, AlertTriangle } from 'lucide-react';
+import { MapPin, Send, HelpCircle, MessageSquare, AlertTriangle, BellRing } from 'lucide-react';
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNotifications } from '@/hooks/useNotifications';
 
 type Alert = {
   id: string;
@@ -27,9 +27,26 @@ const PressDashboard = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   const [location, setLocation] = useState('');
+  const { isSupported, permissionGranted, requestPermission } = useNotifications();
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
+
+  useEffect(() => {
+    if (isSupported && !permissionGranted) {
+      toast.info(
+        "Enable notifications to stay updated",
+        {
+          description: "Get notified about important updates even when the app is in the background.",
+          duration: 8000,
+          action: {
+            label: "Enable",
+            onClick: () => requestPermission()
+          }
+        }
+      );
+    }
+  }, [isSupported, permissionGranted, requestPermission]);
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -205,10 +222,23 @@ const PressDashboard = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
           <header className="mb-8">
-            <h1 className="text-3xl font-bold text-primary dark:text-white">Press Dashboard</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Welcome back, {user?.name}
-            </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-primary dark:text-white">Press Dashboard</h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  Welcome back, {user?.name}
+                </p>
+              </div>
+              {isSupported && !permissionGranted && (
+                <button
+                  onClick={() => requestPermission()}
+                  className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  title="Enable Notifications"
+                >
+                  <BellRing size={20} />
+                </button>
+              )}
+            </div>
           </header>
           
           <div className="mb-8">
