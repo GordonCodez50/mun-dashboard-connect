@@ -4,6 +4,7 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import firebaseService from '@/services/firebaseService';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { toast } from 'sonner';
+import { isAndroid } from '@/utils/notificationPermission';
 
 // Get the exported Firebase instances
 const { firestore, auth } = firebaseService;
@@ -18,6 +19,19 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
   try {
     if (!('serviceWorker' in navigator)) {
       console.warn('Service workers are not supported');
+      return null;
+    }
+    
+    // Log platform information for debugging
+    console.log('Platform info:', {
+      isAndroid: isAndroid(),
+      userAgent: navigator.userAgent,
+      notificationPermission: Notification.permission
+    });
+    
+    // Check permission status first
+    if (Notification.permission !== 'granted') {
+      console.warn('Notification permission not granted, cannot get FCM token');
       return null;
     }
     
@@ -48,6 +62,12 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
       return currentToken;
     } else {
       console.warn('No FCM token available, notification permission may not be enabled');
+      
+      // On Android, might need special handling
+      if (isAndroid() && Notification.permission === 'granted') {
+        console.warn('Android detected: Permission is granted but no token was returned');
+        toast.error('Unable to register for notifications on this device');
+      }
       return null;
     }
   } catch (error) {

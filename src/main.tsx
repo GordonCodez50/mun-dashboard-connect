@@ -4,6 +4,11 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { notificationService } from './services/notificationService';
+import { 
+  isNotificationSupported,
+  getNotificationPermissionStatus,
+  isAndroid 
+} from '@/utils/notificationPermission';
 
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
@@ -25,6 +30,18 @@ if ('serviceWorker' in navigator) {
       console.error('Service Worker registration failed:', err);
     });
 }
+
+// Check for notification support early and log platform information
+const notificationStatus = {
+  supported: isNotificationSupported(),
+  permission: getNotificationPermissionStatus(),
+  platform: {
+    isAndroid: isAndroid(),
+    userAgent: navigator.userAgent
+  }
+};
+
+console.log('Notification support status:', notificationStatus);
 
 // Check for notification support early
 if (notificationService.isNotificationSupported()) {

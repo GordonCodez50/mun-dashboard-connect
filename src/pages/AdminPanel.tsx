@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService } from '@/services/firebaseService';
 import { useNotifications } from '@/hooks/useNotifications';
-import { BellRing } from 'lucide-react';
+import { BellRing, Settings, AlertTriangle } from 'lucide-react';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';
@@ -15,6 +15,14 @@ import { Alert } from '@/components/admin/AlertItem';
 import { Council } from '@/components/admin/CouncilList';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
 import { Button } from '@/components/ui/button';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 
 const AdminPanel = () => {
   const { user, users } = useAuth();
@@ -32,8 +40,16 @@ const AdminPanel = () => {
   });
   
   // Notification state
-  const { isSupported, permissionGranted, requestPermission } = useNotifications();
+  const { 
+    isSupported, 
+    permissionGranted, 
+    requestPermission, 
+    permissionError,
+    isAndroid,
+    getSettingsInstructions
+  } = useNotifications();
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
 
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
@@ -58,6 +74,23 @@ const AdminPanel = () => {
   useEffect(() => {
     localStorage.setItem('alertsMuted', JSON.stringify(alertsMuted));
   }, [alertsMuted]);
+
+  // Close dialog when permission is granted
+  useEffect(() => {
+    if (permissionGranted && showPermissionDialog) {
+      setShowPermissionDialog(false);
+    }
+  }, [permissionGranted]);
+
+  // Handle permission request click
+  const handleRequestPermission = async () => {
+    const result = await requestPermission();
+    
+    // If on Android and permission denied, show instructions dialog
+    if (!result && isAndroid) {
+      setShowPermissionDialog(true);
+    }
+  };
 
   // Load councils from Firestore and match with chair users
   useEffect(() => {
@@ -171,18 +204,24 @@ const AdminPanel = () => {
                 <div className="flex items-center">
                   <BellRing className="h-5 w-5 text-amber-500 mr-2" />
                   <p className="text-sm text-amber-800">
-                    Enable notifications to get alerts about important events
+                    Enable notifications to receive alerts in real-time
                   </p>
                 </div>
                 <Button 
                   size="sm" 
                   variant="outline"
                   className="border-amber-300 text-amber-800 hover:bg-amber-100"
-                  onClick={() => requestPermission()}
+                  onClick={handleRequestPermission}
                 >
                   Enable Notifications
                 </Button>
               </div>
+              {permissionError && (
+                <div className="mt-2 flex items-start gap-2 text-xs text-amber-700">
+                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                  <p>{permissionError}</p>
+                </div>
+              )}
             </div>
           )}
           
@@ -206,6 +245,54 @@ const AdminPanel = () => {
           </div>
         </div>
       </div>
+
+      {/* Instructions Dialog for Android users */}
+      <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enable Notifications</DialogTitle>
+            <DialogDescription>
+              Your browser requires manual permission for notifications.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-4">
+              <Settings className="h-10 w-10 text-muted-foreground" />
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none">Browser Settings Required</h4>
+                <p className="text-sm text-muted-foreground">{getSettingsInstructions()}</p>
+              </div>
+            </div>
+            
+            <div className="rounded-md bg-amber-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-amber-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-amber-800">Important Note</h3>
+                  <div className="mt-2 text-sm text-amber-700">
+                    <p>After enabling notifications in settings, return to this app and reload the page.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPermissionDialog(false)}>
+              I'll do it later
+            </Button>
+            <Button onClick={() => {
+              toast.success("Check your browser settings to enable notifications");
+              setShowPermissionDialog(false);
+            }}>
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
