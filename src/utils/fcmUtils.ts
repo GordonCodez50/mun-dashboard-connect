@@ -1,9 +1,12 @@
 
 import { getMessaging, getToken, deleteToken } from 'firebase/messaging';
 import { doc, updateDoc, Timestamp } from 'firebase/firestore';
-import { firestore, auth } from '@/services/firebaseService';
+import firebaseService from '@/services/firebaseService';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { toast } from 'sonner';
+
+// Get the exported Firebase instances
+const { firestore, auth } = firebaseService;
 
 // The public VAPID key for web push
 const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';

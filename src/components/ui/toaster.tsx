@@ -21,12 +21,18 @@ export function Toaster() {
         
         if (variant === "destructive") {
           Icon = AlertTriangle;
-        } else if (title?.toLowerCase().includes('reply') || 
-                  description?.toLowerCase().includes('reply')) {
+        } else if (
+          (typeof title === 'string' && title.toLowerCase().includes('reply')) || 
+          (typeof description === 'string' && description.toLowerCase().includes('reply'))
+        ) {
           Icon = MessageSquare;
-        } else if (title?.toLowerCase().includes('success') || 
-                  title?.toLowerCase().includes('resolved') ||
-                  title?.toLowerCase().includes('completed')) {
+        } else if (
+          (typeof title === 'string' && (
+            title.toLowerCase().includes('success') || 
+            title.toLowerCase().includes('resolved') ||
+            title.toLowerCase().includes('completed')
+          ))
+        ) {
           Icon = CheckCircle;
         }
         
