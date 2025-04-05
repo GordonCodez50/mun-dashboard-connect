@@ -8,20 +8,42 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
+import { Bell, AlertTriangle, MessageSquare, CheckCircle, X } from "lucide-react"
 
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Determine icon based on title or variant
+        let Icon = Bell;
+        
+        if (variant === "destructive") {
+          Icon = AlertTriangle;
+        } else if (title?.toLowerCase().includes('reply') || 
+                  description?.toLowerCase().includes('reply')) {
+          Icon = MessageSquare;
+        } else if (title?.toLowerCase().includes('success') || 
+                  title?.toLowerCase().includes('resolved') ||
+                  title?.toLowerCase().includes('completed')) {
+          Icon = CheckCircle;
+        }
+        
         return (
           <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
+            <div className="flex gap-3">
+              <div className="mt-1">
+                <Icon className={`h-5 w-5 ${
+                  variant === "destructive" ? "text-red-500" : "text-primary"
+                }`} />
+              </div>
+              <div className="grid gap-1">
+                {title && <ToastTitle>{title}</ToastTitle>}
+                {description && (
+                  <ToastDescription>{description}</ToastDescription>
+                )}
+              </div>
             </div>
             {action}
             <ToastClose />

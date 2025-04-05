@@ -40,8 +40,8 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
   const notificationSound = useRef<HTMLAudioElement | null>(null);
   const processedAlertIds = useRef<Set<string>>(getProcessedAlertIds());
   const processedReplyIds = useRef<Set<string>>(getProcessedReplyIds());
-
-  // Initialize notification sound with the new ringtone
+  
+  // Initialize notification sound with the ringtone
   useEffect(() => {
     notificationSound.current = new Audio("/ringtonenotification.mp3");
     return () => {
@@ -117,30 +117,24 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
       alertsWithNewReplies.forEach(alert => {
         if (alert.reply && !alert.replyFrom) {
           // Admin reply (default if replyFrom not specified)
-          notificationService.showNotification(
-            `New reply from ${alert.admin || 'Admin'}`,
-            {
-              body: alert.reply,
-              icon: '/logo.png',
-              tag: `alert-reply-${alert.id}`,
-              timestamp: Date.now(),
-            } as ExtendedNotificationOptions
+          notificationService.showReplyNotification(
+            alert.admin || 'Admin',
+            alert.reply,
+            alert.id,
+            'admin'
           );
           
           // Mark this reply as processed
           processedReplyIds.current.add(`${alert.id}-admin-${alert.reply}`);
         } else if (alert.reply && alert.replyFrom) {
           // Reply from a specific user type
-          notificationService.showNotification(
-            `New reply from ${alert.replyFrom === 'admin' ? (alert.admin || 'Admin') : 
-                              alert.replyFrom === 'press' ? 'Press' : 
-                              (alert.chairName || 'Chair')}`,
-            {
-              body: alert.reply,
-              icon: '/logo.png',
-              tag: `alert-reply-${alert.id}`,
-              timestamp: Date.now(),
-            } as ExtendedNotificationOptions
+          notificationService.showReplyNotification(
+            alert.replyFrom === 'admin' ? (alert.admin || 'Admin') : 
+            alert.replyFrom === 'press' ? 'Press' : 
+            (alert.chairName || 'Chair'),
+            alert.reply,
+            alert.id,
+            alert.replyFrom
           );
           
           // Mark this reply as processed
@@ -149,14 +143,11 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
         
         // Show notifications for chair replies
         if (alert.chairReply && alert.chairName) {
-          notificationService.showNotification(
-            `New reply from ${alert.chairName}`,
-            {
-              body: alert.chairReply,
-              icon: '/logo.png',
-              tag: `chair-reply-${alert.id}`,
-              timestamp: Date.now(),
-            } as ExtendedNotificationOptions
+          notificationService.showReplyNotification(
+            alert.chairName,
+            alert.chairReply,
+            alert.id,
+            'chair'
           );
           
           // Mark this chair reply as processed
@@ -172,5 +163,16 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
     setPreviousAlerts(validAlerts);
   }, [alerts, alertsMuted, previousAlerts]);
   
-  return notificationSound;
+  // Method to clear processed alerts (useful when testing)
+  const clearProcessedAlerts = () => {
+    sessionStorage.removeItem('processedAlertIds');
+    sessionStorage.removeItem('processedReplyIds');
+    processedAlertIds.current = new Set();
+    processedReplyIds.current = new Set();
+  };
+  
+  return {
+    notificationSound,
+    clearProcessedAlerts
+  };
 };

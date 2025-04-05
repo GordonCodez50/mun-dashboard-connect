@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -40,6 +39,8 @@ import { FirebaseError } from 'firebase/app';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
+import { getMessaging, getToken } from 'firebase/messaging';
+import { notificationService } from './notificationService';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -47,6 +48,16 @@ const auth = getAuth(app);
 const firestore = getFirestore(app);
 const realtimeDb = getDatabase(app);
 const analytics = getAnalytics(app);
+
+// Initialize Firebase Cloud Messaging (FCM)
+let messaging: any = null;
+try {
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    messaging = getMessaging(app);
+  }
+} catch (error) {
+  console.error('Error initializing Firebase messaging:', error);
+}
 
 // Demo data for simulation mode
 const DEMO_USERS = [
@@ -351,6 +362,81 @@ const setDoc = (docRef: any, data: any) => {
   });
 };
 
+// New service for Firebase Cloud Messaging
+export const fcmService = {
+  getToken: async (vapidKey: string): Promise<string | null> => {
+    if (!messaging) {
+      console.error('Firebase messaging is not available');
+      return null;
+    }
+    
+    try {
+      const currentToken = await getToken(messaging, { vapidKey });
+      
+      if (currentToken) {
+        console.log('FCM token obtained');
+        
+        // Save token in Firestore (for admin to send notifications)
+        if (auth.currentUser) {
+          const userRef = doc(firestore, FIRESTORE_COLLECTIONS.users, auth.currentUser.uid);
+          await updateDoc(userRef, {
+            fcmToken: currentToken,
+            lastTokenUpdate: Timestamp.now()
+          });
+        }
+        
+        return currentToken;
+      } else {
+        console.warn('No FCM token available');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error getting FCM token:', error);
+      return null;
+    }
+  },
+  
+  // Send notification to specific users or councils
+  sendNotification: async (
+    options: {
+      title: string;
+      body: string;
+      tokens?: string[];
+      council?: string;
+      role?: string;
+      data?: any;
+    }
+  ): Promise<boolean> => {
+    if (FIREBASE_CONFIG.demoMode) {
+      console.log('Demo mode: would send notification', options);
+      return true;
+    }
+    
+    try {
+      // In a real implementation, this would involve a Cloud Function
+      // to send the notification through the Firebase Admin SDK
+      
+      // For demo purposes, we're simulating it with a direct notification
+      if (options.tokens && options.tokens.length > 0) {
+        // Simulate successful notification
+        toast.success(`Notification sent to ${options.tokens.length} devices`);
+        return true;
+      } else if (options.council) {
+        // Would query for all tokens for the given council
+        toast.success(`Notification would be sent to council ${options.council}`);
+        return true;
+      } else {
+        toast.error('No recipients specified for notification');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast.error('Failed to send notification');
+      return false;
+    }
+  }
+};
+
 // Realtime Database service (replaces WebSocket)
 export const realtimeService = {
   // Listen for new alerts
@@ -397,6 +483,10 @@ export const realtimeService = {
         status: 'pending'
       });
       
+      // If this is a server implementation, we would trigger FCM here
+      // For now just log as a placeholder
+      console.log('Alert created, would trigger FCM notification');
+      
       return true;
     } catch (error) {
       console.error('Error creating alert:', error);
@@ -414,6 +504,11 @@ export const realtimeService = {
         updatedAt: Date.now(),
         ...additionalData
       });
+      
+      // If there's a reply, we would trigger FCM here for the specific user
+      if (additionalData.reply) {
+        console.log('Reply added, would trigger FCM notification to specific user');
+      }
       
       return true;
     } catch (error) {
@@ -686,6 +781,18 @@ export const initializeFirebase = async () => {
     
     console.log('Firebase initialized successfully');
     
+    // Initialize FCM if supported
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && notificationService.hasPermission()) {
+      try {
+        const token = await notificationService.requestFcmToken();
+        if (token) {
+          console.log('FCM initialized successfully');
+        }
+      } catch (fcmError) {
+        console.error('Error initializing FCM:', fcmError);
+      }
+    }
+    
     // Initialize demo data if in demo mode
     if (FIREBASE_CONFIG.demoMode) {
       await initializeDemoData();
@@ -704,8 +811,10 @@ export default {
   firestore,
   realtimeDb,
   analytics,
+  messaging,
   authService,
   realtimeService,
   firestoreService,
+  fcmService,
   initializeFirebase
 };

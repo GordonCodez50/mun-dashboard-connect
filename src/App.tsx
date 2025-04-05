@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import { TimerProvider } from "./context/TimerContext";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { notificationService } from "./services/notificationService";
+import { requestAndSaveFcmToken } from "./utils/fcmUtils";
 
 // Eager loading critical components
 import Login from "./pages/Login";
@@ -56,7 +56,7 @@ const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: false,
       staleTime: 30000,
-      gcTime: 60000, // Changed from cacheTime to gcTime
+      gcTime: 60000,
       meta: {
         onError: (error: Error) => {
           console.error('Query error:', error);
@@ -116,9 +116,17 @@ const AppWithAuth = () => {
         await initializeFirebase();
         
         // Check if notification permission is already granted
-        if (notificationService.isNotificationSupported() && 
-            notificationService.hasPermission()) {
-          console.log("Notification permission already granted");
+        if (notificationService.isNotificationSupported()) {
+          if (notificationService.hasPermission()) {
+            console.log("Notification permission already granted");
+            
+            // Initialize FCM if supported
+            if (notificationService.isFcmSupported()) {
+              await requestAndSaveFcmToken();
+            }
+          } else {
+            console.log("Notification permission not granted yet");
+          }
         }
       } catch (error) {
         console.error('Failed to initialize app:', error);
