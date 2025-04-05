@@ -84,7 +84,7 @@ const showTimerNotification = (timerName: string): boolean => {
     // Cast to satisfy TypeScript
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
-  });
+  } as ExtendedNotificationOptions);
 };
 
 // Show alert notification
@@ -99,7 +99,30 @@ const showAlertNotification = (alertType: string, council: string, message: stri
       tag: 'alert-notification', // Group similar notifications
       requireInteraction: urgent, // Urgent alerts stay until clicked
       timestamp: Date.now(),
-    }
+    } as ExtendedNotificationOptions
+  );
+};
+
+// Show reply notification
+const showReplyNotification = (
+  fromName: string, 
+  replyMessage: string, 
+  alertId: string,
+  userType: 'admin' | 'chair' | 'press' = 'admin'
+): boolean => {
+  const emoji = userType === 'admin' ? '👨‍💼' : 
+                userType === 'chair' ? '🪑' : '📰';
+  
+  return showNotification(
+    `${emoji} New reply from ${fromName}`,
+    {
+      body: replyMessage,
+      icon: '/logo.png',
+      tag: `reply-${alertId}`,
+      timestamp: Date.now(),
+      vibrate: [100, 50, 100],
+      requireInteraction: false,
+    } as ExtendedNotificationOptions
   );
 };
 
@@ -110,4 +133,5 @@ export const notificationService = {
   showNotification,
   showTimerNotification,
   showAlertNotification,
+  showReplyNotification,
 };

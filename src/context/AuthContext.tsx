@@ -32,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [permissionChecked, setPermissionChecked] = useState(false);
+  const [permissionPromptShown, setPermissionPromptShown] = useState(false);
   const navigate = useNavigate();
 
   // Check notification support on mount
@@ -76,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const granted = await notificationService.requestPermission();
       setPermissionGranted(granted);
+      setPermissionPromptShown(true);
       return granted;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -173,9 +175,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Determine if notification prompt should be shown
+  // Determine if notification prompt should be shown - only show once per session
   const showNotificationPrompt = permissionChecked && 
                                 !permissionGranted && 
+                                !permissionPromptShown &&
                                 notificationService.isNotificationSupported() && 
                                 user !== null && 
                                 (user?.role === 'chair' || user?.council === 'PRESS');

@@ -15,6 +15,8 @@ export type AlertWithSound = {
   chairName?: string;
   priority?: 'normal' | 'urgent';
   chairReply?: string;
+  replyTimestamp?: number;
+  replyFrom?: 'admin' | 'chair' | 'press';
 };
 
 // Extended notification options for TypeScript compatibility
@@ -36,7 +38,7 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
     };
   }, []);
 
-  // Play sound for new alerts if not muted and show notifications
+  // Play sound for new alerts and replies if not muted and show notifications
   useEffect(() => {
     if (!alerts || !previousAlerts) return;
     
@@ -49,10 +51,22 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
       alert => !validPreviousAlerts.some(a => a.id === alert.id)
     );
     
-    // Check for new replies on existing alerts
+    // Check for new replies (admin replies or chair replies) on existing alerts
     const alertsWithNewReplies = validAlerts.filter(alert => {
       const prevAlert = validPreviousAlerts.find(a => a.id === alert.id);
-      return prevAlert && alert.reply && alert.reply !== prevAlert.reply;
+      
+      // Check for admin replies
+      const hasNewAdminReply = prevAlert && alert.reply && alert.reply !== prevAlert.reply;
+      
+      // Check for chair replies
+      const hasNewChairReply = prevAlert && alert.chairReply && alert.chairReply !== prevAlert.chairReply;
+      
+      // Check for reply timestamp changes (for differentiating new replies)
+      const hasNewReplyTimestamp = prevAlert && 
+                                  alert.replyTimestamp && 
+                                  (!prevAlert.replyTimestamp || alert.replyTimestamp > prevAlert.replyTimestamp);
+      
+      return hasNewAdminReply || hasNewChairReply || hasNewReplyTimestamp;
     });
     
     if ((newAlerts.length > 0 || alertsWithNewReplies.length > 0) && !alertsMuted) {
@@ -73,15 +87,42 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
         );
       });
       
-      // Show notifications for new replies
+      // Show notifications for new replies from admins
       alertsWithNewReplies.forEach(alert => {
-        if (alert.reply) {
+        if (alert.reply && !alert.replyFrom) {
+          // Admin reply (default if replyFrom not specified)
           notificationService.showNotification(
             `New reply from ${alert.admin || 'Admin'}`,
             {
               body: alert.reply,
               icon: '/logo.png',
               tag: `alert-reply-${alert.id}`,
+              timestamp: Date.now(),
+            } as ExtendedNotificationOptions
+          );
+        } else if (alert.reply && alert.replyFrom) {
+          // Reply from a specific user type
+          notificationService.showNotification(
+            `New reply from ${alert.replyFrom === 'admin' ? (alert.admin || 'Admin') : 
+                              alert.replyFrom === 'press' ? 'Press' : 
+                              (alert.chairName || 'Chair')}`,
+            {
+              body: alert.reply,
+              icon: '/logo.png',
+              tag: `alert-reply-${alert.id}`,
+              timestamp: Date.now(),
+            } as ExtendedNotificationOptions
+          );
+        }
+        
+        // Show notifications for chair replies
+        if (alert.chairReply && alert.chairName) {
+          notificationService.showNotification(
+            `New reply from ${alert.chairName}`,
+            {
+              body: alert.chairReply,
+              icon: '/logo.png',
+              tag: `chair-reply-${alert.id}`,
               timestamp: Date.now(),
             } as ExtendedNotificationOptions
           );

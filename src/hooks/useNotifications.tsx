@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '@/services/notificationService';
 import { toast } from 'sonner';
 
@@ -23,7 +23,7 @@ export const useNotifications = () => {
   }, []);
 
   // Request notification permission
-  const requestPermission = async () => {
+  const requestPermission = useCallback(async () => {
     if (!isSupported) {
       toast.error("Notifications are not supported in your browser");
       return false;
@@ -45,16 +45,33 @@ export const useNotifications = () => {
       toast.error("Failed to request notification permission");
       return false;
     }
-  };
+  }, [isSupported]);
+
+  // Show a reply notification
+  const showReplyNotification = useCallback((
+    fromName: string,
+    message: string,
+    alertId: string,
+    userType: 'admin' | 'chair' | 'press' = 'admin'
+  ) => {
+    if (!permissionGranted || !isSupported) return false;
+    
+    return notificationService.showReplyNotification(
+      fromName,
+      message,
+      alertId,
+      userType
+    );
+  }, [permissionGranted, isSupported]);
 
   // Allow manual notification checks
-  const checkPermission = () => {
+  const checkPermission = useCallback(() => {
     if (!isSupported) return false;
     
     const hasPermission = notificationService.hasPermission();
     setPermissionGranted(hasPermission);
     return hasPermission;
-  };
+  }, [isSupported]);
 
   return {
     isSupported,
@@ -62,6 +79,7 @@ export const useNotifications = () => {
     permissionChecked,
     requestPermission,
     checkPermission,
+    showReplyNotification,
     showNotificationPrompt: permissionChecked && !permissionGranted && isSupported
   };
 };
