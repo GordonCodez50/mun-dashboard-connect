@@ -8,7 +8,10 @@ import {
   isNotificationSupported,
   getNotificationPermissionStatus,
   isAndroid,
-  isChrome 
+  isChrome,
+  isIOS,
+  getIOSVersion,
+  canPotentiallyEnableNotifications
 } from '@/utils/notificationPermission';
 
 // Add viewport meta for proper mobile rendering
@@ -57,7 +60,10 @@ const notificationStatus = {
   permission: getNotificationPermissionStatus(),
   platform: {
     isAndroid: isAndroid(),
+    isIOS: isIOS(),
+    iosVersion: isIOS() ? getIOSVersion() : 0,
     isChrome: isChrome(),
+    canPotentiallyEnableNotifications: canPotentiallyEnableNotifications(),
     userAgent: navigator.userAgent
   }
 };
@@ -67,6 +73,20 @@ console.log('Notification support status:', notificationStatus);
 // Check for notification support early
 if (notificationService.isNotificationSupported()) {
   console.log('Browser notifications are supported');
+  
+  // Check for specific issues with iOS
+  if (isIOS()) {
+    const iosVersion = getIOSVersion();
+    console.log(`iOS ${iosVersion} detected`);
+    
+    if (iosVersion >= 16.4) {
+      console.log('iOS 16.4+ supports web push notifications');
+    } else if (iosVersion >= 16) {
+      console.log('iOS 16-16.3 detected - limited notification support');
+    } else {
+      console.log('iOS version does not support web push notifications');
+    }
+  }
   
   // Initialize Firebase Cloud Messaging
   notificationService.initializeMessaging().catch(err => {

@@ -4,12 +4,16 @@ import { notificationService } from '@/services/notificationService';
 import { toast } from 'sonner';
 import { 
   isAndroid, 
+  isIOS,
   isChrome,
+  isSafari,
+  getIOSVersion,
   isNotificationSupported, 
   getNotificationPermissionStatus,
   requestNotificationPermission,
   getNotificationSettingsInstructions,
-  testNotification
+  testNotification,
+  canPotentiallyEnableNotifications
 } from '@/utils/notificationPermission';
 
 export const useNotifications = () => {
@@ -18,11 +22,46 @@ export const useNotifications = () => {
   const [permissionChecked, setPermissionChecked] = useState<boolean>(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [requestInProgress, setRequestInProgress] = useState<boolean>(false);
+  const [deviceInfo, setDeviceInfo] = useState<{
+    isAndroid: boolean;
+    isIOS: boolean;
+    iosVersion: number;
+    isChrome: boolean;
+    isSafari: boolean;
+    browserSupportsNotifications: boolean;
+    canPotentiallyEnable: boolean;
+  }>({
+    isAndroid: false,
+    isIOS: false,
+    iosVersion: 0,
+    isChrome: false,
+    isSafari: false,
+    browserSupportsNotifications: false,
+    canPotentiallyEnable: false,
+  });
 
   // Check notification support on mount
   useEffect(() => {
     const supported = isNotificationSupported();
+    
+    // Gather device info
+    const isIosDevice = isIOS();
+    const iosVer = isIosDevice ? getIOSVersion() : 0;
+    const isAndroidDevice = isAndroid();
+    const isChromeDevice = isChrome();
+    const isSafariDevice = isSafari();
+    const canEnable = canPotentiallyEnableNotifications();
+    
     setIsSupported(supported);
+    setDeviceInfo({
+      isAndroid: isAndroidDevice,
+      isIOS: isIosDevice,
+      iosVersion: iosVer,
+      isChrome: isChromeDevice,
+      isSafari: isSafariDevice,
+      browserSupportsNotifications: supported,
+      canPotentiallyEnable: canEnable,
+    });
     
     if (supported) {
       // Check if we already have permission
@@ -53,10 +92,22 @@ export const useNotifications = () => {
       // Clear any previous errors
       setPermissionError(null);
 
-      console.log('Requesting notification permission, Android:', isAndroid(), 'Chrome:', isChrome());
+      console.log('Requesting notification permission, iOS:', deviceInfo.isIOS, 
+                 'iOS version:', deviceInfo.iosVersion, 
+                 'Android:', deviceInfo.isAndroid, 
+                 'Chrome:', deviceInfo.isChrome);
       
       // Show a toast to let the user know what's happening
       toast.info("Requesting notification permission...");
+
+      // iOS 16+ specific approach
+      if (deviceInfo.isIOS && deviceInfo.iosVersion >= 16 && deviceInfo.isSafari) {
+        console.log('iOS 16+ Safari detected, showing guidance');
+        toast.info("iOS requires manual notification setup", {
+          description: getNotificationSettingsInstructions(),
+          duration: 8000,
+        });
+      }
 
       // Use enhanced permission request function
       const result = await requestNotificationPermission();
@@ -79,7 +130,7 @@ export const useNotifications = () => {
               console.warn('Failed to obtain FCM token even with permission granted');
               
               // For Android Chrome, this could be due to service worker issues
-              if (isAndroid() && isChrome()) {
+              if (deviceInfo.isAndroid && deviceInfo.isChrome) {
                 console.log('Android Chrome detected, trying service worker refresh');
                 
                 // Re-register the service worker
@@ -98,6 +149,14 @@ export const useNotifications = () => {
                   }
                 }
               }
+              
+              // For iOS 16.4+, we need to check if Safari is blocking notifications
+              if (deviceInfo.isIOS && deviceInfo.iosVersion >= 16.4 && !token) {
+                toast.warning("Safari may be blocking notifications", {
+                  description: "Check Safari settings to allow notifications for this website",
+                  duration: 6000,
+                });
+              }
             }
           } catch (fcmError) {
             console.error('Error getting FCM token:', fcmError);
@@ -106,10 +165,12 @@ export const useNotifications = () => {
       } else {
         // Handle different failure cases
         if (result.status === 'denied') {
-          const message = isAndroid() 
+          const message = deviceInfo.isIOS
             ? "Notification permission denied. " + getNotificationSettingsInstructions()
-            : "Notification permission denied.";
-            
+            : deviceInfo.isAndroid 
+              ? "Notification permission denied. " + getNotificationSettingsInstructions()
+              : "Notification permission denied.";
+              
           toast.error(message, { duration: 8000 });
           setPermissionError(message);
         } else if (result.status === 'unsupported') {
@@ -131,7 +192,7 @@ export const useNotifications = () => {
     } finally {
       setRequestInProgress(false);
     }
-  }, [isSupported, requestInProgress]);
+  }, [isSupported, requestInProgress, deviceInfo]);
 
   // Show a reply notification
   const showReplyNotification = useCallback((
@@ -183,14 +244,19 @@ export const useNotifications = () => {
     permissionGranted,
     permissionChecked,
     permissionError,
-    isAndroid: isAndroid(),
-    isChrome: isChrome(),
+    isAndroid: deviceInfo.isAndroid,
+    isIOS: deviceInfo.isIOS,
+    iosVersion: deviceInfo.iosVersion,
+    isChrome: deviceInfo.isChrome,
+    isSafari: deviceInfo.isSafari,
+    canEnableNotifications: deviceInfo.canPotentiallyEnable,
     requestPermission,
     checkPermission,
     showReplyNotification,
     showNotificationPrompt: permissionChecked && !permissionGranted && isSupported,
     getSettingsInstructions: getNotificationSettingsInstructions,
     testFcm,
-    requestInProgress
+    requestInProgress,
+    deviceInfo
   };
 };

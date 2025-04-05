@@ -10,9 +10,28 @@ export const isAndroid = (): boolean => {
   return /android/i.test(navigator.userAgent);
 };
 
+// Check if running on iOS
+export const isIOS = (): boolean => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+};
+
+// Check iOS version (returns major version number or 0 if not iOS)
+export const getIOSVersion = (): number => {
+  if (!isIOS()) return 0;
+  
+  const match = navigator.userAgent.match(/OS (\d+)_/);
+  return match && match[1] ? parseInt(match[1], 10) : 0;
+};
+
 // Check if running on Chrome
 export const isChrome = (): boolean => {
   return /chrome|crios/i.test(navigator.userAgent.toLowerCase());
+};
+
+// Check if running on Safari
+export const isSafari = (): boolean => {
+  return /safari/i.test(navigator.userAgent.toLowerCase()) && 
+         !/chrome|crios/i.test(navigator.userAgent.toLowerCase());
 };
 
 // Check if notifications are supported in this browser
@@ -46,6 +65,23 @@ export const requestNotificationPermission = async (): Promise<{
     
     console.log('Requesting notification permission...');
     console.log('Current permission status:', Notification.permission);
+    
+    // iOS 16+ specific handling - Safari on iOS 16+ silently ignores permission requests 
+    // unless triggered by a user interaction
+    const isIOS16Plus = isIOS() && getIOSVersion() >= 16;
+    if (isIOS16Plus && isSafari()) {
+      console.log('iOS 16+ Safari detected, may need special handling');
+      if (Notification.permission === 'default') {
+        console.log('iOS 16+ permission is default, attempting request');
+      } else if (Notification.permission === 'denied') {
+        console.log('Permission previously denied on iOS 16+ Safari');
+        return {
+          success: false,
+          status: 'denied',
+          error: 'Permission previously denied. Please enable notifications manually in browser settings.'
+        };
+      }
+    }
     
     // Special handling for Android Chrome which may silently deny
     if (isAndroid() && isChrome()) {
@@ -104,10 +140,29 @@ export const requestNotificationPermission = async (): Promise<{
 export const getNotificationSettingsInstructions = (): string => {
   if (isAndroid() && isChrome()) {
     return "To enable notifications: tap the three dots (⋮) in Chrome → Settings → Site Settings → Notifications → find this site and allow notifications.";
+  } else if (isIOS()) {
+    const iosVersion = getIOSVersion();
+    if (iosVersion >= 16) {
+      return "To enable notifications on iOS: go to Settings → Safari → Advanced → Website Data → find this site and allow notifications. Or, in Safari, tap the 'AA' icon in address bar → Website Settings → Notifications → Allow.";
+    } else {
+      return "To enable notifications on iOS: in Safari, tap the 'AA' icon in address bar → Website Settings → Notifications → Allow.";
+    }
   } else if (isAndroid()) {
     return "Please check your browser settings to enable notifications for this site.";
   }
   return "Please check your browser settings to enable notifications for this site.";
+};
+
+// Check if the device has any chance of supporting notifications
+export const canPotentiallyEnableNotifications = (): boolean => {
+  // iOS web push is only supported in iOS 16.4+
+  if (isIOS()) {
+    const iosVersion = getIOSVersion();
+    // iOS 16.4+ supports web push notifications in Safari and Chrome
+    return iosVersion >= 16.4;
+  }
+  
+  return isNotificationSupported();
 };
 
 // Test notification permission by showing a test notification

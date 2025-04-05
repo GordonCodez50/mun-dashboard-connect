@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { notificationService } from "./services/notificationService";
 import { requestAndSaveFcmToken } from "./utils/fcmUtils";
+import NotificationHandler from "./components/notification/NotificationHandler";
 
 // Eager loading critical components
 import Login from "./pages/Login";
@@ -139,6 +141,7 @@ const AppWithAuth = () => {
   
   return (
     <>
+      <NotificationHandler />
       <Routes>
         <Route path="/" element={<Login />} />
 
