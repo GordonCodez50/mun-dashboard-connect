@@ -20,9 +20,9 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
   const [previousAlerts, setPreviousAlerts] = useState<AlertWithSound[]>([]);
   const notificationSound = useRef<HTMLAudioElement | null>(null);
 
-  // Initialize notification sound
+  // Initialize notification sound with the new ringtone
   useEffect(() => {
-    notificationSound.current = new Audio("/notification.mp3");
+    notificationSound.current = new Audio("/ringtonenotification.mp3");
     return () => {
       if (notificationSound.current) {
         notificationSound.current = null;
