@@ -3,6 +3,13 @@
  * Service for handling browser notifications
  */
 
+// Extended notification options type to handle additional properties
+interface ExtendedNotificationOptions extends NotificationOptions {
+  timestamp?: number;
+  vibrate?: number[];
+  requireInteraction?: boolean;
+}
+
 // Check if notifications are supported in this browser
 const isNotificationSupported = (): boolean => {
   return 'Notification' in window;
@@ -42,7 +49,7 @@ const hasPermission = (): boolean => {
 };
 
 // Show a notification
-const showNotification = (title: string, options?: NotificationOptions): boolean => {
+const showNotification = (title: string, options?: ExtendedNotificationOptions): boolean => {
   if (!isNotificationSupported() || !hasPermission()) {
     return false;
   }
@@ -53,7 +60,7 @@ const showNotification = (title: string, options?: NotificationOptions): boolean
       icon: '/logo.png',
       badge: '/logo.png',
       ...options,
-    });
+    } as NotificationOptions);
     
     // Add click handler to focus the window
     notification.onclick = () => {
@@ -73,6 +80,8 @@ const showTimerNotification = (timerName: string): boolean => {
   return showNotification(`${timerName} has ended!`, {
     body: 'Your timer has completed.',
     icon: '/logo.png',
+    // Using optional properties that might not be supported in all browsers
+    // Cast to satisfy TypeScript
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
   });
@@ -85,6 +94,7 @@ const showAlertNotification = (alertType: string, council: string, message: stri
     {
       body: message,
       icon: '/logo.png',
+      // Using optional properties that might not be supported in all browsers
       vibrate: urgent ? [200, 100, 200, 100, 200] : [100, 50, 100],
       tag: 'alert-notification', // Group similar notifications
       requireInteraction: urgent, // Urgent alerts stay until clicked

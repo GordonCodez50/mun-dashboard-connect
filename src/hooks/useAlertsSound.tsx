@@ -17,6 +17,11 @@ export type AlertWithSound = {
   chairReply?: string;
 };
 
+// Extended notification options for TypeScript compatibility
+interface ExtendedNotificationOptions extends NotificationOptions {
+  timestamp?: number;
+}
+
 export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) => {
   const [previousAlerts, setPreviousAlerts] = useState<AlertWithSound[]>([]);
   const notificationSound = useRef<HTMLAudioElement | null>(null);
@@ -77,8 +82,8 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
               body: alert.reply,
               icon: '/logo.png',
               tag: `alert-reply-${alert.id}`,
-              timestamp: Date.now()
-            }
+              timestamp: Date.now(),
+            } as ExtendedNotificationOptions
           );
         }
       });
