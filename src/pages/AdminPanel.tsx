@@ -92,16 +92,27 @@ const AdminPanel = () => {
   // Process alert data from Firebase
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
-      const processedAlerts = alertsData.map(alert => ({
-        ...alert,
-        timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
-      }));
+      const processedAlerts = alertsData
+        .filter(alert => alert && alert.id) // Filter out invalid alerts
+        .map(alert => ({
+          id: alert.id,
+          council: alert.council || "Unknown Council",
+          chairName: alert.chairName || "Unknown Chair",
+          type: alert.type || "Unspecified Alert",
+          message: alert.message || "No message provided",
+          timestamp: alert.timestamp ? new Date(alert.timestamp) : new Date(),
+          status: alert.status || 'pending',
+          priority: alert.priority || 'normal',
+          chairReply: alert.chairReply,
+          reply: alert.reply
+        }));
       
       setLiveAlerts(processedAlerts);
       
       // Show toast for urgent alerts that are new
+      const currentAlertIds = liveAlerts.map(a => a.id);
       const newAlerts = processedAlerts.filter(
-        alert => !liveAlerts.some(a => a.id === alert.id)
+        alert => !currentAlertIds.includes(alert.id)
       );
       
       if (newAlerts.length > 0) {

@@ -10,10 +10,13 @@ type AlertsSectionProps = {
 };
 
 export const AlertsSection = ({ alerts, hideResolved, user }: AlertsSectionProps) => {
+  // Filter out invalid alerts
+  const validAlerts = alerts.filter(alert => alert && alert.id);
+  
   // Filter alerts based on hideResolved setting
   const filteredAlerts = hideResolved 
-    ? alerts.filter(alert => alert.status !== 'resolved')
-    : alerts;
+    ? validAlerts.filter(alert => alert.status !== 'resolved')
+    : validAlerts;
     
   // Sort alerts by timestamp, latest first
   const sortedAlerts = [...filteredAlerts].sort((a, b) => {

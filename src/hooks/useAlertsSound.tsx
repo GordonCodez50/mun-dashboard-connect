@@ -34,14 +34,18 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
   useEffect(() => {
     if (!alerts || !previousAlerts) return;
     
+    // Ensure all alerts have valid IDs
+    const validAlerts = alerts.filter(alert => alert && alert.id);
+    const validPreviousAlerts = previousAlerts.filter(alert => alert && alert.id);
+    
     // Check for new alerts (by ID)
-    const newAlerts = alerts.filter(
-      alert => !previousAlerts.some(a => a.id === alert.id)
+    const newAlerts = validAlerts.filter(
+      alert => !validPreviousAlerts.some(a => a.id === alert.id)
     );
     
     // Check for new replies on existing alerts
-    const alertsWithNewReplies = alerts.filter(alert => {
-      const prevAlert = previousAlerts.find(a => a.id === alert.id);
+    const alertsWithNewReplies = validAlerts.filter(alert => {
+      const prevAlert = validPreviousAlerts.find(a => a.id === alert.id);
       return prevAlert && alert.reply && alert.reply !== prevAlert.reply;
     });
     
@@ -53,7 +57,7 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
       }
     }
     
-    setPreviousAlerts(alerts);
+    setPreviousAlerts(validAlerts);
   }, [alerts, alertsMuted, previousAlerts]);
   
   return notificationSound;

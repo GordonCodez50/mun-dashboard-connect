@@ -8,13 +8,13 @@ import { User } from '@/types/auth';
 
 export type Alert = {
   id: string;
-  council: string;
-  chairName: string;
-  type: string;
-  message: string;
+  council?: string;
+  chairName?: string;
+  type?: string;
+  message?: string;
   timestamp: Date;
   status: 'pending' | 'acknowledged' | 'resolved';
-  priority: 'normal' | 'urgent';
+  priority?: 'normal' | 'urgent';
   chairReply?: string;
 };
 
@@ -26,6 +26,16 @@ type AlertItemProps = {
 export const AlertItem = ({ alert, user }: AlertItemProps) => {
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
+
+  // Ensure we have the required fields, with fallbacks for missing data
+  const safeAlert = {
+    ...alert,
+    council: alert.council || 'Unknown Council',
+    type: alert.type || 'Unspecified Alert',
+    message: alert.message || 'No message provided',
+    chairName: alert.chairName || 'Unknown Chair',
+    priority: alert.priority || 'normal'
+  };
 
   const handleAcknowledge = async (alertId: string) => {
     try {
@@ -61,7 +71,7 @@ export const AlertItem = ({ alert, user }: AlertItemProps) => {
         replyTimestamp: Date.now()
       });
       
-      toast.success(`Reply sent to ${alert.chairName}`);
+      toast.success(`Reply sent to ${safeAlert.chairName}`);
       setReplyMessage('');
       setActiveAlertId(null);
     } catch (error) {
@@ -74,21 +84,21 @@ export const AlertItem = ({ alert, user }: AlertItemProps) => {
     <div 
       key={alert.id} 
       className={`bg-white rounded-lg shadow-sm border ${
-        alert.priority === 'urgent' 
+        safeAlert.priority === 'urgent' 
           ? 'border-red-200' 
           : 'border-gray-100'
       } overflow-hidden animate-scale-in`}
     >
       <div className={`px-4 py-3 flex justify-between items-center ${
-        alert.priority === 'urgent' ? 'bg-red-50' : 'bg-gray-50'
+        safeAlert.priority === 'urgent' ? 'bg-red-50' : 'bg-gray-50'
       }`}>
         <div className="flex items-center gap-2">
           <AlertTriangle 
             size={18} 
-            className={alert.priority === 'urgent' ? 'text-red-500' : 'text-accent'}
+            className={safeAlert.priority === 'urgent' ? 'text-red-500' : 'text-accent'}
           />
           <h3 className="font-medium text-primary">
-            {alert.council} - {alert.type}
+            {safeAlert.council} - {safeAlert.type}
           </h3>
         </div>
         <div className="flex items-center gap-2">
@@ -107,15 +117,15 @@ export const AlertItem = ({ alert, user }: AlertItemProps) => {
       
       <div className="p-4">
         <div className="mb-4">
-          <p className="text-sm text-gray-800">{alert.message}</p>
+          <p className="text-sm text-gray-800">{safeAlert.message}</p>
           <p className="text-xs text-gray-500 mt-1">
-            From: {alert.chairName}
+            From: {safeAlert.chairName}
           </p>
           
           {alert.chairReply && (
             <div className="mt-2 p-2 bg-blue-50 rounded-md">
               <p className="text-xs text-gray-800">
-                <span className="font-medium">Reply from {alert.chairName}:</span> {alert.chairReply}
+                <span className="font-medium">Reply from {safeAlert.chairName}:</span> {alert.chairReply}
               </p>
             </div>
           )}
