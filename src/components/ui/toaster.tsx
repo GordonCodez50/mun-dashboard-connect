@@ -8,10 +8,12 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { Bell, AlertTriangle, MessageSquare, CheckCircle, X } from "lucide-react"
+import { Bell, AlertTriangle, MessageSquare, CheckCircle } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const isMobile = useIsMobile()
 
   return (
     <ToastProvider>
@@ -37,17 +39,19 @@ export function Toaster() {
         }
         
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...props} className={isMobile ? "max-w-[calc(100vw-32px)]" : undefined}>
             <div className="flex gap-3">
               <div className="mt-1">
                 <Icon className={`h-5 w-5 ${
                   variant === "destructive" ? "text-red-500" : "text-primary"
                 }`} />
               </div>
-              <div className="grid gap-1">
+              <div className="grid gap-1 flex-1">
                 {title && <ToastTitle>{title}</ToastTitle>}
                 {description && (
-                  <ToastDescription>{description}</ToastDescription>
+                  <ToastDescription className={isMobile ? "break-words" : undefined}>
+                    {description}
+                  </ToastDescription>
                 )}
               </div>
             </div>
@@ -56,7 +60,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className={isMobile ? "p-2" : undefined} />
     </ToastProvider>
   )
 }

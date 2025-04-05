@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService } from '@/services/firebaseService';
 import { useNotifications } from '@/hooks/useNotifications';
-import { BellRing, Settings, AlertTriangle } from 'lucide-react';
+import { BellRing, Settings, AlertTriangle, Menu, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Button } from '@/components/ui/button';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';
@@ -14,7 +18,6 @@ import { CouncilList } from '@/components/admin/CouncilList';
 import { Alert } from '@/components/admin/AlertItem';
 import { Council } from '@/components/admin/CouncilList';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
-import { Button } from '@/components/ui/button';
 import { 
   Dialog,
   DialogContent,
@@ -38,6 +41,8 @@ const AdminPanel = () => {
     const savedMuted = localStorage.getItem('alertsMuted');
     return savedMuted ? JSON.parse(savedMuted) : false;
   });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
   
   // Notification state
   const { 
@@ -192,59 +197,141 @@ const AdminPanel = () => {
     toast.success(hideResolved ? 'Showing all alerts' : 'Hiding resolved alerts');
   };
 
+  // Render mobile or desktop layout based on screen size
+  const renderContent = () => (
+    <div className="flex-1 overflow-y-auto">
+      <div className="p-4 md:p-8 animate-fade-in space-y-6">
+        {showPermissionPrompt && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center">
+                <BellRing className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
+                <p className="text-sm text-amber-800">
+                  Enable notifications to receive alerts in real-time
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="border-amber-300 text-amber-800 hover:bg-amber-100"
+                onClick={handleRequestPermission}
+              >
+                Enable Notifications
+              </Button>
+            </div>
+            {permissionError && (
+              <div className="mt-2 flex items-start gap-2 text-xs text-amber-700">
+                <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                <p>{permissionError}</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+        <AdminHeader 
+          user={user}
+          hideResolved={hideResolved}
+          alertsMuted={alertsMuted}
+          toggleHideResolved={toggleHideResolved}
+          toggleAlertsMute={toggleAlertsMute}
+        />
+        
+        <AlertsSection 
+          alerts={liveAlerts}
+          hideResolved={hideResolved}
+          user={user}
+        />
+        
+        <div>
+          <h2 className="text-lg font-medium text-primary mb-4">Council Overview</h2>
+          <CouncilList councils={councils} user={user} />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mobile layout with sheet sidebar
+  if (isMobile) {
+    return (
+      <div className="flex h-screen bg-gray-50 relative">
+        {/* Mobile header with menu trigger */}
+        <div className="fixed top-0 left-0 right-0 bg-white z-40 border-b border-gray-200 px-4 h-14 flex items-center justify-between">
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[240px] p-0">
+              <Sidebar />
+            </SheetContent>
+          </Sheet>
+          <div className="font-semibold text-primary">Admin Dashboard</div>
+          <div className="w-9"></div> {/* Balance the layout */}
+        </div>
+        
+        {/* Main content with padding for header */}
+        <div className="pt-14 w-full h-full overflow-hidden">
+          {renderContent()}
+        </div>
+
+        {/* Instructions Dialog for Android users */}
+        <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Enable Notifications</DialogTitle>
+              <DialogDescription>
+                Your browser requires manual permission for notifications.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-2">
+              <div className="flex items-start gap-3">
+                <Settings className="h-7 w-7 text-muted-foreground flex-shrink-0 mt-1" />
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Browser Settings Required</h4>
+                  <p className="text-sm text-muted-foreground">{getSettingsInstructions()}</p>
+                </div>
+              </div>
+              
+              <div className="rounded-md bg-amber-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertTriangle className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">Important Note</h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <p>After enabling notifications in settings, return to this app and reload the page.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowPermissionDialog(false)}>
+                I'll do it later
+              </Button>
+              <Button onClick={() => {
+                toast.success("Check your browser settings to enable notifications");
+                setShowPermissionDialog(false);
+              }}>
+                Got it
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 animate-fade-in">
-          {showPermissionPrompt && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <BellRing className="h-5 w-5 text-amber-500 mr-2" />
-                  <p className="text-sm text-amber-800">
-                    Enable notifications to receive alerts in real-time
-                  </p>
-                </div>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="border-amber-300 text-amber-800 hover:bg-amber-100"
-                  onClick={handleRequestPermission}
-                >
-                  Enable Notifications
-                </Button>
-              </div>
-              {permissionError && (
-                <div className="mt-2 flex items-start gap-2 text-xs text-amber-700">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <p>{permissionError}</p>
-                </div>
-              )}
-            </div>
-          )}
-          
-          <AdminHeader 
-            user={user}
-            hideResolved={hideResolved}
-            alertsMuted={alertsMuted}
-            toggleHideResolved={toggleHideResolved}
-            toggleAlertsMute={toggleAlertsMute}
-          />
-          
-          <AlertsSection 
-            alerts={liveAlerts}
-            hideResolved={hideResolved}
-            user={user}
-          />
-          
-          <div>
-            <h2 className="text-lg font-medium text-primary mb-4">Council Overview</h2>
-            <CouncilList councils={councils} user={user} />
-          </div>
-        </div>
-      </div>
+      {renderContent()}
 
       {/* Instructions Dialog for Android users */}
       <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>

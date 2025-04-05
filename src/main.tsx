@@ -11,6 +11,20 @@ import {
   isChrome 
 } from '@/utils/notificationPermission';
 
+// Add viewport meta for proper mobile rendering
+const updateViewportMeta = () => {
+  let viewport = document.querySelector('meta[name="viewport"]');
+  if (!viewport) {
+    viewport = document.createElement('meta');
+    viewport.setAttribute('name', 'viewport');
+    document.head.appendChild(viewport);
+  }
+  viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+};
+
+// Call immediately
+updateViewportMeta();
+
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
   console.error('Unhandled error:', event.error);
