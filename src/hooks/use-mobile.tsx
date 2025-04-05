@@ -15,7 +15,7 @@ export function useIsMobile() {
     // Check immediately
     checkMobile()
     
-    // Set up media query listener
+    // Set up media query listener for more efficient listening
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     
     // Use the appropriate event listener based on browser support

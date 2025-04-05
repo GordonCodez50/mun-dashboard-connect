@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 export const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const isPress = user?.role === 'chair' && user?.council === 'PRESS';
@@ -27,6 +28,14 @@ export const Sidebar = () => {
     return location.pathname === path;
   };
 
+  // Handle navigation for mobile devices
+  const handleNavigation = (path: string) => {
+    if (isMobile) {
+      // For mobile: navigate to the path
+      navigate(path);
+    }
+  };
+
   const renderNavLinks = () => {
     // Admin Routes
     if (isAdmin) {
@@ -34,6 +43,7 @@ export const Sidebar = () => {
         <>
           <Link
             to="/admin-panel"
+            onClick={() => handleNavigation("/admin-panel")}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
               isActive("/admin-panel")
@@ -46,6 +56,7 @@ export const Sidebar = () => {
           </Link>
           <Link
             to="/user-management"
+            onClick={() => handleNavigation("/user-management")}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
               isActive("/user-management")
@@ -66,6 +77,7 @@ export const Sidebar = () => {
         <>
           <Link
             to="/chair-dashboard"
+            onClick={() => handleNavigation("/chair-dashboard")}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
               isActive("/chair-dashboard")
@@ -78,6 +90,7 @@ export const Sidebar = () => {
           </Link>
           <Link
             to="/timer"
+            onClick={() => handleNavigation("/timer")}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
               isActive("/timer")
@@ -107,6 +120,7 @@ export const Sidebar = () => {
       return (
         <Link
           to="/press-dashboard"
+          onClick={() => handleNavigation("/press-dashboard")}
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
             isActive("/press-dashboard")
