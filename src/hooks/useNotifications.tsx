@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 export const useNotifications = () => {
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
   const [isSupported, setIsSupported] = useState<boolean>(false);
+  const [permissionChecked, setPermissionChecked] = useState<boolean>(false);
 
   // Check notification support on mount
   useEffect(() => {
@@ -17,6 +18,8 @@ export const useNotifications = () => {
       const hasPermission = notificationService.hasPermission();
       setPermissionGranted(hasPermission);
     }
+    
+    setPermissionChecked(true);
   }, []);
 
   // Request notification permission
@@ -56,7 +59,9 @@ export const useNotifications = () => {
   return {
     isSupported,
     permissionGranted,
+    permissionChecked,
     requestPermission,
-    checkPermission
+    checkPermission,
+    showNotificationPrompt: permissionChecked && !permissionGranted && isSupported
   };
 };

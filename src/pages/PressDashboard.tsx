@@ -7,7 +7,7 @@ import { MapPin, Send, HelpCircle, MessageSquare, AlertTriangle, BellRing } from
 import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNotifications } from '@/hooks/useNotifications';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 
 type Alert = {
   id: string;
@@ -20,33 +20,21 @@ type Alert = {
 };
 
 const PressDashboard = () => {
-  const { user } = useAuth();
+  const { 
+    user, 
+    showNotificationPrompt, 
+    requestNotificationPermission 
+  } = useAuth();
+  
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   const [location, setLocation] = useState('');
-  const { isSupported, permissionGranted, requestPermission } = useNotifications();
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
-
-  useEffect(() => {
-    if (isSupported && !permissionGranted) {
-      toast.info(
-        "Enable notifications to stay updated",
-        {
-          description: "Get notified about important updates even when the app is in the background.",
-          duration: 8000,
-          action: {
-            label: "Enable",
-            onClick: () => requestPermission()
-          }
-        }
-      );
-    }
-  }, [isSupported, permissionGranted, requestPermission]);
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -221,6 +209,21 @@ const PressDashboard = () => {
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
+          {showNotificationPrompt && (
+            <Alert className="mb-6 flex items-center justify-between bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+              <div className="flex items-center space-x-4">
+                <BellRing className="h-5 w-5" />
+                <AlertTitle className="m-0">Enable notifications to get alerts about important events</AlertTitle>
+              </div>
+              <button
+                onClick={requestNotificationPermission}
+                className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-800/30 dark:hover:bg-amber-800/50 rounded-md transition-colors"
+              >
+                Enable Notifications
+              </button>
+            </Alert>
+          )}
+          
           <header className="mb-8">
             <div className="flex justify-between items-center">
               <div>
@@ -229,15 +232,6 @@ const PressDashboard = () => {
                   Welcome back, {user?.name}
                 </p>
               </div>
-              {isSupported && !permissionGranted && (
-                <button
-                  onClick={() => requestPermission()}
-                  className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                  title="Enable Notifications"
-                >
-                  <BellRing size={20} />
-                </button>
-              )}
             </div>
           </header>
           

@@ -17,6 +17,9 @@ type AuthContextType = {
   createUser: (userData: UserFormData) => Promise<boolean>;
   deleteUser: (userId: string) => Promise<boolean>;
   isAuthenticated: boolean;
+  showNotificationPrompt: boolean;
+  requestNotificationPermission: () => Promise<boolean>;
+  permissionGranted: boolean;
 };
 
 // Create context
@@ -27,7 +30,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [permissionChecked, setPermissionChecked] = useState(false);
   const navigate = useNavigate();
+
+  // Check notification support on mount
+  useEffect(() => {
+    const checkNotifications = () => {
+      if (notificationService.isNotificationSupported()) {
+        const hasPermission = notificationService.hasPermission();
+        setPermissionGranted(hasPermission);
+      }
+      setPermissionChecked(true);
+    };
+    
+    checkNotifications();
+  }, []);
 
   // Load users and check authentication state on mount
   useEffect(() => {
@@ -53,6 +71,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadInitialData();
   }, []);
 
+  // Request notification permission
+  const requestNotificationPermission = async () => {
+    try {
+      const granted = await notificationService.requestPermission();
+      setPermissionGranted(granted);
+      return granted;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return false;
+    }
+  };
+
   // Login function
   const login = async (email: string, password: string) => {
     // Simulate network request
@@ -67,11 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUsers(allUsers);
       
       // Request notification permission for chairs and press users
-      if (loggedInUser.role === 'chair' && notificationService.isNotificationSupported()) {
-        // Only request permissions for chairs - we'll prompt in the UI for admins
-        notificationService.requestPermission().catch(err => {
-          console.warn('Error requesting notification permission:', err);
-        });
+      if ((loggedInUser.role === 'chair' || loggedInUser.council === 'PRESS') 
+          && notificationService.isNotificationSupported() 
+          && !notificationService.hasPermission()) {
+        // We'll handle this in the UI components now, not automatically
       }
       
       // Navigate based on role and council
@@ -144,6 +173,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Determine if notification prompt should be shown
+  const showNotificationPrompt = permissionChecked && 
+                                !permissionGranted && 
+                                notificationService.isNotificationSupported() && 
+                                user !== null && 
+                                (user?.role === 'chair' || user?.council === 'PRESS');
+
   // Return provider
   return (
     <AuthContext.Provider value={{ 
@@ -154,7 +190,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       createUser,
       deleteUser, 
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      showNotificationPrompt,
+      requestNotificationPermission,
+      permissionGranted
     }}>
       {children}
     </AuthContext.Provider>

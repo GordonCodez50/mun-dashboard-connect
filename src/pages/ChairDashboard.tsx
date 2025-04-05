@@ -9,7 +9,7 @@ import { realtimeService } from '@/services/firebaseService';
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
-import { useNotifications } from '@/hooks/useNotifications';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 
 type Alert = {
   id: string;
@@ -22,7 +22,12 @@ type Alert = {
 };
 
 const ChairDashboard = () => {
-  const { user } = useAuth();
+  const { 
+    user, 
+    showNotificationPrompt, 
+    requestNotificationPermission 
+  } = useAuth();
+  
   const [customAlert, setCustomAlert] = useState('');
   const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
   const [loadingAlert, setLoadingAlert] = useState<string | null>(null);
@@ -31,28 +36,11 @@ const ChairDashboard = () => {
   const [alertsMuted, setAlertsMuted] = useState<boolean>(false);
   const [lastAlertTime, setLastAlertTime] = useState<number>(0);
   const [isOnCooldown, setIsOnCooldown] = useState<boolean>(false);
-  const { isSupported, permissionGranted, requestPermission } = useNotifications();
   
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
   useAlertsSound(recentAlerts, alertsMuted);
-
-  useEffect(() => {
-    if (isSupported && !permissionGranted) {
-      toast.info(
-        "Enable notifications to stay updated",
-        {
-          description: "Get notified about important updates even when the app is in the background.",
-          duration: 8000,
-          action: {
-            label: "Enable",
-            onClick: () => requestPermission()
-          }
-        }
-      );
-    }
-  }, [isSupported, permissionGranted, requestPermission]);
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -245,6 +233,21 @@ const ChairDashboard = () => {
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
+          {showNotificationPrompt && (
+            <Alert className="mb-6 flex items-center justify-between bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+              <div className="flex items-center space-x-4">
+                <BellRing className="h-5 w-5" />
+                <AlertTitle className="m-0">Enable notifications to get alerts about important events</AlertTitle>
+              </div>
+              <button
+                onClick={requestNotificationPermission}
+                className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-800/30 dark:hover:bg-amber-800/50 rounded-md transition-colors"
+              >
+                Enable Notifications
+              </button>
+            </Alert>
+          )}
+          
           <header className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-primary dark:text-white">Chair Dashboard</h1>
@@ -253,15 +256,6 @@ const ChairDashboard = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {isSupported && !permissionGranted && (
-                <button
-                  onClick={() => requestPermission()}
-                  className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
-                  title="Enable Notifications"
-                >
-                  <BellRing size={20} />
-                </button>
-              )}
               <button
                 onClick={() => setAlertsMuted(!alertsMuted)}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
