@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Timer, AlertTriangle } from 'lucide-react';
+import { Clock, Timer, AlertTriangle, MousePointerClick } from 'lucide-react';
 
 export const TimerGuide: React.FC = () => {
   return (
@@ -46,7 +46,8 @@ export const TimerGuide: React.FC = () => {
         </ul>
         
         <div className="mt-4 p-3 bg-accent/5 border border-accent/20 rounded-lg">
-          <p className="text-xs text-center text-gray-600 dark:text-gray-400">
+          <p className="text-xs flex items-center justify-center gap-1.5 text-gray-600 dark:text-gray-400">
+            <MousePointerClick size={14} className="text-accent" />
             Click on timer display to edit time directly
           </p>
         </div>
