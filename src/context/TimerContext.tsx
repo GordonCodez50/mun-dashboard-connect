@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 import { formatTime } from '@/utils/timeUtils';
+import { notificationService } from '@/services/notificationService';
 
 interface Timer {
   id: string;
@@ -157,12 +158,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       audio.play();
     }
     
+    // Show toast notification
     toast.info(`${timerName} has ended!`, {
       style: {
         background: 'rgba(239, 68, 68, 0.9)',
         color: 'white',
       },
     });
+    
+    // Show browser notification
+    notificationService.showTimerNotification(timerName);
   };
   
   // Handle preset selection

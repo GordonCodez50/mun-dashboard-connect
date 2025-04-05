@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
+import { notificationService } from '@/services/notificationService';
 
 // Define the Alert type to match what's used in AlertItem and ChairDashboard
 export type AlertWithSound = {
@@ -30,7 +31,7 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
     };
   }, []);
 
-  // Play sound for new alerts if not muted
+  // Play sound for new alerts if not muted and show notifications
   useEffect(() => {
     if (!alerts || !previousAlerts) return;
     
@@ -55,6 +56,32 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
         notificationSound.current.currentTime = 0;
         notificationSound.current.play().catch(err => console.error("Error playing sound:", err));
       }
+      
+      // Show browser notifications for each new alert
+      newAlerts.forEach(alert => {
+        const isUrgent = alert.priority === 'urgent';
+        notificationService.showAlertNotification(
+          alert.type || 'New Alert',
+          alert.council || 'Unknown Council',
+          alert.message || 'No message provided',
+          isUrgent
+        );
+      });
+      
+      // Show notifications for new replies
+      alertsWithNewReplies.forEach(alert => {
+        if (alert.reply) {
+          notificationService.showNotification(
+            `New reply from ${alert.admin || 'Admin'}`,
+            {
+              body: alert.reply,
+              icon: '/logo.png',
+              tag: `alert-reply-${alert.id}`,
+              timestamp: Date.now()
+            }
+          );
+        }
+      });
     }
     
     setPreviousAlerts(validAlerts);

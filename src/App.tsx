@@ -9,6 +9,7 @@ import { useEffect, Suspense, lazy } from "react";
 import { TimerProvider } from "./context/TimerContext";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { notificationService } from "./services/notificationService";
 
 // Eager loading critical components
 import Login from "./pages/Login";
@@ -33,7 +34,7 @@ const ErrorFallback = () => (
   </div>
 );
 
-// Lazy loading less critical components for code splitting
+// Lazy loading less critical components
 const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
 const PressDashboard = lazy(() => import("./pages/PressDashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
@@ -107,18 +108,25 @@ const ProtectedRoute = ({
 
 // App wrapper to handle auth context
 const AppWithAuth = () => {
-  // Initialize Firebase when the app mounts
+  // Initialize Firebase and check notification permissions when the app mounts
   useEffect(() => {
-    const initFirebase = async () => {
+    const initApp = async () => {
       try {
+        // Initialize Firebase
         await initializeFirebase();
+        
+        // Check if notification permission is already granted
+        if (notificationService.isNotificationSupported() && 
+            notificationService.hasPermission()) {
+          console.log("Notification permission already granted");
+        }
       } catch (error) {
-        console.error('Failed to initialize Firebase:', error);
+        console.error('Failed to initialize app:', error);
         toast.error('Failed to connect to the server. Please refresh and try again.');
       }
     };
     
-    initFirebase();
+    initApp();
   }, []);
   
   return (

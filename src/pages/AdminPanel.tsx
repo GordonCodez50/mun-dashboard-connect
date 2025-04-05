@@ -5,6 +5,8 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { toast } from "sonner";
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService } from '@/services/firebaseService';
+import { useNotifications } from '@/hooks/useNotifications';
+import { BellRing } from 'lucide-react';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';
@@ -12,6 +14,7 @@ import { CouncilList } from '@/components/admin/CouncilList';
 import { Alert } from '@/components/admin/AlertItem';
 import { Council } from '@/components/admin/CouncilList';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
+import { Button } from '@/components/ui/button';
 
 const AdminPanel = () => {
   const { user, users } = useAuth();
@@ -27,12 +30,25 @@ const AdminPanel = () => {
     const savedMuted = localStorage.getItem('alertsMuted');
     return savedMuted ? JSON.parse(savedMuted) : false;
   });
+  
+  // Notification state
+  const { isSupported, permissionGranted, requestPermission } = useNotifications();
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
 
   // Use Firebase Realtime Database for alerts
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   
   // Initialize sound hook
   useAlertsSound(liveAlerts, alertsMuted);
+  
+  // Check if we should show the notification permission prompt
+  useEffect(() => {
+    if (isSupported && !permissionGranted) {
+      setShowPermissionPrompt(true);
+    } else {
+      setShowPermissionPrompt(false);
+    }
+  }, [isSupported, permissionGranted]);
 
   // Save preferences to localStorage when they change
   useEffect(() => {
@@ -146,6 +162,27 @@ const AdminPanel = () => {
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-6 md:p-8 animate-fade-in">
+          {showPermissionPrompt && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <BellRing className="h-5 w-5 text-amber-500 mr-2" />
+                  <p className="text-sm text-amber-800">
+                    Enable notifications to get alerts about important events
+                  </p>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="border-amber-300 text-amber-800 hover:bg-amber-100"
+                  onClick={() => requestPermission()}
+                >
+                  Enable Notifications
+                </Button>
+              </div>
+            </div>
+          )}
+          
           <AdminHeader 
             user={user}
             hideResolved={hideResolved}
