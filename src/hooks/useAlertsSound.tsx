@@ -24,9 +24,22 @@ interface ExtendedNotificationOptions extends NotificationOptions {
   timestamp?: number;
 }
 
+// Store processed alerts in sessionStorage to prevent duplicates across page navigations
+const getProcessedAlertIds = (): Set<string> => {
+  const storedIds = sessionStorage.getItem('processedAlertIds');
+  return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+};
+
+const getProcessedReplyIds = (): Set<string> => {
+  const storedIds = sessionStorage.getItem('processedReplyIds');
+  return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+};
+
 export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) => {
   const [previousAlerts, setPreviousAlerts] = useState<AlertWithSound[]>([]);
   const notificationSound = useRef<HTMLAudioElement | null>(null);
+  const processedAlertIds = useRef<Set<string>>(getProcessedAlertIds());
+  const processedReplyIds = useRef<Set<string>>(getProcessedReplyIds());
 
   // Initialize notification sound with the new ringtone
   useEffect(() => {
@@ -46,12 +59,12 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
     const validAlerts = alerts.filter(alert => alert && alert.id);
     const validPreviousAlerts = previousAlerts.filter(alert => alert && alert.id);
     
-    // Check for new alerts (by ID)
+    // Check for new alerts (by ID) that we haven't processed yet
     const newAlerts = validAlerts.filter(
-      alert => !validPreviousAlerts.some(a => a.id === alert.id)
+      alert => !processedAlertIds.current.has(alert.id)
     );
     
-    // Check for new replies (admin replies or chair replies) on existing alerts
+    // Check for new replies on existing alerts that we haven't processed yet
     const alertsWithNewReplies = validAlerts.filter(alert => {
       const prevAlert = validPreviousAlerts.find(a => a.id === alert.id);
       
@@ -66,7 +79,17 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
                                   alert.replyTimestamp && 
                                   (!prevAlert.replyTimestamp || alert.replyTimestamp > prevAlert.replyTimestamp);
       
-      return hasNewAdminReply || hasNewChairReply || hasNewReplyTimestamp;
+      // Create a unique ID for replies to track them
+      const replyId = hasNewAdminReply ? `${alert.id}-admin-${alert.reply}` : 
+                     hasNewChairReply ? `${alert.id}-chair-${alert.chairReply}` :
+                     hasNewReplyTimestamp ? `${alert.id}-timestamp-${alert.replyTimestamp}` : null;
+      
+      // Check if we've already processed this reply
+      if (replyId && !processedReplyIds.current.has(replyId)) {
+        return true;
+      }
+      
+      return false;
     });
     
     if ((newAlerts.length > 0 || alertsWithNewReplies.length > 0) && !alertsMuted) {
@@ -85,9 +108,12 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
           alert.message || 'No message provided',
           isUrgent
         );
+        
+        // Mark this alert as processed
+        processedAlertIds.current.add(alert.id);
       });
       
-      // Show notifications for new replies from admins
+      // Show notifications for new replies
       alertsWithNewReplies.forEach(alert => {
         if (alert.reply && !alert.replyFrom) {
           // Admin reply (default if replyFrom not specified)
@@ -100,6 +126,9 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
               timestamp: Date.now(),
             } as ExtendedNotificationOptions
           );
+          
+          // Mark this reply as processed
+          processedReplyIds.current.add(`${alert.id}-admin-${alert.reply}`);
         } else if (alert.reply && alert.replyFrom) {
           // Reply from a specific user type
           notificationService.showNotification(
@@ -113,6 +142,9 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
               timestamp: Date.now(),
             } as ExtendedNotificationOptions
           );
+          
+          // Mark this reply as processed
+          processedReplyIds.current.add(`${alert.id}-${alert.replyFrom}-${alert.reply}`);
         }
         
         // Show notifications for chair replies
@@ -126,8 +158,15 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
               timestamp: Date.now(),
             } as ExtendedNotificationOptions
           );
+          
+          // Mark this chair reply as processed
+          processedReplyIds.current.add(`${alert.id}-chair-${alert.chairReply}`);
         }
       });
+      
+      // Save the processed IDs to sessionStorage
+      sessionStorage.setItem('processedAlertIds', JSON.stringify([...processedAlertIds.current]));
+      sessionStorage.setItem('processedReplyIds', JSON.stringify([...processedReplyIds.current]));
     }
     
     setPreviousAlerts(validAlerts);

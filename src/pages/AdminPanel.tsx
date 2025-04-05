@@ -120,12 +120,15 @@ const AdminPanel = () => {
           status: alert.status || 'pending',
           priority: alert.priority || 'normal',
           chairReply: alert.chairReply,
-          reply: alert.reply
+          reply: alert.reply,
+          replyTimestamp: alert.replyTimestamp,
+          replyFrom: alert.replyFrom
         }));
       
       setLiveAlerts(processedAlerts);
       
-      // Show toast for urgent alerts that are new
+      // We're removing this section since we now track notifications in useAlertsSound
+      // The toast for urgent alerts will still work as it doesn't create browser notifications
       const currentAlertIds = liveAlerts.map(a => a.id);
       const newAlerts = processedAlerts.filter(
         alert => !currentAlertIds.includes(alert.id)
