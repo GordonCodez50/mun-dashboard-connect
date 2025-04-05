@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from "sonner";
 import { formatTime } from '@/utils/timeUtils';
@@ -10,6 +11,8 @@ interface Timer {
   isRunning: boolean;
   isPaused: boolean;
   initialDuration: number;
+  startTime?: number;
+  pausedAt?: number;
 }
 
 interface TimerContextType {
@@ -54,27 +57,78 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
   
-  // Timer tick effect
+  // Use visibilitychange event to handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // When tab becomes visible again, recalculate all running timers
+        setTimers(prev => prev.map(timer => {
+          if (timer.isRunning && !timer.isPaused && timer.startTime) {
+            const now = Date.now();
+            const elapsedSeconds = Math.floor((now - timer.startTime) / 1000);
+            const newDuration = Math.max(0, timer.initialDuration - elapsedSeconds);
+            
+            // If timer has completed while tab was inactive
+            if (newDuration <= 0) {
+              if (intervalRefs.current[timer.id]) {
+                clearInterval(intervalRefs.current[timer.id]!);
+                intervalRefs.current[timer.id] = null;
+              }
+              // Handle timer completion
+              handleTimerComplete(timer.label);
+              return { ...timer, duration: 0, isRunning: false, startTime: undefined };
+            }
+            
+            return { ...timer, duration: newDuration };
+          }
+          return timer;
+        }));
+      }
+    };
+    
+    // Add event listener for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+  
+  // Timer tick effect with improved reliability
   useEffect(() => {
     timers.forEach(timer => {
       if (timer.isRunning && !timer.isPaused) {
+        // Clear any existing interval
         if (intervalRefs.current[timer.id]) {
           clearInterval(intervalRefs.current[timer.id]!);
+        }
+        
+        // Record the exact time when the timer starts/resumes
+        if (!timer.startTime) {
+          setTimers(prev => prev.map(t => 
+            t.id === timer.id 
+              ? { ...t, startTime: Date.now() - ((timer.initialDuration - timer.duration) * 1000) } 
+              : t
+          ));
         }
         
         intervalRefs.current[timer.id] = setInterval(() => {
           setTimers(prev => prev.map(t => {
             if (t.id === timer.id) {
-              if (t.duration <= 1) {
+              const now = Date.now();
+              const elapsedSeconds = Math.floor((now - (t.startTime || now)) / 1000);
+              const newDuration = Math.max(0, t.initialDuration - elapsedSeconds);
+              
+              if (newDuration <= 0) {
                 // Timer completed
                 if (intervalRefs.current[t.id]) {
                   clearInterval(intervalRefs.current[t.id]!);
                   intervalRefs.current[t.id] = null;
                 }
                 handleTimerComplete(t.label);
-                return { ...t, duration: 0, isRunning: false };
+                return { ...t, duration: 0, isRunning: false, startTime: undefined };
               }
-              return { ...t, duration: t.duration - 1 };
+              return { ...t, duration: newDuration };
             }
             return t;
           }));
@@ -82,6 +136,15 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else if (intervalRefs.current[timer.id]) {
         clearInterval(intervalRefs.current[timer.id]!);
         intervalRefs.current[timer.id] = null;
+        
+        // If paused, record the time it was paused at
+        if (timer.isPaused && timer.isRunning) {
+          setTimers(prev => prev.map(t => 
+            t.id === timer.id 
+              ? { ...t, pausedAt: Date.now() } 
+              : t
+          ));
+        }
       }
     });
   }, [timers]);
@@ -112,7 +175,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             initialDuration: seconds,
             isEditing: false,
             isRunning: false,
-            isPaused: false
+            isPaused: false,
+            startTime: undefined,
+            pausedAt: undefined
           } 
         : timer
     ));
@@ -130,7 +195,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             initialDuration: totalSeconds,
             isEditing: false,
             isRunning: false,
-            isPaused: false
+            isPaused: false,
+            startTime: undefined,
+            pausedAt: undefined
           } 
         : timer
     ));
@@ -152,10 +219,24 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (timer.id === timerId) {
         if (timer.isRunning && !timer.isPaused) {
           // Pause the timer
-          return { ...timer, isPaused: true };
+          return { ...timer, isPaused: true, pausedAt: Date.now() };
+        } else if (timer.isPaused && timer.pausedAt && timer.startTime) {
+          // Resume the timer - adjust startTime based on pause duration
+          const pauseDuration = Date.now() - timer.pausedAt;
+          return { 
+            ...timer, 
+            isPaused: false, 
+            pausedAt: undefined,
+            startTime: timer.startTime + pauseDuration 
+          };
         } else {
-          // Start/Resume the timer
-          return { ...timer, isRunning: true, isPaused: false };
+          // Start the timer from scratch
+          return { 
+            ...timer, 
+            isRunning: true, 
+            isPaused: false,
+            startTime: Date.now() - ((timer.initialDuration - timer.duration) * 1000)
+          };
         }
       }
       return timer;
@@ -170,7 +251,9 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             ...timer, 
             duration: timer.initialDuration,
             isRunning: false,
-            isPaused: false
+            isPaused: false,
+            startTime: undefined,
+            pausedAt: undefined
           } 
         : timer
     ));
