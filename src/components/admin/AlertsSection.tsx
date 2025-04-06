@@ -7,10 +7,9 @@ type AlertsSectionProps = {
   alerts: Alert[];
   hideResolved: boolean;
   user: User | null;
-  isMobile?: boolean;
 };
 
-export const AlertsSection = ({ alerts, hideResolved, user, isMobile }: AlertsSectionProps) => {
+export const AlertsSection = ({ alerts, hideResolved, user }: AlertsSectionProps) => {
   // Filter out invalid alerts
   const validAlerts = alerts.filter(alert => alert && alert.id);
   
