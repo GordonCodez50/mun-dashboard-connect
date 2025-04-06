@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -6,7 +5,8 @@ import { toast } from "sonner";
 import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService } from '@/services/firebaseService';
 import { useNotifications } from '@/hooks/useNotifications';
-import { BellRing, Settings, AlertTriangle } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { BellRing, Settings, AlertTriangle, Home, Users, AlertCircle } from 'lucide-react';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';
@@ -15,6 +15,7 @@ import { Alert } from '@/components/admin/AlertItem';
 import { Council } from '@/components/admin/CouncilList';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { 
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import {
 
 const AdminPanel = () => {
   const { user, users } = useAuth();
+  const isMobile = useIsMobile();
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
   const [hideResolved, setHideResolved] = useState<boolean>(() => {
     // Initialize from localStorage if available
@@ -38,6 +40,7 @@ const AdminPanel = () => {
     const savedMuted = localStorage.getItem('alertsMuted');
     return savedMuted ? JSON.parse(savedMuted) : false;
   });
+  const [activeTab, setActiveTab] = useState<'alerts' | 'councils'>('alerts');
   
   // Notification state
   const { 
@@ -192,6 +195,184 @@ const AdminPanel = () => {
     toast.success(hideResolved ? 'Showing all alerts' : 'Hiding resolved alerts');
   };
 
+  // Calculate unresolved alerts count for the badge
+  const unresolvedCount = liveAlerts.filter(alert => alert.status !== 'resolved').length;
+
+  // Mobile-specific UI rendering
+  if (isMobile) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 animate-fade-in">
+        {/* Mobile Header */}
+        <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-md bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center shadow-sm">
+                <img 
+                  src="/logo.png" 
+                  alt="ISBMUN Logo" 
+                  className="h-6 w-6 object-contain"
+                />
+              </div>
+              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                Admin Dashboard
+              </h1>
+            </div>
+            <Link to="/user-management" className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+              <Users size={20} className="text-gray-700" />
+            </Link>
+          </div>
+        </header>
+
+        {/* Notification Permission Prompt */}
+        {showPermissionPrompt && (
+          <div className="mb-0 p-4 bg-white border-b border-amber-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BellRing className="h-5 w-5 text-amber-500" />
+                <p className="text-sm text-gray-800">
+                  Enable notifications
+                </p>
+              </div>
+              <Button 
+                size="sm" 
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+                onClick={handleRequestPermission}
+              >
+                Enable
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="flex border-b bg-white">
+          <button 
+            className={`flex-1 py-3 px-4 text-center font-medium text-sm transition-colors ${
+              activeTab === 'alerts' 
+                ? 'border-b-2 border-primary text-primary' 
+                : 'text-gray-600'
+            }`}
+            onClick={() => setActiveTab('alerts')}
+          >
+            Alerts
+            {unresolvedCount > 0 && (
+              <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-white">
+                {unresolvedCount}
+              </span>
+            )}
+          </button>
+          <button 
+            className={`flex-1 py-3 px-4 text-center font-medium text-sm transition-colors ${
+              activeTab === 'councils' 
+                ? 'border-b-2 border-primary text-primary' 
+                : 'text-gray-600'
+            }`}
+            onClick={() => setActiveTab('councils')}
+          >
+            Councils
+          </button>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-auto p-4">
+          {/* Control bar */}
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-medium text-gray-800">
+              {activeTab === 'alerts' ? 'Live Alerts' : 'Council Overview'}
+            </h2>
+            <div className="flex gap-2">
+              {activeTab === 'alerts' && (
+                <>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="text-xs"
+                    onClick={toggleHideResolved}
+                  >
+                    {hideResolved ? 'Show All' : 'Hide Resolved'}
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant={alertsMuted ? "default" : "outline"}
+                    className="text-xs"
+                    onClick={toggleAlertsMute}
+                  >
+                    {alertsMuted ? 'Unmute' : 'Mute'}
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'alerts' ? (
+            <div className="space-y-2 animate-fade-in">
+              <AlertsSection 
+                alerts={liveAlerts}
+                hideResolved={hideResolved}
+                user={user}
+                isMobile={true}
+              />
+            </div>
+          ) : (
+            <div className="space-y-4 animate-fade-in">
+              <CouncilList councils={councils} user={user} isMobile={true} />
+            </div>
+          )}
+        </div>
+
+        {/* Instructions Dialog for Android users */}
+        <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Enable Notifications</DialogTitle>
+              <DialogDescription>
+                Your browser requires manual permission for notifications.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="flex items-start gap-4">
+                <Settings className="h-10 w-10 text-muted-foreground" />
+                <div className="space-y-2">
+                  <h4 className="font-medium leading-none">Browser Settings Required</h4>
+                  <p className="text-sm text-muted-foreground">{getSettingsInstructions()}</p>
+                </div>
+              </div>
+              
+              <div className="rounded-md bg-amber-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertTriangle className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-amber-800">Important Note</h3>
+                    <div className="mt-2 text-sm text-amber-700">
+                      <p>After enabling notifications in settings, return to this app and reload the page.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPermissionDialog(false)}>
+                I'll do it later
+              </Button>
+              <Button onClick={() => {
+                toast.success("Check your browser settings to enable notifications");
+                setShowPermissionDialog(false);
+              }}>
+                Got it
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Desktop UI (unchanged)
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />

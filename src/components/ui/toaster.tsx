@@ -9,9 +9,11 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { Bell, AlertTriangle, MessageSquare, CheckCircle, X } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const isMobile = useIsMobile()
 
   return (
     <ToastProvider>
@@ -37,26 +39,33 @@ export function Toaster() {
         }
         
         return (
-          <Toast key={id} {...props}>
+          <Toast 
+            key={id} 
+            {...props}
+            className={`${isMobile ? 'max-w-[350px] p-4 shadow-lg' : ''} animate-fade-in`}
+            style={isMobile ? {
+              borderLeft: variant === "destructive" ? "4px solid #ef4444" : "4px solid #7c3aed"
+            } : undefined}
+          >
             <div className="flex gap-3">
               <div className="mt-1">
                 <Icon className={`h-5 w-5 ${
                   variant === "destructive" ? "text-red-500" : "text-primary"
-                }`} />
+                } ${isMobile ? "animate-pulse" : ""}`} />
               </div>
               <div className="grid gap-1">
-                {title && <ToastTitle>{title}</ToastTitle>}
+                {title && <ToastTitle className={isMobile ? "text-[15px] font-medium" : ""}>{title}</ToastTitle>}
                 {description && (
-                  <ToastDescription>{description}</ToastDescription>
+                  <ToastDescription className={isMobile ? "text-sm" : ""}>{description}</ToastDescription>
                 )}
               </div>
             </div>
             {action}
-            <ToastClose />
+            <ToastClose className={isMobile ? "h-6 w-6 mt-0.5" : ""} />
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport className={isMobile ? "p-3 gap-2" : ""} />
     </ToastProvider>
   )
 }
