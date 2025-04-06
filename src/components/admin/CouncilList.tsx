@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { MessageSquare, Send } from 'lucide-react';
@@ -16,9 +15,10 @@ export type Council = {
 type CouncilListProps = {
   councils: Council[];
   user: User | null;
+  isMobile?: boolean;
 };
 
-export const CouncilList = ({ councils, user }: CouncilListProps) => {
+export const CouncilList = ({ councils, user, isMobile }: CouncilListProps) => {
   const [activeChairId, setActiveChairId] = useState<string | null>(null);
   const [directMessage, setDirectMessage] = useState('');
   const [showPressMessages, setShowPressMessages] = useState(false);
@@ -35,7 +35,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
     
     try {
-      // Create a direct message alert
       const messageData = {
         type: 'DIRECT_MESSAGE',
         message: directMessage,
@@ -67,7 +66,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     }
     
     try {
-      // Create a press message alert
       const messageData = {
         type: 'PRESS_MESSAGE',
         message: pressMessage,
@@ -100,13 +98,10 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
 
     setIsLoading(true);
     try {
-      // Prepare list of councils to message
       let targetCouncils = [...councils];
       
-      // If broadcasting to chairs & press, we need to ensure press is included
       const includePress = broadcastTarget === 'chairsAndPress';
       
-      // Broadcast to all selected councils
       const broadcastPromises = targetCouncils.map(async (council) => {
         const messageData = {
           type: 'BROADCAST_MESSAGE',
@@ -118,13 +113,12 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'resolved' // Mark as resolved immediately
+          status: 'resolved'
         };
         
         return realtimeService.createDirectMessage(messageData);
       });
       
-      // If including press, add press message
       if (includePress) {
         const pressMessageData = {
           type: 'BROADCAST_MESSAGE',
@@ -136,13 +130,12 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'resolved' // Mark as resolved immediately
+          status: 'resolved'
         };
         
         broadcastPromises.push(realtimeService.createDirectMessage(pressMessageData));
       }
       
-      // Wait for all messages to be sent
       await Promise.all(broadcastPromises);
       
       toast.success(
@@ -163,7 +156,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Broadcast Controls */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h3 className="text-md font-medium text-primary">Broadcast Messages</h3>
@@ -237,7 +229,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         )}
       </div>
 
-      {/* Council List */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -301,7 +292,6 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
         </table>
       </div>
       
-      {/* Press Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
           <h3 className="text-md font-medium text-primary">Press Team</h3>
@@ -346,4 +336,3 @@ export const CouncilList = ({ councils, user }: CouncilListProps) => {
     </div>
   );
 };
-
