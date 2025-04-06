@@ -10,6 +10,7 @@ type AdminHeaderProps = {
   alertsMuted: boolean;
   toggleHideResolved: () => void;
   toggleAlertsMute: () => void;
+  isMobile?: boolean;  // Added isMobile as an optional prop
 };
 
 export const AdminHeader = ({ 
@@ -17,10 +18,11 @@ export const AdminHeader = ({
   hideResolved, 
   alertsMuted,
   toggleHideResolved,
-  toggleAlertsMute
+  toggleAlertsMute,
+  isMobile
 }: AdminHeaderProps) => {
   return (
-    <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+    <header className={`flex flex-col ${isMobile ? 'space-y-4' : 'md:flex-row'} justify-between items-start md:items-center mb-8`}>
       <div>
         <h1 className="text-3xl font-bold text-primary">Admin Panel</h1>
         <p className="text-gray-600 mt-1">
