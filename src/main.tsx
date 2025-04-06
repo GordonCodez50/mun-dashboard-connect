@@ -8,25 +8,8 @@ import {
   isNotificationSupported,
   getNotificationPermissionStatus,
   isAndroid,
-  isChrome,
-  isIOS,
-  getIOSVersion,
-  canPotentiallyEnableNotifications
+  isChrome 
 } from '@/utils/notificationPermission';
-
-// Add viewport meta for proper mobile rendering
-const updateViewportMeta = () => {
-  let viewport = document.querySelector('meta[name="viewport"]');
-  if (!viewport) {
-    viewport = document.createElement('meta');
-    viewport.setAttribute('name', 'viewport');
-    document.head.appendChild(viewport);
-  }
-  viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-};
-
-// Call immediately
-updateViewportMeta();
 
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
@@ -60,10 +43,7 @@ const notificationStatus = {
   permission: getNotificationPermissionStatus(),
   platform: {
     isAndroid: isAndroid(),
-    isIOS: isIOS(),
-    iosVersion: isIOS() ? getIOSVersion() : 0,
     isChrome: isChrome(),
-    canPotentiallyEnableNotifications: canPotentiallyEnableNotifications(),
     userAgent: navigator.userAgent
   }
 };
@@ -73,20 +53,6 @@ console.log('Notification support status:', notificationStatus);
 // Check for notification support early
 if (notificationService.isNotificationSupported()) {
   console.log('Browser notifications are supported');
-  
-  // Check for specific issues with iOS
-  if (isIOS()) {
-    const iosVersion = getIOSVersion();
-    console.log(`iOS ${iosVersion} detected`);
-    
-    if (iosVersion >= 16.4) {
-      console.log('iOS 16.4+ supports web push notifications');
-    } else if (iosVersion >= 16) {
-      console.log('iOS 16-16.3 detected - limited notification support');
-    } else {
-      console.log('iOS version does not support web push notifications');
-    }
-  }
   
   // Initialize Firebase Cloud Messaging
   notificationService.initializeMessaging().catch(err => {

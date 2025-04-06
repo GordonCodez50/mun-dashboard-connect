@@ -62,90 +62,6 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
     }
   }, [mainTimer.duration, mainTimer.isRunning]);
   
-  // Mobile-optimized widget
-  if (isMobile) {
-    return (
-      <div className={`w-full ${className}`}>
-        {isEditing ? (
-          <div className="py-2 max-w-full mx-auto">
-            <TimeInput 
-              minutes={Math.floor(mainTimer.duration / 60)}
-              seconds={mainTimer.duration % 60}
-              onTimeChange={handleQuickTimeChange}
-              onCancel={() => setIsEditing(false)}
-            />
-          </div>
-        ) : (
-          <div className="w-full p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden">
-            {/* Background decorative elements */}
-            <div className="absolute inset-0 opacity-5">
-              <div className="absolute top-0 left-0 w-24 h-24 bg-accent rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-24 h-24 bg-accent rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
-            </div>
-            
-            <button 
-              className="absolute top-2 right-2 text-gray-400 hover:text-accent transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-              onClick={() => setIsEditing(true)}
-              aria-label="Edit timer"
-            >
-              <Edit size={16} />
-            </button>
-
-            <div 
-              className={`flex justify-center cursor-pointer ${getTimerAnimation()}`}
-              onClick={() => setIsEditing(true)}
-            >
-              <div className={`text-4xl md:text-5xl font-mono font-bold timer-display ${getTimerColor()}`}>
-                {formatTime(mainTimer.duration)}
-              </div>
-            </div>
-            
-            <div className="timer-progress-bg my-3">
-              <Progress value={progress} className="h-1.5" />
-            </div>
-            
-            <div className="flex justify-center gap-2">
-              <Button
-                onClick={() => handleStartPause(mainTimer.id)}
-                variant={mainTimer.isRunning && !mainTimer.isPaused ? "secondary" : "default"}
-                size="sm"
-                className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-3 py-1 h-9 flex-1 font-medium timer-button`}
-              >
-                {mainTimer.isRunning && !mainTimer.isPaused ? (
-                  <>
-                    <Pause size={16} className="mr-1" /> Pause
-                  </>
-                ) : (
-                  <>
-                    <Play size={16} className="mr-1" /> Start
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => handleReset(mainTimer.id)}
-                variant="outline"
-                size="sm"
-                className="px-3 py-1 h-9 flex-1 font-medium border timer-button"
-              >
-                <RefreshCw size={16} className="mr-1" /> Reset
-              </Button>
-            </div>
-            
-            {/* Show pulsing indicator when timer is running */}
-            {mainTimer.isRunning && !mainTimer.isPaused && (
-              <div className="mt-2 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-accent/80 pulse-animation mr-1.5"></div>
-                <span className="text-xs text-gray-500">Running</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-  // Original desktop widget
   return (
     <div className={`w-full ${className}`}>
       {isEditing ? (
@@ -183,7 +99,10 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           </div>
           
           <div className="timer-progress-bg mb-8">
-            <Progress value={progress} className="h-2" />
+            <div 
+              className="timer-progress"
+              style={{ width: `${progress}%` }} 
+            />
           </div>
           
           <div className="flex justify-center gap-5">
