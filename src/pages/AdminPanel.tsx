@@ -7,6 +7,7 @@ import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { firestoreService } from '@/services/firebaseService';
 import { useNotifications } from '@/hooks/useNotifications';
 import { BellRing, Settings, AlertTriangle } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AlertsSection } from '@/components/admin/AlertsSection';
@@ -26,6 +27,7 @@ import {
 
 const AdminPanel = () => {
   const { user, users } = useAuth();
+  const isMobile = useIsMobile();
   const [liveAlerts, setLiveAlerts] = useState<Alert[]>([]);
   const [hideResolved, setHideResolved] = useState<boolean>(() => {
     // Initialize from localStorage if available
@@ -193,18 +195,18 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+    <div className="flex h-full bg-gray-50 overflow-x-hidden">
+      {!isMobile && <Sidebar />}
       
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 animate-fade-in">
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
           {showPermissionPrompt && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
-              <div className="flex items-center justify-between">
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center">
-                  <BellRing className="h-5 w-5 text-amber-500 mr-2" />
+                  <BellRing className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
                   <p className="text-sm text-amber-800">
-                    Enable notifications to receive alerts in real-time
+                    Enable notifications to receive alerts
                   </p>
                 </div>
                 <Button 
@@ -231,32 +233,34 @@ const AdminPanel = () => {
             alertsMuted={alertsMuted}
             toggleHideResolved={toggleHideResolved}
             toggleAlertsMute={toggleAlertsMute}
+            isMobile={isMobile}
           />
           
           <AlertsSection 
             alerts={liveAlerts}
             hideResolved={hideResolved}
             user={user}
+            isMobile={isMobile}
           />
           
           <div>
             <h2 className="text-lg font-medium text-primary mb-4">Council Overview</h2>
-            <CouncilList councils={councils} user={user} />
+            <CouncilList councils={councils} user={user} isMobile={isMobile} />
           </div>
         </div>
       </div>
 
       {/* Instructions Dialog for Android users */}
       <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className={isMobile ? "w-[90%] max-w-md rounded-xl p-0" : ""}>
+          <DialogHeader className={isMobile ? "p-4" : ""}>
             <DialogTitle>Enable Notifications</DialogTitle>
             <DialogDescription>
               Your browser requires manual permission for notifications.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
+          <div className={`space-y-4 ${isMobile ? "px-4 py-2" : "py-4"}`}>
             <div className="flex items-start gap-4">
               <Settings className="h-10 w-10 text-muted-foreground" />
               <div className="space-y-2">
@@ -280,12 +284,12 @@ const AdminPanel = () => {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className={isMobile ? "p-4 pt-2" : ""}>
             <Button variant="outline" onClick={() => setShowPermissionDialog(false)}>
-              I'll do it later
+              Later
             </Button>
             <Button onClick={() => {
-              toast.success("Check your browser settings to enable notifications");
+              toast.success("Check browser settings for notifications");
               setShowPermissionDialog(false);
             }}>
               Got it

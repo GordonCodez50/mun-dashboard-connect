@@ -17,3 +17,14 @@ export const externalNavButton: NavButtonConfig = {
   url: "https://isbmun.com/resources",
   openInNewTab: true
 };
+
+// Mobile specific configuration
+export const mobileConfig = {
+  // Animation timings
+  animationDuration: 300, // ms
+  transitionTiming: 'ease-out',
+  // Colors
+  primaryColor: '#9b87f5',
+  secondaryColor: '#7E69AB',
+  backgroundColor: '#f9f9fc'
+};
