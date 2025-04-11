@@ -10,6 +10,7 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 - **Responsive Design**: Works on all devices from desktop to mobile
 - **Document Sharing**: Share and access conference documents
 - **Two-way Communication**: Chairs and admins can reply to alerts and messages
+- **File Sharing**: Easy file sharing with print tracking and auto-generated codes
 
 ## 🚀 Setup & Deployment (For 15-Year-Olds!)
 
@@ -226,6 +227,66 @@ This app uses a special system to determine user roles based on email addresses:
 - Example: `press-sarah@isbmun.com`
 - Press users have similar access to chairs but are assigned to the "PRESS" council
 - Name is extracted and capitalized for display if provided
+
+## File Sharing System
+
+The File Share feature allows chairs to send files to the admin team for printing or other purposes.
+
+### How It Works
+
+1. Chairs click on "File Share" in the sidebar
+2. They choose between "Send for Printing" or "Send for Other Reasons"
+3. The system opens a pre-configured Gmail compose window
+4. For printing files, a unique print code is automatically generated
+
+### Customizing Email Templates
+
+Email templates can be modified in the `src/pages/FileShare.tsx` file:
+
+1. Locate the `handlePrintRequest` function for printing emails
+2. Modify the `emailBody` variable to change the email content
+3. Locate the `handleOtherRequest` function for other purpose emails
+4. Modify the `emailBody` and `subject` variables as needed
+
+Example of modifying the print request email body:
+
+```javascript
+const emailBody = `Dear Admin Team,
+
+Please find the attached file for printing for the ${user?.council} council. 
+This is urgent and needed by [time].
+
+Regards,
+Chair – ${user?.council}`;
+```
+
+### Print Count System
+
+Print counts are stored in Firebase Realtime Database for faster concurrent updates:
+
+- Council-specific counts: `printCounts/councils/{councilName}`
+- Global count: `printCounts/global`
+
+The system automatically increments both counters when a chair sends a print request.
+
+To reset counters:
+1. Go to Firebase console > Realtime Database
+2. Navigate to the `printCounts` node
+3. Delete the counters or set them to desired values
+
+### D1/D2 Date Logic
+
+The system automatically determines whether to use 'd1' or 'd2' based on the current date:
+- If today is May 16, 2025 or earlier: Uses 'd1'
+- If today is May 17, 2025 or later: Uses 'd2'
+
+This logic is implemented in `src/pages/FileShare.tsx` in the `handlePrintRequest` function:
+
+```javascript
+const dateDesignation = currentDate <= new Date('2025-05-16') ? 'd1' : 'd2';
+```
+
+To modify this cutoff date, change the date string in the comparison.
 
 ## Troubleshooting
 

@@ -11,7 +11,8 @@ import {
   LayoutDashboard,
   FileText,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Share
 } from 'lucide-react';
 import { externalNavButton } from '@/config/navigationConfig';
 
@@ -101,6 +102,18 @@ export const Sidebar = () => {
               >
                 <Timer size={18} />
                 Timer
+              </Link>
+              <Link
+                to="/file-share"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/file-share")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <Share size={18} />
+                File Share
               </Link>
               {/* External resources button - configurable */}
               <a
