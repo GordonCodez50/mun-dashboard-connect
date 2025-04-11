@@ -1,5 +1,5 @@
 
-import { realtimeDb as db, firestore } from '@/services/firebaseService';
+import firebaseService from '@/services/firebaseService';
 import { ref, get, set, increment } from 'firebase/database';
 import { doc, getDoc, setDoc, updateDoc, increment as firestoreIncrement } from 'firebase/firestore';
 
@@ -10,7 +10,7 @@ export const printCountService = {
   async getCouncilPrintCount(council: string): Promise<number> {
     try {
       // First try Firestore
-      const docRef = doc(firestore, 'councils', council.toLowerCase());
+      const docRef = doc(firebaseService.firestore, 'councils', council.toLowerCase());
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists() && docSnap.data().printCount !== undefined) {
@@ -18,7 +18,7 @@ export const printCountService = {
       }
       
       // Fallback to Realtime Database
-      const dbRef = ref(db, `councilPrintCounts/${council.toLowerCase()}`);
+      const dbRef = ref(firebaseService.realtimeDb, `councilPrintCounts/${council.toLowerCase()}`);
       const snapshot = await get(dbRef);
       
       if (snapshot.exists()) {
@@ -40,7 +40,7 @@ export const printCountService = {
   async getGlobalPrintCount(): Promise<number> {
     try {
       // First try Firestore
-      const docRef = doc(firestore, 'global', 'printCount');
+      const docRef = doc(firebaseService.firestore, 'global', 'printCount');
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
@@ -48,7 +48,7 @@ export const printCountService = {
       }
       
       // Fallback to Realtime Database
-      const dbRef = ref(db, 'globalPrintCount');
+      const dbRef = ref(firebaseService.realtimeDb, 'globalPrintCount');
       const snapshot = await get(dbRef);
       
       if (snapshot.exists()) {
@@ -74,7 +74,7 @@ export const printCountService = {
       const currentGlobalCount = await this.getGlobalPrintCount();
       
       // Increment council count in Firestore
-      const councilDocRef = doc(firestore, 'councils', council.toLowerCase());
+      const councilDocRef = doc(firebaseService.firestore, 'councils', council.toLowerCase());
       await updateDoc(councilDocRef, {
         printCount: firestoreIncrement(1)
       }).catch(async () => {
@@ -83,7 +83,7 @@ export const printCountService = {
       });
       
       // Increment global count in Firestore
-      const globalDocRef = doc(firestore, 'global', 'printCount');
+      const globalDocRef = doc(firebaseService.firestore, 'global', 'printCount');
       await updateDoc(globalDocRef, {
         count: firestoreIncrement(1)
       }).catch(async () => {
@@ -92,8 +92,8 @@ export const printCountService = {
       });
       
       // Update also in Realtime Database as backup
-      await set(ref(db, `councilPrintCounts/${council.toLowerCase()}`), currentCouncilCount + 1);
-      await set(ref(db, 'globalPrintCount'), currentGlobalCount + 1);
+      await set(ref(firebaseService.realtimeDb, `councilPrintCounts/${council.toLowerCase()}`), currentCouncilCount + 1);
+      await set(ref(firebaseService.realtimeDb, 'globalPrintCount'), currentGlobalCount + 1);
       
       return {
         councilCount: currentCouncilCount + 1,
