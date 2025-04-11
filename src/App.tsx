@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,7 +40,6 @@ const PressDashboard = lazy(() => import("./pages/PressDashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const TimerManager = lazy(() => import("./pages/TimerManager"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
-const FileShare = lazy(() => import("./pages/FileShare")); // New import
 
 // Setup loading fallback
 const LoadingFallback = () => (
@@ -152,10 +150,6 @@ const AppWithAuth = () => {
         <Route
           path="/timer"
           element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
-        />
-        <Route
-          path="/file-share"
-          element={<ProtectedRoute element={<FileShare />} requiredRole="chair" />}
         />
 
         {/* Press Route */}
