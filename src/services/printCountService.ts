@@ -1,5 +1,5 @@
 
-import { db, firestore } from '@/services/firebaseService';
+import { realtimeDb as db, firestore } from '@/services/firebaseService';
 import { ref, get, set, increment } from 'firebase/database';
 import { doc, getDoc, setDoc, updateDoc, increment as firestoreIncrement } from 'firebase/firestore';
 
