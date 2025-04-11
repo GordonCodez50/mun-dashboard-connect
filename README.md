@@ -1,4 +1,3 @@
-
 # ISB MUN Conference Dashboard
 
 A real-time dashboard for Model United Nations conferences that enables chairs and admins to communicate effectively during sessions.
@@ -11,7 +10,6 @@ A real-time dashboard for Model United Nations conferences that enables chairs a
 - **Responsive Design**: Works on all devices from desktop to mobile
 - **Document Sharing**: Share and access conference documents
 - **Two-way Communication**: Chairs and admins can reply to alerts and messages
-- **File Sharing**: Send files for printing or other purposes via Gmail
 
 ## 🚀 Setup & Deployment (For 15-Year-Olds!)
 
@@ -135,53 +133,7 @@ For the timer notification sounds to work correctly, follow these steps:
 
 With these steps, the timer sounds will work reliably across all browsers and devices.
 
-### Step 5: File Sharing System Configuration
-
-The app includes a file sharing system that enables chairs to send files via Gmail with specific formatting. Here's how to customize it:
-
-#### How the Print Code System Works
-
-The print code follows this format: `#<councilname><council-wise print serial number><global print job serial number><d1/d2>`
-
-For example: `#ecosoc02-17d1` indicates:
-- Council: ECOSOC
-- 2nd print job from ECOSOC (02)
-- 17th global print job across all councils
-- Date is on or before May 16 (d1)
-
-#### Print Count Storage
-
-Print counts are stored in both Firestore and Realtime Database for redundancy:
-
-1. **Firestore Storage:**
-   - Council-specific count: `councils/{councilName}/printCount`
-   - Global count: `global/printCount`
-
-2. **Realtime Database Backup:**
-   - Council-specific count: `councilPrintCounts/{councilName}`
-   - Global count: `globalPrintCount`
-
-#### Customizing Email Templates
-
-To modify the email templates:
-
-1. **Open `src/pages/FileShare.tsx`**
-2. Locate the `handleSendForPrinting` and `handleSendForOtherReasons` functions
-3. Edit the template strings in the `body` variable to change the email content
-4. Edit the `subject` variable to change the subject line format
-5. Update the email addresses as needed (currently set to `admin-print@isbmun.com` and `admin-support@isbmun.com`)
-
-#### Date-based Logic (d1/d2)
-
-The system automatically adds d1 or d2 to print codes based on the date:
-- `d1`: If the current date is May 16 or earlier
-- `d2`: If the current date is May 17 or later
-
-To modify this logic:
-1. Locate the `getDayDesignation` function in `src/pages/FileShare.tsx`
-2. Update the date comparison as needed (currently checks if date <= 16 and month is May)
-
-### Step 6: Customizing Quick Actions in Chair Dashboard
+### Step 5: Customizing Quick Actions in Chair Dashboard
 
 To modify the quick action buttons that appear in the Chair Dashboard:
 
@@ -219,7 +171,18 @@ To modify the quick action buttons that appear in the Chair Dashboard:
 
 These customizations don't require any backend changes, as the alert system is already set up to handle custom alert types.
 
-### Step 7: Customizing the Navigation Menu
+### Step 6: Deploy to Vercel (Super Easy!)
+
+1. Create a Vercel account if you don't have one: https://vercel.com/signup
+2. Install the Vercel CLI: `npm install -g vercel`
+3. In your project folder, run: `vercel login`
+4. Then run: `vercel`
+5. Follow the prompts (mostly just press Enter for the default options)
+6. Your app is deployed! 🎉
+
+## Customizing the Navigation Menu
+
+### Changing the External Resources Button
 
 To modify the external resources button in the chair panel navigation menu:
 
@@ -241,15 +204,6 @@ export const externalNavButton: NavButtonConfig = {
 ```
 
 After making changes, save the file and rebuild the application.
-
-### Step 8: Deploy to Vercel (Super Easy!)
-
-1. Create a Vercel account if you don't have one: https://vercel.com/signup
-2. Install the Vercel CLI: `npm install -g vercel`
-3. In your project folder, run: `vercel login`
-4. Then run: `vercel`
-5. Follow the prompts (mostly just press Enter for the default options)
-6. Your app is deployed! 🎉
 
 ## Using Email-Based Role Recognition
 
@@ -297,11 +251,8 @@ This app uses a special system to determine user roles based on email addresses:
 - Try using a different sound file format (MP3 is most compatible)
 - Check the browser console for any errors related to audio playback
 
-### "File Sharing Not Working" Problems
-- Ensure you have a working internet connection
-- Allow popups from the application in your browser
-- Gmail must be accessible from your browser
-- Check the console for any errors related to file sharing
-- Verify Firebase rules allow read/write to the print count documents
+### "Deployment Failed" Problems
+- Make sure all environment variables are set correctly in Vercel
+- Try running `vercel --prod` to force a production build
 
 Need more help? Ask your teacher or IT support person!
