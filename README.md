@@ -1,99 +1,95 @@
-# ISBMUN Dashboard Application
 
-This application serves as a dashboard for ISBMUN chairs and administrators to manage their sessions.
+# MUN Conference Dashboard - Cross-Platform Notifications
 
-## Features
+This MUN Conference Dashboard application includes comprehensive cross-platform notification support for all devices and browsers.
 
-- **Chair Dashboard**: Manage alerts and session information
-- **Timer**: Control debate timers for speakers and motions
-- **File Share**: Send files to administrators via email
-- **User Management**: Manage user accounts and permissions (Admin only)
+## Notification Support
 
-## File Share Feature
+The application provides push notifications on:
+- **Android** devices (Chrome, Firefox, Samsung Internet)
+- **iOS** devices (Safari, Chrome, as PWA)
+- **Windows** (Chrome, Firefox, Edge)
+- **macOS** (Safari, Chrome, Firefox)
+- **Linux** (Chrome, Firefox)
 
-The File Share feature allows chairs to send files to administrators via Gmail for printing or other purposes.
+## Getting Started with Notifications
 
-### How It Works
+### Basic Requirements
 
-- The File Share page provides two options:
-  - Send File for Printing
-  - Send File for Other Reasons
-  
-- Each option opens a pre-filled Gmail compose window with appropriate recipient, subject, and body text
-- Users must manually attach their files in Gmail
+1. For the best experience, users on mobile devices should install the application as a Progressive Web App (PWA).
+2. For desktop browsers, notifications are supported in most modern browsers with some minor differences in behavior.
 
-### Email Templates
+### Setting Up Notifications
 
-#### Print Email Template
+When using the application:
 
-Email templates can be modified in the `src/pages/FileShare.tsx` file:
+1. You will be prompted to allow notifications when appropriate.
+2. Grant permission when requested to receive important alerts.
+3. On mobile devices, consider installing the app to your home screen for lock screen notifications.
 
-```typescript
-// Print Email Template
-const handlePrintEmail = () => {
-  const recipient = 'admin-print@isbmun.com';
-  const printCode = generatePrintCode(councilName);
-  const subject = encodeURIComponent(`${printCode} — File for Printing`);
-  const body = encodeURIComponent(
-    `Dear Admin Team,\n\nPlease find the attached file for printing for the ${councilName.toUpperCase()} council. Let me know if any changes are required.\n\nRegards,\nChair – ${councilName.toUpperCase()}`
-  );
-  
-  window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
-};
-```
+### iOS Setup
 
-#### Other Email Template
+For iOS users:
+1. **Safari Browser**: Add the application to your home screen for the best notification experience.
+   - Tap the Share button
+   - Select "Add to Home Screen"
+   - Launch the application from the home screen icon
 
-```typescript
-// Other Email Template
-const handleOtherEmail = () => {
-  const recipient = 'admin-support@isbmun.com';
-  const subject = encodeURIComponent(`File Share – ${councilName.toUpperCase()}`);
-  const body = encodeURIComponent(
-    `Dear Admins,\n\nPlease find the attached file regarding [brief description]. This is not for printing, but for your attention.\n\nRegards,\nChair – ${councilName.toUpperCase()}`
-  );
-  
-  window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
-};
-```
+2. **Chrome/Firefox on iOS**: These browsers have limited notification support on iOS. We recommend using the PWA (installed from Safari).
 
-### Print Code Construction
+### Android Setup
 
-The print code follows this format: `#<councilname><serial><total><d1/d2>`
+For Android users:
+1. When prompted, allow notifications permission.
+2. For lock screen notifications, ensure you have not disabled them in system settings.
+3. For optimal performance, install the app to your home screen:
+   - Tap the three-dot menu in Chrome
+   - Select "Add to Home Screen"
 
-- **Council Name**: Extracted from the chair's email (e.g., chair-unhrc@isbmun.com → unhrc)
-- **Serial**: Fixed at '00' (since tracking is disabled)
-- **Total**: Fixed at '00' (since tracking is disabled)
-- **d1/d2**: Determined by current date
-  - d1: If date is May 16 or earlier
-  - d2: If date is May 17 or later
+## Troubleshooting Notifications
 
-The print code is generated in the `src/utils/emailUtils.ts` file:
+If you're not receiving notifications:
 
-```typescript
-export const generatePrintCode = (councilName: string): string => {
-  const serial = '00'; // Static serial value
-  const total = '00';  // Static total value
-  
-  // Determine d1 or d2 based on current date
-  const today = new Date();
-  const cutoffDate = new Date(today.getFullYear(), 4, 16); // May 16 (months are 0-indexed)
-  const dateCode = today <= cutoffDate ? 'd1' : 'd2';
-  
-  return `#${councilName}${serial}${total}${dateCode}`;
-};
-```
+### On Android:
+1. Check notification permissions in system settings:
+   - Settings → Apps → [App Name] → Notifications
+2. Ensure battery optimization is not restricting the app:
+   - Settings → Battery → Battery Optimization → Find and exempt the app
 
-### Mailto Link Construction
+### On iOS:
+1. Ensure you've installed the app to your home screen
+2. Check notification settings:
+   - Settings → Notifications → Find the application
+3. Background App Refresh should be enabled:
+   - Settings → General → Background App Refresh
 
-The mailto links are constructed in the FileShare component using the following format:
+### On Desktop:
+1. Check browser notification permissions:
+   - Site Settings/Preferences → Notifications
+2. Ensure your browser is not in Do Not Disturb mode
+3. On macOS, check System Preferences → Notifications for the browser
 
-```
-mailto:recipient@example.com?subject=EncodedSubject&body=EncodedBody
-```
+## Technical Implementation
 
-- **To**: The email recipient
-- **Subject**: URL-encoded subject line
-- **Body**: URL-encoded email body
+The notification system uses:
+1. Firebase Cloud Messaging (FCM) for cross-platform delivery
+2. Service Workers for background notification handling
+3. Web Push API for compatible browsers
+4. Fallback toast notifications for unsupported browsers
 
-Note: File attachments must be done manually after the Gmail compose window opens, as mailto links cannot directly include attachments.
+### For Developers
+
+The code includes:
+- Platform detection utilities for tailoring notification behavior
+- PWA installation guidance for optimal mobile experience
+- Service worker enhancements for lock screen notifications
+- Graceful degradation for browsers with limited support
+
+## Support
+
+If you encounter any issues with notifications, please:
+1. Check your browser and device settings
+2. Verify your internet connection
+3. Try refreshing the application
+4. Contact support if problems persist
+

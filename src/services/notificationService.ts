@@ -1,22 +1,38 @@
 
 /**
  * Service for handling browser notifications and Firebase Cloud Messaging
+ * Provides cross-platform support for all devices and browsers
  */
 
 import { initializeApp, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { firebaseConfig } from '@/config/firebaseConfig';
 import { toast } from 'sonner';
-import { isAndroid, isChrome } from '@/utils/notificationPermission';
+import { 
+  isAndroid, 
+  isChrome, 
+  isIOS,
+  isSafari,
+  isServiceWorkerSupported,
+  isNotificationSupported as checkNotificationSupport,
+  createNotification
+} from '@/utils/crossPlatformNotifications';
 
 // The public VAPID key for web push
-const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';
+const VAPID_KEY = 'BDWcbZw6VGnWZ_wucBdtVT70I6Ixq_bFgGHt-VUiPkqpO7ZG_VoviT76hfvNIJ37LTfP2Z6QdJ1WV0kjuIAqQaI';
 
 // Extended notification options type to handle additional properties
-interface ExtendedNotificationOptions extends NotificationOptions {
-  timestamp?: number;
+interface ExtendedNotificationOptions {
+  body?: string;
+  icon?: string;
+  badge?: string;
   vibrate?: number[];
+  timestamp?: number;
+  tag?: string;
   requireInteraction?: boolean;
+  data?: any;
+  renotify?: boolean;
+  silent?: boolean;
 }
 
 // Initialize Firebase Messaging
@@ -44,12 +60,12 @@ const getFcmToken = (): string | null => {
 
 // Check if notifications are supported in this browser
 const isNotificationSupported = (): boolean => {
-  return 'Notification' in window;
+  return checkNotificationSupport();
 };
 
 // Check if FCM is supported in this browser
 const isFcmSupported = (): boolean => {
-  return 'serviceWorker' in navigator && messaging !== null;
+  return isServiceWorkerSupported() && messaging !== null;
 };
 
 // Request notification permissions and FCM token
@@ -74,6 +90,15 @@ const requestPermission = async (): Promise<boolean> => {
   }
   
   try {
+    // Use special handling for iOS
+    if (isIOS()) {
+      console.log('iOS device detected, using specialized permission flow');
+      // On iOS, we need to provide clear instructions for best results
+      if (isSafari()) {
+        console.log('Safari on iOS has limited notification support');
+      }
+    }
+    
     // Use special handling for Android Chrome
     if (isAndroid() && isChrome()) {
       console.log('Using specialized Android Chrome permission flow');
@@ -119,14 +144,14 @@ const requestFcmToken = async (): Promise<string | null> => {
       }
     }
     
-    console.log('Calling getToken with vapidKey:', VAPID_KEY);
+    console.log('Calling getToken with vapidKey:', VAPID_KEY.substring(0, 10) + '...');
     
     const currentToken = await getToken(messaging, { 
       vapidKey: VAPID_KEY 
     });
     
     if (currentToken) {
-      console.log('FCM token obtained:', currentToken);
+      console.log('FCM token obtained:', currentToken.substring(0, 10) + '...');
       saveFcmToken(currentToken);
       setupFcmListener();
       return currentToken;
@@ -138,7 +163,7 @@ const requestFcmToken = async (): Promise<string | null> => {
         console.log('Permission is granted but no token received, checking service worker');
         
         // Check service worker registration
-        if ('serviceWorker' in navigator) {
+        if (isServiceWorkerSupported()) {
           const registrations = await navigator.serviceWorker.getRegistrations();
           console.log('Service worker registrations:', registrations.length);
           
@@ -151,7 +176,7 @@ const requestFcmToken = async (): Promise<string | null> => {
               // Try getting token again after registration
               const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
               if (retryToken) {
-                console.log('FCM token obtained after registration:', retryToken);
+                console.log('FCM token obtained after registration:', retryToken.substring(0, 10) + '...');
                 saveFcmToken(retryToken);
                 setupFcmListener();
                 return retryToken;
@@ -186,7 +211,8 @@ const setupFcmListener = () => {
         badge: '/logo.png',
         vibrate: [200, 100, 200],
         requireInteraction: payload.data?.requireInteraction === 'true',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        data: payload.data || {}
       };
       
       // Show foreground notification
@@ -209,31 +235,13 @@ const hasPermission = (): boolean => {
   return Notification.permission === 'granted';
 };
 
-// Show a notification
+// Show a notification using our cross-platform utility
 const showNotification = (title: string, options?: ExtendedNotificationOptions): boolean => {
   if (!isNotificationSupported() || !hasPermission()) {
     return false;
   }
   
-  try {
-    // Create and display the notification
-    const notification = new Notification(title, {
-      icon: '/logo.png',
-      badge: '/logo.png',
-      ...options,
-    } as NotificationOptions);
-    
-    // Add click handler to focus the window
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-    
-    return true;
-  } catch (error) {
-    console.error('Error showing notification:', error);
-    return false;
-  }
+  return createNotification(title, options as any);
 };
 
 // Show timer notification
@@ -243,7 +251,7 @@ const showTimerNotification = (timerName: string): boolean => {
     icon: '/logo.png',
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
-  } as ExtendedNotificationOptions);
+  });
 };
 
 // Show alert notification
@@ -257,7 +265,7 @@ const showAlertNotification = (alertType: string, council: string, message: stri
       tag: 'alert-notification', // Group similar notifications
       requireInteraction: urgent, // Urgent alerts stay until clicked
       timestamp: Date.now(),
-    } as ExtendedNotificationOptions
+    }
   );
 };
 
@@ -280,13 +288,13 @@ const showReplyNotification = (
       timestamp: Date.now(),
       vibrate: [100, 50, 100],
       requireInteraction: false,
-    } as ExtendedNotificationOptions
+    }
   );
 };
 
 // Function to initialize Firebase messaging with more detailed logging
-const initializeMessaging = async () => {
-  if (!messaging && 'serviceWorker' in navigator) {
+const initializeMessaging = async (): Promise<boolean> => {
+  if (!messaging && isServiceWorkerSupported()) {
     try {
       console.log('Initializing Firebase messaging');
       const app = getApp();
@@ -298,18 +306,23 @@ const initializeMessaging = async () => {
       if (existingToken) {
         console.log('Using existing FCM token');
         setupFcmListener();
+        return true;
       } else if (hasPermission()) {
         console.log('We have notification permission, requesting FCM token');
         // If we have permission but no token, request it
-        await requestFcmToken();
+        const token = await requestFcmToken();
+        return !!token;
       } else {
         console.log('No notification permission yet, skipping FCM token request');
+        return false;
       }
     } catch (error) {
       console.error('Error initializing Firebase messaging:', error);
+      return false;
     }
   } else {
     console.log('Messaging already initialized or service workers not supported');
+    return !!messaging;
   }
 };
 

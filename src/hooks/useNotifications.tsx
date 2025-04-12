@@ -4,13 +4,17 @@ import { notificationService } from '@/services/notificationService';
 import { toast } from 'sonner';
 import { 
   isAndroid, 
-  isChrome,
-  isNotificationSupported, 
-  getNotificationPermissionStatus,
+  isChrome, 
+  isIOS,
+  isSafari,
+  isPwa,
+  isNotificationSupported,
   requestNotificationPermission,
-  getNotificationSettingsInstructions,
-  testNotification
-} from '@/utils/notificationPermission';
+  getNotificationInstructions,
+  testNotification,
+  getPwaInstructions,
+  canShowLockScreenNotifications
+} from '@/utils/crossPlatformNotifications';
 
 export const useNotifications = () => {
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
@@ -18,6 +22,8 @@ export const useNotifications = () => {
   const [permissionChecked, setPermissionChecked] = useState<boolean>(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [requestInProgress, setRequestInProgress] = useState<boolean>(false);
+  const [isPwaInstalled, setIsPwaInstalled] = useState<boolean>(false);
+  const [canShowLockScreen, setCanShowLockScreen] = useState<boolean>(false);
 
   // Check notification support on mount
   useEffect(() => {
@@ -29,7 +35,13 @@ export const useNotifications = () => {
       const hasPermission = notificationService.hasPermission();
       setPermissionGranted(hasPermission);
       console.log('Initial permission check:', hasPermission);
+      
+      // Check if notifications can appear on lock screen
+      setCanShowLockScreen(canShowLockScreenNotifications());
     }
+    
+    // Check if running as PWA
+    setIsPwaInstalled(isPwa());
     
     setPermissionChecked(true);
   }, []);
@@ -53,7 +65,14 @@ export const useNotifications = () => {
       // Clear any previous errors
       setPermissionError(null);
 
-      console.log('Requesting notification permission, Android:', isAndroid(), 'Chrome:', isChrome());
+      console.log('Requesting notification permission');
+      console.log('Platform info:', {
+        isAndroid: isAndroid(),
+        isChrome: isChrome(),
+        isIOS: isIOS(),
+        isSafari: isSafari(),
+        isPwa: isPwa()
+      });
       
       // Show a toast to let the user know what's happening
       toast.info("Requesting notification permission...");
@@ -70,6 +89,9 @@ export const useNotifications = () => {
         if (!notificationShown) {
           console.warn('Test notification failed despite permission granted');
         }
+        
+        // Update lock screen notification status
+        setCanShowLockScreen(canShowLockScreenNotifications());
         
         // After permission is granted, try to get FCM token
         if (notificationService.isFcmSupported()) {
@@ -106,12 +128,19 @@ export const useNotifications = () => {
       } else {
         // Handle different failure cases
         if (result.status === 'denied') {
-          const message = isAndroid() 
-            ? "Notification permission denied. " + getNotificationSettingsInstructions()
-            : "Notification permission denied.";
-            
+          const message = getNotificationInstructions();
           toast.error(message, { duration: 8000 });
           setPermissionError(message);
+          
+          // If on iOS, suggest installing as PWA for better notification support
+          if (isIOS() && !isPwa()) {
+            const pwaMessage = getPwaInstructions();
+            toast({
+              title: "Install for better notifications",
+              description: pwaMessage,
+              duration: 10000,
+            });
+          }
         } else if (result.status === 'unsupported') {
           toast.error("Your browser doesn't support notifications.");
           setPermissionError("Browser doesn't support notifications");
@@ -156,6 +185,11 @@ export const useNotifications = () => {
     
     const hasPermission = notificationService.hasPermission();
     setPermissionGranted(hasPermission);
+    
+    // Update PWA and lock screen status
+    setIsPwaInstalled(isPwa());
+    setCanShowLockScreen(canShowLockScreenNotifications());
+    
     return hasPermission;
   }, [isSupported]);
 
@@ -185,11 +219,16 @@ export const useNotifications = () => {
     permissionError,
     isAndroid: isAndroid(),
     isChrome: isChrome(),
+    isIOS: isIOS(),
+    isSafari: isSafari(),
+    isPwa: isPwaInstalled,
+    canShowLockScreen,
     requestPermission,
     checkPermission,
     showReplyNotification,
     showNotificationPrompt: permissionChecked && !permissionGranted && isSupported,
-    getSettingsInstructions: getNotificationSettingsInstructions,
+    getSettingsInstructions: getNotificationInstructions,
+    getPwaInstructions,
     testFcm,
     requestInProgress
   };

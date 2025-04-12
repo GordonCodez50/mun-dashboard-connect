@@ -11,13 +11,36 @@
     {
       "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "gcm_sender_id": "879089256467"
+  "gcm_sender_id": "879089256467",
+  "prefer_related_applications": false,
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["productivity", "education"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/",
+      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "lang": "en",
+  "dir": "ltr",
+  "display_override": ["window-controls-overlay"],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "protocol_handlers": []
 }
