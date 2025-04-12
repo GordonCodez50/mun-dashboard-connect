@@ -1,11 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Printer, AlertCircle } from 'lucide-react';
+import { FileText, Printer, AlertCircle, ChevronDown } from 'lucide-react';
 import { extractCouncilName, generatePrintCode } from '@/utils/emailUtils';
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from '@/components/ui/accordion';
 
 const FileShare = () => {
   const { user } = useAuth();
@@ -46,7 +52,7 @@ const FileShare = () => {
           </header>
           
           <div className="grid gap-6 md:grid-cols-2">
-            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 transition-all duration-200 hover:shadow-md">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-primary dark:text-white flex items-center gap-2">
                   <Printer className="h-5 w-5" />
@@ -59,14 +65,14 @@ const FileShare = () => {
                 </p>
                 <Button 
                   onClick={handlePrintEmail}
-                  className="w-full"
+                  className="w-full transition-all duration-200"
                 >
                   Compose Print Email
                 </Button>
               </CardContent>
             </Card>
             
-            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800">
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 transition-all duration-200 hover:shadow-md">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg text-primary dark:text-white flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -80,7 +86,7 @@ const FileShare = () => {
                 <Button 
                   onClick={handleOtherEmail}
                   variant="outline"
-                  className="w-full"
+                  className="w-full transition-all duration-200"
                 >
                   Compose General Email
                 </Button>
@@ -88,7 +94,7 @@ const FileShare = () => {
             </Card>
           </div>
           
-          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 animate-fade-in">
             <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300 mb-2">How to Use</h3>
             <ol className="list-decimal pl-5 text-blue-700 dark:text-blue-200 space-y-2">
               <li>Click on one of the buttons above to open a pre-filled email in Gmail</li>
@@ -98,21 +104,38 @@ const FileShare = () => {
             </ol>
           </div>
           
-          {/* Troubleshooting Section */}
-          <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
-            <h3 className="text-lg font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-2">
-              <AlertCircle className="h-5 w-5" />
-              Troubleshooting
-            </h3>
-            <p className="text-amber-700 dark:text-amber-200 mb-2">
-              If the email compose buttons don't work, you need to allow Gmail to handle mailto links:
-            </p>
-            <ol className="list-decimal pl-5 text-amber-700 dark:text-amber-200 space-y-2">
-              <li>Go to Gmail in your browser</li>
-              <li>Click the small rhombus icon at the end of address bar <img src="/lovable-uploads/793b8d7e-cb28-45d6-a66a-1edbd7f9e81c.png" alt="Gmail address bar with rhombus icon highlighted" className="inline-block h-6 ml-1 align-middle rounded border border-amber-200 dark:border-amber-700" /></li>
-              <li>Follow the prompts to set up Gmail as your email handler</li>
-              <li>Enjoy seamless email composition!</li>
-            </ol>
+          {/* Troubleshooting Section as Accordion */}
+          <div className="mt-6">
+            <Accordion type="single" collapsible className="border rounded-lg overflow-hidden">
+              <AccordionItem value="troubleshooting" className="border-0">
+                <AccordionTrigger className="p-4 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-b border-amber-100 dark:border-amber-800 transition-all">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    <span className="text-lg font-medium">Troubleshooting</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-amber-50/70 dark:bg-amber-900/10 px-4 py-3 border-amber-100 dark:border-amber-800">
+                  <p className="text-amber-700 dark:text-amber-200 mb-3">
+                    If the email compose buttons don't work, you need to allow Gmail to handle mailto links:
+                  </p>
+                  <ol className="list-decimal pl-5 text-amber-700 dark:text-amber-200 space-y-3">
+                    <li>Go to Gmail in your browser</li>
+                    <li className="flex items-center">
+                      Click the small rhombus icon at the end of address bar 
+                      <div className="mx-2 p-1 bg-white dark:bg-gray-700 rounded-md border border-amber-200 dark:border-amber-700 inline-flex items-center">
+                        <img 
+                          src="/lovable-uploads/793b8d7e-cb28-45d6-a66a-1edbd7f9e81c.png" 
+                          alt="Gmail address bar with rhombus icon highlighted" 
+                          className="h-8 rounded" 
+                        />
+                      </div>
+                    </li>
+                    <li>Follow the prompts to set up Gmail as your email handler</li>
+                    <li>Enjoy seamless email composition!</li>
+                  </ol>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </div>
       </div>
