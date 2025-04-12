@@ -1,21 +1,13 @@
 
 /**
- * Cross-platform notification service with support for all devices and browsers
+ * Service for handling browser notifications and Firebase Cloud Messaging
  */
 
 import { initializeApp, getApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { firebaseConfig } from '@/config/firebaseConfig';
 import { toast } from 'sonner';
-import { 
-  isAndroid, 
-  isIOS,
-  isSafari,
-  isChrome,
-  isNotificationSupported,
-  createNotification,
-  simulateNotification
-} from '@/utils/crossPlatformNotifications';
+import { isAndroid, isChrome } from '@/utils/notificationPermission';
 
 // The public VAPID key for web push
 const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';
@@ -39,23 +31,10 @@ try {
   console.log('Firebase app not initialized yet for FCM');
 }
 
-// Store FCM token in localStorage with device info
+// Store FCM token in localStorage
 const saveFcmToken = (token: string) => {
   localStorage.setItem('fcmToken', token);
-  
-  // Also save device info for debugging
-  const deviceInfo = {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    isAndroid: isAndroid(),
-    isIOS: isIOS(),
-    isChrome: isChrome(),
-    isSafari: isSafari(),
-    timestamp: new Date().toISOString()
-  };
-  localStorage.setItem('fcmDeviceInfo', JSON.stringify(deviceInfo));
-  
-  console.log('FCM token saved with device info');
+  console.log('FCM token saved to localStorage');
 };
 
 // Get stored FCM token
@@ -73,7 +52,7 @@ const isFcmSupported = (): boolean => {
   return 'serviceWorker' in navigator && messaging !== null;
 };
 
-// Request notification permissions and FCM token with enhanced platform support
+// Request notification permissions and FCM token
 const requestPermission = async (): Promise<boolean> => {
   if (!isNotificationSupported()) {
     console.warn('Notifications not supported in this browser');
@@ -95,15 +74,11 @@ const requestPermission = async (): Promise<boolean> => {
   }
   
   try {
-    // Log platform info for debugging
-    console.log('Platform info:', {
-      isAndroid: isAndroid(),
-      isIOS: isIOS(),
-      isChrome: isChrome(),
-      isSafari: isSafari()
-    });
+    // Use special handling for Android Chrome
+    if (isAndroid() && isChrome()) {
+      console.log('Using specialized Android Chrome permission flow');
+    }
     
-    // Request permission
     const permission = await Notification.requestPermission();
     const granted = permission === 'granted';
     
@@ -144,26 +119,14 @@ const requestFcmToken = async (): Promise<string | null> => {
       }
     }
     
-    // Special handling for iOS
-    if (isIOS()) {
-      // Check if app is in standalone mode (PWA)
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                          (window.navigator as any).standalone === true;
-      
-      if (!isStandalone) {
-        console.warn('iOS requires PWA mode for reliable notifications');
-        toast.info("For reliable notifications on iOS, please add this app to your home screen");
-      }
-    }
-    
-    console.log('Calling getToken with vapidKey:', VAPID_KEY.substring(0, 10) + '...');
+    console.log('Calling getToken with vapidKey:', VAPID_KEY);
     
     const currentToken = await getToken(messaging, { 
       vapidKey: VAPID_KEY 
     });
     
     if (currentToken) {
-      console.log('FCM token obtained:', currentToken.substring(0, 10) + '...');
+      console.log('FCM token obtained:', currentToken);
       saveFcmToken(currentToken);
       setupFcmListener();
       return currentToken;
@@ -188,28 +151,13 @@ const requestFcmToken = async (): Promise<string | null> => {
               // Try getting token again after registration
               const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
               if (retryToken) {
-                console.log('FCM token obtained after registration:', retryToken.substring(0, 10) + '...');
+                console.log('FCM token obtained after registration:', retryToken);
                 saveFcmToken(retryToken);
                 setupFcmListener();
                 return retryToken;
               }
             } catch (swError) {
               console.error('Error registering service worker:', swError);
-            }
-          } else {
-            // Service worker exists, but token retrieval failed
-            // Try to message the service worker to see if it's functioning
-            const registration = registrations[0];
-            try {
-              if (registration.active) {
-                registration.active.postMessage({
-                  type: 'PING',
-                  time: Date.now()
-                });
-                console.log('Ping sent to service worker');
-              }
-            } catch (msgError) {
-              console.error('Error sending message to service worker:', msgError);
             }
           }
         }
@@ -223,7 +171,7 @@ const requestFcmToken = async (): Promise<string | null> => {
   }
 };
 
-// Set up FCM foreground message listener with enhanced handling
+// Set up FCM foreground message listener
 const setupFcmListener = () => {
   if (!isFcmSupported()) return;
   
@@ -238,76 +186,19 @@ const setupFcmListener = () => {
         badge: '/logo.png',
         vibrate: [200, 100, 200],
         requireInteraction: payload.data?.requireInteraction === 'true',
-        timestamp: Date.now(),
-        tag: payload.data?.tag || 'default',
-        data: { ...payload.data, url: payload.data?.url || '/' }
+        timestamp: Date.now()
       };
       
-      // Try to show notification through service worker for better mobile support
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then(registration => {
-          registration.showNotification(title, options)
-            .catch(error => {
-              console.error('Error showing notification via service worker:', error);
-              
-              // Fall back to standard notification
-              showNotification(title, options);
-              
-              // Always show toast for better visibility on mobile
-              toast(title, {
-                description: options.body,
-                duration: 5000,
-              });
-            });
-        }).catch(err => {
-          console.error('Service worker not ready:', err);
-          
-          // Fall back to standard notification
-          showNotification(title, options);
-          
-          // Show toast as additional fallback
-          toast(title, {
-            description: options.body,
-            duration: 5000,
-          });
-        });
-      } else {
-        // No service worker, use standard notification
-        showNotification(title, options);
-        
-        // Also show toast
-        toast(title, {
-          description: options.body,
-          duration: 5000,
-        });
-      }
+      // Show foreground notification
+      showNotification(title, options);
+      
+      // Also show toast for better UX
+      toast(title, {
+        description: options.body,
+        duration: 5000,
+      });
     }
   });
-  
-  // Set up message listener for service worker communication
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      console.log('Message from service worker:', event.data);
-      
-      if (event.data.type === 'NOTIFICATION_CLICK') {
-        // Handle notification click event
-        console.log('Notification clicked:', event.data);
-        
-        // Dispatch custom event for app to handle
-        window.dispatchEvent(new CustomEvent('notificationclick', { 
-          detail: event.data 
-        }));
-      } else if (event.data.type === 'NOTIFICATION_ACTION') {
-        // Handle notification action event
-        console.log('Notification action:', event.data);
-        
-        // Dispatch custom event for app to handle
-        window.dispatchEvent(new CustomEvent('notificationaction', { 
-          detail: event.data 
-        }));
-      }
-    });
-  }
 };
 
 // Check current permission status
@@ -318,78 +209,55 @@ const hasPermission = (): boolean => {
   return Notification.permission === 'granted';
 };
 
-// Show a notification with enhanced cross-platform support
+// Show a notification
 const showNotification = (title: string, options?: ExtendedNotificationOptions): boolean => {
-  return createNotification(title, options, (title, body) => {
-    // Fallback to toast when notification fails
-    toast(title, {
-      description: body,
-      duration: 5000
-    });
-  });
+  if (!isNotificationSupported() || !hasPermission()) {
+    return false;
+  }
+  
+  try {
+    // Create and display the notification
+    const notification = new Notification(title, {
+      icon: '/logo.png',
+      badge: '/logo.png',
+      ...options,
+    } as NotificationOptions);
+    
+    // Add click handler to focus the window
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+    
+    return true;
+  } catch (error) {
+    console.error('Error showing notification:', error);
+    return false;
+  }
 };
 
 // Show timer notification
 const showTimerNotification = (timerName: string): boolean => {
-  const options: ExtendedNotificationOptions = {
+  return showNotification(`${timerName} has ended!`, {
     body: 'Your timer has completed.',
     icon: '/logo.png',
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
-    requireInteraction: false,
-    tag: 'timer-notification',
-    data: { type: 'timer', timerName }
-  };
-  
-  // Enhanced handling for mobile platforms
-  if (isAndroid()) {
-    options.vibrate = [100, 50, 100, 50, 100];
-    options.requireInteraction = true;
-  }
-  
-  if (isIOS()) {
-    // iOS has limitations with service workers, try both methods
-    simulateNotification(`${timerName} has ended!`, options.body || '', options.icon);
-  }
-  
-  return showNotification(`${timerName} has ended!`, options);
+  } as ExtendedNotificationOptions);
 };
 
-// Show alert notification with enhanced cross-platform support
+// Show alert notification
 const showAlertNotification = (alertType: string, council: string, message: string, urgent: boolean = false): boolean => {
-  const options: ExtendedNotificationOptions = {
-    body: message,
-    icon: '/logo.png',
-    vibrate: urgent ? [200, 100, 200, 100, 200] : [100, 50, 100],
-    tag: 'alert-notification', // Group similar notifications
-    requireInteraction: urgent, // Urgent alerts stay until clicked
-    timestamp: Date.now(),
-    data: { type: 'alert', alertType, council, urgent }
-  };
-  
-  // Enhanced handling for mobile platforms
-  if (isAndroid()) {
-    options.vibrate = urgent ? [300, 100, 300, 100, 300] : [100, 50, 100];
-    // Android can show actions
-    (options as any).actions = [
-      { action: 'view', title: 'View Details' }
-    ];
-  }
-  
-  if (isIOS()) {
-    // iOS has limitations, also use in-app notification
-    if (urgent) {
-      simulateNotification(
-        `🚨 URGENT: ${alertType} from ${council}`, 
-        message, 
-        options.icon
-      );
-    }
-  }
-  
   return showNotification(
     `${urgent ? '🚨 URGENT: ' : ''}${alertType} from ${council}`,
-    options
+    {
+      body: message,
+      icon: '/logo.png',
+      vibrate: urgent ? [200, 100, 200, 100, 200] : [100, 50, 100],
+      tag: 'alert-notification', // Group similar notifications
+      requireInteraction: urgent, // Urgent alerts stay until clicked
+      timestamp: Date.now(),
+    } as ExtendedNotificationOptions
   );
 };
 
@@ -403,39 +271,16 @@ const showReplyNotification = (
   const emoji = userType === 'admin' ? '👨‍💼' : 
                 userType === 'chair' ? '🪑' : '📰';
   
-  const options: ExtendedNotificationOptions = {
-    body: replyMessage,
-    icon: '/logo.png',
-    tag: `reply-${alertId}`,
-    timestamp: Date.now(),
-    vibrate: [100, 50, 100],
-    requireInteraction: false,
-    data: { type: 'reply', alertId, fromName, userType }
-  };
-  
-  // Enhanced handling for mobile platforms
-  if (isAndroid()) {
-    options.vibrate = [100, 30, 100, 30, 100];
-    // Android can show actions
-    (options as any).actions = [
-      { action: 'reply', title: 'Reply' },
-      { action: 'view', title: 'View' }
-    ];
-  }
-  
-  if (isIOS()) {
-    // For iOS, also show in-app notification since notification 
-    // support is limited on iOS unless in PWA mode
-    simulateNotification(
-      `${emoji} New reply from ${fromName}`, 
-      replyMessage, 
-      options.icon
-    );
-  }
-  
   return showNotification(
     `${emoji} New reply from ${fromName}`,
-    options
+    {
+      body: replyMessage,
+      icon: '/logo.png',
+      tag: `reply-${alertId}`,
+      timestamp: Date.now(),
+      vibrate: [100, 50, 100],
+      requireInteraction: false,
+    } as ExtendedNotificationOptions
   );
 };
 
@@ -479,16 +324,6 @@ const testFcm = async (): Promise<boolean> => {
   const token = await requestFcmToken();
   if (!token) {
     console.warn('Could not obtain FCM token');
-    
-    // Fall back to basic notification test
-    if (hasPermission()) {
-      showNotification('Basic Notification Test', {
-        body: 'Testing basic notification functionality',
-        icon: '/logo.png'
-      });
-      return true; // At least basic notifications work
-    }
-    
     return false;
   }
   
@@ -496,8 +331,6 @@ const testFcm = async (): Promise<boolean> => {
   showNotification('FCM Test Successful', {
     body: 'Firebase Cloud Messaging is working correctly.',
     timestamp: Date.now(),
-    requireInteraction: false,
-    vibrate: [100, 50, 100]
   });
   
   return true;
