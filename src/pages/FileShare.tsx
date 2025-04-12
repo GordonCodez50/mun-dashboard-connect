@@ -12,9 +12,13 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from '@/components/ui/accordion';
+import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 const FileShare = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const { permissionGranted, requestPermission } = useNotifications();
   const councilName = extractCouncilName(user?.email || '');
 
   const handlePrintEmail = () => {
@@ -26,6 +30,13 @@ const FileShare = () => {
     );
     
     window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
+    
+    // Show success toast
+    toast({
+      title: "Email ready",
+      description: "Print request email has been prepared. Please attach your files.",
+      duration: 5000
+    });
   };
 
   const handleOtherEmail = () => {
@@ -36,6 +47,13 @@ const FileShare = () => {
     );
     
     window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
+    
+    // Show success toast
+    toast({
+      title: "Email ready",
+      description: "General support email has been prepared. Please attach your files.",
+      duration: 5000
+    });
   };
 
   return (
@@ -94,14 +112,35 @@ const FileShare = () => {
             </Card>
           </div>
           
-          <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 animate-fade-in">
-            <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300 mb-2">How to Use</h3>
-            <ol className="list-decimal pl-5 text-blue-700 dark:text-blue-200 space-y-2">
-              <li>Click on one of the buttons above to open a pre-filled email in Gmail</li>
-              <li>Attach your file manually in the Gmail compose window</li>
-              <li>Review the email content and make any necessary changes</li>
-              <li>Send the email to the admin team</li>
-            </ol>
+          <div className="mt-8">
+            {!permissionGranted && (
+              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 animate-fade-in">
+                <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-5 w-5" />
+                  Enable Notifications
+                </h3>
+                <p className="text-blue-700 dark:text-blue-200 mb-3">
+                  Get notified about important events and updates. Notifications work on all devices including mobile phones.
+                </p>
+                <Button 
+                  onClick={requestPermission}
+                  variant="outline" 
+                  className="border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/40"
+                >
+                  Enable Notifications
+                </Button>
+              </div>
+            )}
+            
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800 animate-fade-in">
+              <h3 className="text-lg font-medium text-blue-800 dark:text-blue-300 mb-2">How to Use</h3>
+              <ol className="list-decimal pl-5 text-blue-700 dark:text-blue-200 space-y-2">
+                <li>Click on one of the buttons above to open a pre-filled email in Gmail</li>
+                <li>Attach your file manually in the Gmail compose window</li>
+                <li>Review the email content and make any necessary changes</li>
+                <li>Send the email to the admin team</li>
+              </ol>
+            </div>
           </div>
           
           {/* Troubleshooting Section as Accordion */}
