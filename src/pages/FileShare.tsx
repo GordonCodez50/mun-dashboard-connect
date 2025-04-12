@@ -4,7 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Printer } from 'lucide-react';
+import { FileText, Printer, AlertCircle } from 'lucide-react';
 import { extractCouncilName, generatePrintCode } from '@/utils/emailUtils';
 
 const FileShare = () => {
@@ -19,7 +19,7 @@ const FileShare = () => {
       `Dear Admin Team,\n\nPlease find the attached file for printing for the ${councilName.toUpperCase()} council. Let me know if any changes are required.\n\nRegards,\nChair – ${councilName.toUpperCase()}`
     );
     
-    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+    window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
   };
 
   const handleOtherEmail = () => {
@@ -29,7 +29,7 @@ const FileShare = () => {
       `Dear Admins,\n\nPlease find the attached file regarding [brief description]. This is not for printing, but for your attention.\n\nRegards,\nChair – ${councilName.toUpperCase()}`
     );
     
-    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+    window.open(`mailto:${recipient}?subject=${subject}&body=${body}`, '_blank');
   };
 
   return (
@@ -95,6 +95,23 @@ const FileShare = () => {
               <li>Attach your file manually in the Gmail compose window</li>
               <li>Review the email content and make any necessary changes</li>
               <li>Send the email to the admin team</li>
+            </ol>
+          </div>
+          
+          {/* Troubleshooting Section */}
+          <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800">
+            <h3 className="text-lg font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-2">
+              <AlertCircle className="h-5 w-5" />
+              Troubleshooting
+            </h3>
+            <p className="text-amber-700 dark:text-amber-200 mb-2">
+              If the email compose buttons don't work, you need to allow Gmail to handle mailto links:
+            </p>
+            <ol className="list-decimal pl-5 text-amber-700 dark:text-amber-200 space-y-2">
+              <li>Go to Gmail in your browser</li>
+              <li>Click the small rhombus icon at the end of address bar <img src="/lovable-uploads/793b8d7e-cb28-45d6-a66a-1edbd7f9e81c.png" alt="Gmail address bar with rhombus icon highlighted" className="inline-block h-6 ml-1 align-middle rounded border border-amber-200 dark:border-amber-700" /></li>
+              <li>Follow the prompts to set up Gmail as your email handler</li>
+              <li>Enjoy seamless email composition!</li>
             </ol>
           </div>
         </div>
