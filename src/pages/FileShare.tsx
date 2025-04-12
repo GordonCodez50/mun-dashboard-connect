@@ -120,13 +120,13 @@ const FileShare = () => {
                   </p>
                   <ol className="list-decimal pl-5 text-amber-700 dark:text-amber-200 space-y-3">
                     <li>Go to Gmail in your browser</li>
-                    <li className="flex items-center">
-                      Click the small rhombus icon at the end of address bar 
-                      <div className="mx-2 p-1 bg-white dark:bg-gray-700 rounded-md border border-amber-200 dark:border-amber-700 inline-flex items-center">
+                    <li className="flex flex-col md:flex-row md:items-center gap-3">
+                      <span>Click the rhombus icon in the address bar as shown:</span>
+                      <div className="mx-auto md:mx-0 p-2 bg-white dark:bg-gray-700 rounded-md border border-amber-200 dark:border-amber-700 inline-flex items-center shadow-sm">
                         <img 
-                          src="/lovable-uploads/793b8d7e-cb28-45d6-a66a-1edbd7f9e81c.png" 
+                          src="/lovable-uploads/496e4fca-3405-41d1-8be4-dea6d4dd11d0.png" 
                           alt="Gmail address bar with rhombus icon highlighted" 
-                          className="h-8 rounded" 
+                          className="h-14 md:h-16 rounded object-contain transition-all duration-200 hover:opacity-95"
                         />
                       </div>
                     </li>
