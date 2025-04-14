@@ -1,72 +1,102 @@
 
 # MUN Conference Dashboard
 
-A comprehensive dashboard for Model United Nations conferences with cross-platform notifications support.
+## Overview
 
-## Features
+A comprehensive, cross-platform web application designed specifically for Model United Nations conferences, providing powerful collaboration and communication tools for chairs, press, and admin users.
 
-- Real-time alerts and notifications
-- Timer management
-- Cross-platform notifications (iOS, Android, Desktop)
+## Professional Features
+
+### 1. Real-Time Notification System
+- Cross-platform notification support (iOS, Android, Desktop, Web)
 - Lock screen notifications for mobile devices
-- PWA support for better mobile experience
+- Firebase Cloud Messaging (FCM) integration
+- Customizable notification sounds and preferences
+- Granular notification filtering (urgent vs. normal alerts)
 
-## Technical Implementation
+### 2. Multi-Platform Compatibility
+- Fully responsive design
+- Progressive Web App (PWA) support
+- Native-like experience across devices
+- Optimized for:
+  - Chrome (Desktop & Mobile)
+  - Safari (Desktop & iOS)
+  - Firefox
+  - Edge
+  - Android
+  - iOS
 
-### Notifications
+### 3. User Role Management
+- Differentiated dashboards for:
+  - Chairs
+  - Press Members
+  - Administrators
+- Role-based access control
+- Secure authentication via Firebase
 
-The application implements a robust notification system that works across different platforms:
+### 4. Advanced Timer Management
+- Multiple simultaneous timers
+- Customizable time presets
+- Sound notifications for timer events
+- Precise countdown tracking
 
-- **Browser Notifications**: Using the Web Notifications API
-- **Firebase Cloud Messaging (FCM)**: For push notifications
-- **Lock Screen Notifications**: For Android and iOS devices
-- **PWA Support**: For better integration on mobile devices
+### 5. Alert and Communication System
+- Instant alert creation and tracking
+- Multi-stage alert workflow (pending, acknowledged, resolved)
+- Inline reply capabilities
+- Priority-based alert handling
 
-### Setup Requirements
+### 6. Document and File Sharing
+- Secure document upload and management
+- Real-time file sharing
+- Access control based on user roles
 
-#### Firebase Configuration
+### 7. Performance and Reliability
+- WebSocket integration for real-time updates
+- Firebase Realtime Database synchronization
+- Efficient state management
+- Minimal latency communication
 
-1. Ensure Firebase configuration is set up correctly in `src/config/firebaseConfig.ts`
-2. The Firebase Messaging Service Worker (`public/firebase-messaging-sw.js`) must be deployed to the root of the domain
+### 8. Developer-Friendly Architecture
+- TypeScript-based
+- Modular component design
+- Tailwind CSS for responsive styling
+- Shadcn/ui component library
+- React Query for data fetching
+- Comprehensive error handling
 
-#### PWA Configuration
+### 9. Mobile-First Design
+- Responsive layouts
+- Touch-friendly interfaces
+- PWA installation support
+- Optimized for small and large screens
 
-1. Ensure the Web App Manifest (`public/manifest.json`) is properly configured
-2. Set the correct icons in the manifest for PWA installation
+## Technical Stack
+- React 18
+- TypeScript
+- Tailwind CSS
+- Firebase
+- React Query
+- Shadcn/ui
+- Capacitor (for mobile capabilities)
 
-#### VAPID Key
-
-1. Make sure to set the correct VAPID key in both:
-   - `src/services/notificationService.ts`
-   - `src/utils/fcmUtils.ts`
-
-## Development Guidelines
-
-### Testing Notifications
-
-1. Enable notifications in your browser
-2. For mobile testing, use a real device or an emulator with notification support
-3. For iOS, install as PWA for better notification support
-
-### Browser Compatibility
-
-The notification system is designed to work on:
-- Chrome (Desktop & Mobile)
-- Safari (Desktop & iOS)
-- Firefox
-- Edge
-
-### Known Limitations
-
-- iOS Safari has limited notification support in regular browser mode
-- PWA installation is recommended for iOS users
+## Coming Soon
+- Enhanced reporting tools
+- Advanced analytics
+- More customization options
 
 ## Deployment
+Easily deployable on:
+- Vercel
+- Netlify
+- Firebase Hosting
+- Custom cloud providers
 
-When deploying to production:
+## Security
+- Secure authentication
+- Role-based permissions
+- Data encryption
+- Regular security updates
 
-1. Make sure the service worker is properly registered
-2. Test notifications on all target platforms
-3. Verify that FCM tokens are being correctly generated and stored
-4. Ensure all security rules are properly configured in Firebase
-
+## Support
+For issues, feature requests, or support, please contact our development team.
