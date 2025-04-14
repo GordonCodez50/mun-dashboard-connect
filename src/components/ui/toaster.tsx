@@ -8,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "@/components/ui/toast"
-import { Bell, AlertTriangle, MessageSquare, CheckCircle, X } from "lucide-react"
+import { Bell, AlertTriangle, MessageSquare, CheckCircle, X, Info } from "lucide-react"
 
 export function Toaster() {
   const { toasts } = useToast()
@@ -16,7 +16,7 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
-        // Determine icon based on title or variant
+        // Determine icon based on title, description or variant
         let Icon = Bell;
         
         if (variant === "destructive") {
@@ -34,6 +34,14 @@ export function Toaster() {
           ))
         ) {
           Icon = CheckCircle;
+        } else if (
+          (typeof title === 'string' && (
+            title.toLowerCase().includes('info') ||
+            title.toLowerCase().includes('requesting') ||
+            title.toLowerCase().includes('testing')
+          ))
+        ) {
+          Icon = Info;
         }
         
         return (
@@ -41,7 +49,9 @@ export function Toaster() {
             <div className="flex gap-3">
               <div className="mt-1">
                 <Icon className={`h-5 w-5 ${
-                  variant === "destructive" ? "text-red-500" : "text-primary"
+                  variant === "destructive" ? "text-red-500" : 
+                  variant === "default" ? "text-primary" :
+                  "text-primary"
                 }`} />
               </div>
               <div className="grid gap-1">

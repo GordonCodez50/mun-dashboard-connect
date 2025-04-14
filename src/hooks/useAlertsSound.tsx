@@ -60,12 +60,17 @@ export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) =
     const validPreviousAlerts = previousAlerts.filter(alert => alert && alert.id);
     
     // Check for new alerts (by ID) that we haven't processed yet
+    // Don't process resolved alerts
     const newAlerts = validAlerts.filter(
-      alert => !processedAlertIds.current.has(alert.id)
+      alert => !processedAlertIds.current.has(alert.id) && alert.status !== 'resolved'
     );
     
     // Check for new replies on existing alerts that we haven't processed yet
+    // Don't process replies for resolved alerts
     const alertsWithNewReplies = validAlerts.filter(alert => {
+      // Skip resolved alerts entirely
+      if (alert.status === 'resolved') return false;
+      
       const prevAlert = validPreviousAlerts.find(a => a.id === alert.id);
       
       // Check for admin replies

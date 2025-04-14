@@ -135,7 +135,6 @@ export const useNotifications = () => {
           // If on iOS, suggest installing as PWA for better notification support
           if (isIOS() && !isPwa()) {
             const pwaMessage = getPwaInstructions();
-            // Fix: Using toast properly without 'title' property
             toast(pwaMessage, {
               description: "Install for better notifications",
               duration: 10000,
