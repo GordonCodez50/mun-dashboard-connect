@@ -5,7 +5,7 @@
 
 A comprehensive, cross-platform web application designed specifically for Model United Nations conferences, providing powerful collaboration and communication tools for chairs, press, and admin users.
 
-## Professional Features
+## Professional Featurex
 
 ### 1. Real-Time Notification System
 - Cross-platform notification support (iOS, Android, Desktop, Web)
