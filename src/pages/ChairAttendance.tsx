@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -10,7 +11,7 @@ import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
 import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, CheckCircle, UserCog, Loader2, Calendar, RefreshCw } from 'lucide-react';
+import { Users, CheckCircle, UserCog, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ChairAttendance = () => {
@@ -40,16 +41,12 @@ const ChairAttendance = () => {
 
   const handleRefreshData = async () => {
     setIsRefreshing(true);
-    try {
-      // This would trigger a re-fetch of the participants data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Attendance data refreshed');
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
-    } finally {
-      setIsRefreshing(false);
-    }
+    toast.info('Refreshing page...');
+    
+    // Short timeout to allow the toast to show before refresh
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
   
   const handleSubmitAttendance = async () => {
@@ -101,10 +98,6 @@ const ChairAttendance = () => {
               )}
               {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
             </Button>
-          </div>
-
-          <div className="mb-6">
-            <AttendanceTroubleshoot />
           </div>
           
           {loading ? (
@@ -197,6 +190,11 @@ const ChairAttendance = () => {
                     </div>
                   </TabsContent>
                 </Tabs>
+              </div>
+              
+              {/* Troubleshoot accordion moved to the bottom of the page */}
+              <div className="mt-10">
+                <AttendanceTroubleshoot />
               </div>
             </>
           )}

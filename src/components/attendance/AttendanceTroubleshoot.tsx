@@ -5,14 +5,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 export const AttendanceTroubleshoot = () => {
-  const handleRefresh = () => {
-    window.location.reload();
-  };
-
   return (
     <Accordion type="single" collapsible className="bg-muted/50 rounded-lg p-2">
       <AccordionItem value="troubleshoot">
@@ -32,17 +27,6 @@ export const AttendanceTroubleshoot = () => {
                 <li>Empty participant list - Verify council selection and filters</li>
                 <li>Batch marking not working - Ensure participants are selected</li>
               </ul>
-            </div>
-            <div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                className="w-full sm:w-auto"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh Page
-              </Button>
             </div>
           </div>
         </AccordionContent>

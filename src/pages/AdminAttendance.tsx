@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -39,20 +40,15 @@ const AdminAttendance = () => {
     ? participants
     : participants.filter(p => p.council === selectedCouncil);
   
-  // Handle refresh data
+  // Handle refresh data - now refreshes the whole page
   const handleRefreshData = async () => {
     setIsRefreshing(true);
+    toast.info('Refreshing page...');
     
-    try {
-      // This would be replaced with actual API call in production
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('Attendance data refreshed');
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
-    } finally {
-      setIsRefreshing(false);
-    }
+    // Short timeout to allow the toast to show before refresh
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   return (
@@ -65,10 +61,6 @@ const AdminAttendance = () => {
             isRefreshing={isRefreshing}
             handleRefreshData={handleRefreshData}
           />
-          
-          <div className="mb-6">
-            <AttendanceTroubleshoot />
-          </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -141,6 +133,11 @@ const AdminAttendance = () => {
                     />
                   </TabsContent>
                 </Tabs>
+              </div>
+              
+              {/* Troubleshoot accordion moved to the bottom of the page */}
+              <div className="mt-10">
+                <AttendanceTroubleshoot />
               </div>
             </>
           )}
