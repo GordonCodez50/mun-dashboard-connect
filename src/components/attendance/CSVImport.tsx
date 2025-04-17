@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ParticipantWithAttendance } from '@/types/attendance';
 import { toast } from 'sonner';
-import { Upload, AlertCircle, Check, FileCheck } from 'lucide-react';
+import { Upload, AlertCircle, Check, FileCheck, Download } from 'lucide-react';
 
 interface CSVImportProps {
   onImport: (participants: Omit<ParticipantWithAttendance, 'id'>[]) => void;
@@ -60,7 +60,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         
         // Check required headers
-        const requiredHeaders = ['name', 'role'];
+        const requiredHeaders = ['name', 'role', 'council'];
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
         
         if (missingHeaders.length > 0) {
@@ -114,9 +114,6 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         const nameIndex = headers.indexOf('name');
         const roleIndex = headers.indexOf('role');
         const councilIndex = headers.indexOf('council');
-        const countryIndex = headers.indexOf('country');
-        const emailIndex = headers.indexOf('email');
-        const notesIndex = headers.indexOf('notes');
         
         // Parse rows into participants
         const participants: Omit<ParticipantWithAttendance, 'id'>[] = [];
@@ -124,7 +121,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
           
-          if (values.length < Math.max(nameIndex, roleIndex) + 1) {
+          if (values.length < Math.max(nameIndex, roleIndex, councilIndex) + 1) {
             continue; // Skip invalid rows
           }
           
@@ -144,9 +141,6 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
             name: values[nameIndex],
             role: role as any,
             council: council,
-            country: countryIndex >= 0 ? values[countryIndex] : undefined,
-            email: emailIndex >= 0 ? values[emailIndex] : undefined,
-            notes: notesIndex >= 0 ? values[notesIndex] : undefined,
             attendance: {
               day1: 'not-marked',
               day2: 'not-marked'
@@ -182,6 +176,30 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
     reader.readAsText(file);
   };
 
+  // New function to download CSV template
+  const downloadTemplate = () => {
+    // Create CSV content with headers
+    const headers = ['name', 'council', 'role'];
+    const csvContent = headers.join(',') + '\n';
+    
+    // Create sample row if needed
+    // const sampleRow = ['John Doe', councilRestriction || 'UNSC', 'delegate'];
+    // csvContent += sampleRow.join(',') + '\n';
+    
+    // Create a blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'participants_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Template downloaded successfully');
+  };
+
   return (
     <Card className="w-full animate-fade-in">
       <CardHeader>
@@ -191,6 +209,21 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         </CardTitle>
       </CardHeader>
       <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <p className="text-sm text-muted-foreground">
+            Upload a CSV file with participant details
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={downloadTemplate}
+          >
+            <Download size={14} />
+            Download Template
+          </Button>
+        </div>
+        
         <div
           className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
             isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/20'
@@ -239,7 +272,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
                 Browse Files
               </Button>
               <p className="text-xs text-muted-foreground mt-3">
-                CSV should include columns: name, role, council, and optionally country, email, notes
+                Required columns: name, council, role
               </p>
             </>
           )}
@@ -276,3 +309,4 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
     </Card>
   );
 };
+

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -32,21 +31,16 @@ const ChairAttendance = () => {
     batchMarkAttendance 
   } = useParticipants();
 
-  // Get list of councils for forms
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
   
-  // Get current user's council
   const userCouncil = user?.council || '';
   
-  // Handle submission of attendance
   const handleSubmitAttendance = async () => {
     setIsSaving(true);
     
     try {
-      // This would be replaced with actual API call in production
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Get counts for success message
       const dayField = selectedDate === 'day1' ? 'day1' : 'day2';
       const markedCount = participants.filter(p => p.attendance[dayField] !== 'not-marked').length;
       const totalCount = participants.length;
