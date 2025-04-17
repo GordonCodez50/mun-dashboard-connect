@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle, MessageSquare } from 'lucide-react';
@@ -23,11 +22,12 @@ type AlertItemProps = {
   user: User | null;
 };
 
+const recentReplies = new Set<string>();
+
 export const AlertItem = ({ alert, user }: AlertItemProps) => {
   const [activeAlertId, setActiveAlertId] = useState<string | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
 
-  // Ensure we have the required fields, with fallbacks for missing data
   const safeAlert = {
     ...alert,
     council: alert.council || 'Unknown Council',
@@ -64,7 +64,19 @@ export const AlertItem = ({ alert, user }: AlertItemProps) => {
     }
     
     try {
-      // Add timestamp to reply to prevent duplicates
+      const replyId = `${alertId}-${Date.now()}`;
+      
+      if (recentReplies.has(replyId)) {
+        return;
+      }
+      
+      recentReplies.add(replyId);
+      
+      if (recentReplies.size > 100) {
+        const entriesIterator = recentReplies.values();
+        recentReplies.delete(entriesIterator.next().value);
+      }
+      
       await realtimeService.updateAlertStatus(alertId, alert.status, {
         reply: replyMessage,
         admin: user?.name || 'Admin',

@@ -12,10 +12,19 @@ import { Bell, AlertTriangle, MessageSquare, CheckCircle, X, Info } from "lucide
 
 export function Toaster() {
   const { toasts } = useToast()
+  
+  // Deduplicate toasts based on title and description (prevents double notifications)
+  const uniqueToasts = toasts.reduce((acc, toast) => {
+    const key = `${toast.title}-${toast.description}`;
+    if (!acc.some(t => `${t.title}-${t.description}` === key)) {
+      acc.push(toast);
+    }
+    return acc;
+  }, [] as typeof toasts);
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+      {uniqueToasts.map(function ({ id, title, description, action, variant, ...props }) {
         // Determine icon based on title, description or variant
         let Icon = Bell;
         

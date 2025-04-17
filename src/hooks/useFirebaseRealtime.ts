@@ -21,7 +21,15 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
           case 'NEW_ALERT':
             // Listen to all alerts
             unsubscribe = realtimeService.onNewAlert((data) => {
-              setData(data as T);
+              // Deduplicate data if it's an array
+              if (Array.isArray(data)) {
+                const uniqueAlerts = Array.from(
+                  new Map(data.map(item => [item.id, item])).values()
+                );
+                setData(uniqueAlerts as T);
+              } else {
+                setData(data as T);
+              }
               setIsLoading(false);
             });
             break;
