@@ -148,4 +148,3 @@ const AdminAttendance = () => {
 };
 
 export default AdminAttendance;
-

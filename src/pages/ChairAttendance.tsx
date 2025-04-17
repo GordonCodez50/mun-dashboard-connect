@@ -10,7 +10,7 @@ import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, CheckCircle, UserCog, Loader2 } from 'lucide-react';
+import { Users, CheckCircle, UserCog, Loader2, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ChairAttendance = () => {
@@ -69,11 +69,37 @@ const ChairAttendance = () => {
       
       <div className="flex-1 overflow-y-auto w-full">
         <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Attendance Management</h1>
-            <p className="text-gray-500 mt-1">
-              Manage participants and track attendance for {userCouncil}
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Attendance Management</h1>
+              <p className="text-gray-500 mt-1">
+                Manage participants and track attendance for {userCouncil}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm">
+              <Calendar size={18} className="text-primary ml-1" />
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedDate === 'day1' ? 'default' : 'outline'}
+                  onClick={() => setSelectedDate('day1')}
+                  disabled={!isDay1}
+                  className={!isDay1 ? 'opacity-50 cursor-not-allowed' : ''}
+                  size="sm"
+                >
+                  Day 1 (16th March)
+                </Button>
+                <Button
+                  variant={selectedDate === 'day2' ? 'default' : 'outline'}
+                  onClick={() => setSelectedDate('day2')}
+                  disabled={!isDay2}
+                  className={!isDay2 ? 'opacity-50 cursor-not-allowed' : ''}
+                  size="sm"
+                >
+                  Day 2 (17th March)
+                </Button>
+              </div>
+            </div>
           </div>
           
           {loading ? (
@@ -139,25 +165,6 @@ const ChairAttendance = () => {
                             Mark attendance for {userCouncil} participants
                           </p>
                         </div>
-                        
-                        <div className="flex gap-2">
-                          <Button
-                            variant={selectedDate === 'day1' ? 'default' : 'outline'}
-                            onClick={() => setSelectedDate('day1')}
-                            disabled={!isDay1}
-                            className={!isDay1 ? 'opacity-50 cursor-not-allowed' : ''}
-                          >
-                            Day 1 (16th March)
-                          </Button>
-                          <Button
-                            variant={selectedDate === 'day2' ? 'default' : 'outline'}
-                            onClick={() => setSelectedDate('day2')}
-                            disabled={!isDay2}
-                            className={!isDay2 ? 'opacity-50 cursor-not-allowed' : ''}
-                          >
-                            Day 2 (17th March)
-                          </Button>
-                        </div>
                       </div>
                       
                       <AttendanceTable
@@ -195,4 +202,3 @@ const ChairAttendance = () => {
 };
 
 export default ChairAttendance;
-
