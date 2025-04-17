@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ParticipantWithAttendance } from '@/types/attendance';
@@ -93,7 +92,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium">Attendance Progress</CardTitle>
         </CardHeader>
