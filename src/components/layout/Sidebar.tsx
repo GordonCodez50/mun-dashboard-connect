@@ -12,7 +12,8 @@ import {
   FileText,
   AlertCircle,
   ExternalLink,
-  Mail
+  Mail,
+  UserCheck
 } from 'lucide-react';
 import { externalNavButton } from '@/config/navigationConfig';
 
@@ -73,6 +74,18 @@ export const Sidebar = () => {
                 <Users size={18} />
                 User Management
               </Link>
+              <Link
+                to="/admin-attendance"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/admin-attendance")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <UserCheck size={18} />
+                Attendance
+              </Link>
             </>
           )}
 
@@ -102,6 +115,18 @@ export const Sidebar = () => {
               >
                 <Timer size={18} />
                 Timer
+              </Link>
+              <Link
+                to="/chair-attendance"
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                  isActive("/chair-attendance")
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                <UserCheck size={18} />
+                Attendance
               </Link>
               <Link
                 to="/file-share"

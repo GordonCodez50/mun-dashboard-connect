@@ -42,6 +42,8 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const TimerManager = lazy(() => import("./pages/TimerManager"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const FileShare = lazy(() => import("./pages/FileShare"));
+const ChairAttendance = lazy(() => import("./pages/ChairAttendance"));
+const AdminAttendance = lazy(() => import("./pages/AdminAttendance"));
 
 // Setup loading fallback
 const LoadingFallback = () => (
@@ -154,6 +156,10 @@ const AppWithAuth = () => {
           element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
         />
         <Route
+          path="/chair-attendance"
+          element={<ProtectedRoute element={<ChairAttendance />} requiredRole="chair" />}
+        />
+        <Route
           path="/file-share"
           element={<ProtectedRoute element={<FileShare />} requiredRole="chair" />}
         />
@@ -172,6 +178,10 @@ const AppWithAuth = () => {
         <Route
           path="/user-management"
           element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
+        />
+        <Route
+          path="/admin-attendance"
+          element={<ProtectedRoute element={<AdminAttendance />} requiredRole="admin" />}
         />
 
         {/* Index route redirect */}
