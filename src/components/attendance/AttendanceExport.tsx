@@ -36,11 +36,8 @@ export const AttendanceExport: React.FC<AttendanceExportProps> = ({
         'Name',
         'Council',
         'Role',
-        'Country',
-        'Email',
         'Day 1 Attendance',
-        'Day 2 Attendance',
-        'Notes'
+        'Day 2 Attendance'
       ];
       
       // Create CSV rows
@@ -48,11 +45,8 @@ export const AttendanceExport: React.FC<AttendanceExportProps> = ({
         p.name,
         p.council,
         p.role,
-        p.country || '',
-        p.email || '',
         p.attendance.day1,
-        p.attendance.day2,
-        p.notes || ''
+        p.attendance.day2
       ]);
       
       // Combine header and rows

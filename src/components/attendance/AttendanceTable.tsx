@@ -51,8 +51,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   
   // Apply filters
   const filteredParticipants = participants.filter(participant => {
-    const matchesSearch = participant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (participant.country && participant.country.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesSearch = participant.name.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || participant.attendance[selectedDate] === statusFilter;
     
@@ -202,14 +201,13 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <TableHead>Name</TableHead>
               {showCouncil && <TableHead>Council</TableHead>}
               <TableHead>Role</TableHead>
-              <TableHead>Country</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredParticipants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={showCouncil ? (readOnly ? 5 : 6) : (readOnly ? 4 : 5)} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={showCouncil ? (readOnly ? 4 : 5) : (readOnly ? 3 : 4)} className="text-center py-8 text-muted-foreground">
                   No participants found
                 </TableCell>
               </TableRow>
@@ -232,7 +230,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                     <TableCell className="font-medium">{participant.name}</TableCell>
                     {showCouncil && <TableCell>{participant.council}</TableCell>}
                     <TableCell className="capitalize">{participant.role}</TableCell>
-                    <TableCell>{participant.country || '-'}</TableCell>
                     <TableCell>
                       {isDateLocked || readOnly ? (
                         <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusDisplay.color}`}>
