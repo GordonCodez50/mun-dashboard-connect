@@ -2,57 +2,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
 import { useAuth } from '@/context/AuthContext';
-
-// Mock data - will be replaced with Firebase later
-const mockParticipants: ParticipantWithAttendance[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    council: 'UNSC',
-    role: 'delegate',
-    country: 'United States',
-    attendance: { day1: 'present', day2: 'not-marked' }
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    council: 'UNSC',
-    role: 'delegate',
-    country: 'United Kingdom',
-    attendance: { day1: 'present', day2: 'not-marked' }
-  },
-  {
-    id: '3',
-    name: 'Ahmed Hassan',
-    council: 'UNHRC',
-    role: 'delegate',
-    country: 'Egypt',
-    attendance: { day1: 'absent', day2: 'not-marked' }
-  },
-  {
-    id: '4',
-    name: 'Sofia Garcia',
-    council: 'UNHRC',
-    role: 'delegate',
-    country: 'Spain',
-    attendance: { day1: 'absent', day2: 'not-marked' }
-  },
-  {
-    id: '5',
-    name: 'Mei Ling',
-    council: 'UNEP',
-    role: 'delegate',
-    country: 'China',
-    attendance: { day1: 'not-marked', day2: 'not-marked' }
-  },
-  {
-    id: '6',
-    name: 'David Kim',
-    council: 'UNEP',
-    role: 'chair',
-    attendance: { day1: 'present', day2: 'not-marked' }
-  }
-];
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  updateDoc, 
+  doc, 
+  deleteDoc,
+  Timestamp,
+  writeBatch
+} from 'firebase/firestore';
+import { firestore } from '@/services/firebaseService';
+import { toast } from 'sonner';
+import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 
 export const useParticipants = () => {
   const { user } = useAuth();
@@ -67,98 +31,224 @@ export const useParticipants = () => {
   const isDay1 = true; // Replace with real date logic later
   const isDay2 = true; // Replace with real date logic later
 
-  // Filter participants by council (for chairs)
+  // Load participants from Firestore
   useEffect(() => {
-    setLoading(true);
-    try {
-      // In a real implementation, this would be a Firebase query
-      let filteredParticipants = [...mockParticipants];
-      
-      // If the user is a chair, only show their council
-      if (user?.role === 'chair' && user?.council) {
-        filteredParticipants = filteredParticipants.filter(
-          p => p.council === user.council
-        );
+    const loadParticipants = async () => {
+      setLoading(true);
+      try {
+        // Create the participants collection reference
+        const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+        
+        // Build query based on user role
+        let participantsQuery;
+        if (user?.role === 'chair' && user?.council) {
+          // Chair users can only see their council's participants
+          participantsQuery = query(participantsRef, where("council", "==", user.council));
+        } else {
+          // Admin users can see all participants
+          participantsQuery = participantsRef;
+        }
+        
+        const snapshot = await getDocs(participantsQuery);
+        
+        // Transform the data
+        const loadedParticipants = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            council: data.council,
+            role: data.role,
+            country: data.country || '',
+            attendance: data.attendance || { day1: 'not-marked', day2: 'not-marked' },
+            // Add other optional fields if they exist
+            ...(data.email && { email: data.email }),
+            ...(data.notes && { notes: data.notes })
+          } as ParticipantWithAttendance;
+        });
+        
+        setParticipants(loadedParticipants);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading participants:', err);
+        setError('Failed to load participants');
+        toast.error('Failed to load participants');
+      } finally {
+        setLoading(false);
       }
-      
-      setParticipants(filteredParticipants);
-      setError(null);
-    } catch (err) {
-      console.error('Error loading participants:', err);
-      setError('Failed to load participants');
-    } finally {
-      setLoading(false);
+    };
+
+    if (user) {
+      loadParticipants();
     }
   }, [user]);
 
-  // Add a participant
-  const addParticipant = useCallback((participant: Omit<ParticipantWithAttendance, 'id'>) => {
-    const newParticipant = {
-      ...participant,
-      id: Date.now().toString(),
-    };
-    
-    setParticipants(prev => [...prev, newParticipant as ParticipantWithAttendance]);
-    return newParticipant.id;
-  }, []);
+  // Add a participant to Firestore
+  const addParticipant = useCallback(async (participant: Omit<ParticipantWithAttendance, 'id'>) => {
+    try {
+      // Add to Firestore
+      const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+      const docRef = await addDoc(participantsRef, {
+        ...participant,
+        createdAt: Timestamp.now(),
+        createdBy: user?.id || 'unknown'
+      });
+      
+      // Add to local state
+      const newParticipant = {
+        ...participant,
+        id: docRef.id
+      } as ParticipantWithAttendance;
+      
+      setParticipants(prev => [...prev, newParticipant]);
+      
+      return docRef.id;
+    } catch (err) {
+      console.error('Error adding participant:', err);
+      toast.error('Failed to add participant');
+      throw err;
+    }
+  }, [user]);
 
   // Add multiple participants (for CSV import)
-  const addMultipleParticipants = useCallback((newParticipants: Omit<ParticipantWithAttendance, 'id'>[]) => {
-    const participantsWithIds = newParticipants.map(p => ({
-      ...p,
-      id: Date.now() + Math.random().toString(36).substr(2, 9),
-    }));
-    
-    setParticipants(prev => [...prev, ...participantsWithIds as ParticipantWithAttendance[]]);
-    return participantsWithIds.map(p => p.id);
-  }, []);
+  const addMultipleParticipants = useCallback(async (newParticipants: Omit<ParticipantWithAttendance, 'id'>[]) => {
+    try {
+      const batch = writeBatch(firestore);
+      const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+      
+      const addedIds: string[] = [];
+      
+      // Prepare batch write
+      for (const participant of newParticipants) {
+        const docRef = doc(participantsRef);
+        batch.set(docRef, {
+          ...participant,
+          createdAt: Timestamp.now(),
+          createdBy: user?.id || 'unknown'
+        });
+        addedIds.push(docRef.id);
+      }
+      
+      // Execute the batch
+      await batch.commit();
+      
+      // Update local state
+      const participantsWithIds = newParticipants.map((p, index) => ({
+        ...p,
+        id: addedIds[index],
+      }));
+      
+      setParticipants(prev => [...prev, ...participantsWithIds as ParticipantWithAttendance[]]);
+      
+      return addedIds;
+    } catch (err) {
+      console.error('Error adding multiple participants:', err);
+      toast.error('Failed to add participants');
+      throw err;
+    }
+  }, [user]);
 
   // Update a participant
-  const updateParticipant = useCallback((id: string, data: Partial<ParticipantWithAttendance>) => {
-    setParticipants(prev => 
-      prev.map(p => (p.id === id ? { ...p, ...data } : p))
-    );
+  const updateParticipant = useCallback(async (id: string, data: Partial<ParticipantWithAttendance>) => {
+    try {
+      const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, id);
+      await updateDoc(docRef, {
+        ...data,
+        updatedAt: Timestamp.now()
+      });
+      
+      setParticipants(prev => 
+        prev.map(p => (p.id === id ? { ...p, ...data } : p))
+      );
+    } catch (err) {
+      console.error('Error updating participant:', err);
+      toast.error('Failed to update participant');
+      throw err;
+    }
   }, []);
 
   // Delete a participant
-  const deleteParticipant = useCallback((id: string) => {
-    setParticipants(prev => prev.filter(p => p.id !== id));
+  const deleteParticipant = useCallback(async (id: string) => {
+    try {
+      await deleteDoc(doc(firestore, FIRESTORE_COLLECTIONS.participants, id));
+      setParticipants(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Error deleting participant:', err);
+      toast.error('Failed to delete participant');
+      throw err;
+    }
   }, []);
 
   // Mark attendance for a single participant
-  const markAttendance = useCallback((participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => {
-    setParticipants(prev => 
-      prev.map(p => {
-        if (p.id === participantId) {
-          return {
-            ...p,
-            attendance: {
-              ...p.attendance,
-              [date]: status
-            }
-          };
-        }
-        return p;
-      })
-    );
+  const markAttendance = useCallback(async (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => {
+    try {
+      const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, participantId);
+      
+      // Update in Firestore
+      await updateDoc(docRef, {
+        [`attendance.${date}`]: status,
+        updatedAt: Timestamp.now()
+      });
+      
+      // Update local state
+      setParticipants(prev => 
+        prev.map(p => {
+          if (p.id === participantId) {
+            return {
+              ...p,
+              attendance: {
+                ...p.attendance,
+                [date]: status
+              }
+            };
+          }
+          return p;
+        })
+      );
+    } catch (err) {
+      console.error(`Error marking attendance for participant ${participantId}:`, err);
+      toast.error('Failed to update attendance');
+      throw err;
+    }
   }, []);
 
   // Batch mark attendance for multiple participants
-  const batchMarkAttendance = useCallback((participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => {
-    setParticipants(prev => 
-      prev.map(p => {
-        if (participantIds.includes(p.id)) {
-          return {
-            ...p,
-            attendance: {
-              ...p.attendance,
-              [date]: status
-            }
-          };
-        }
-        return p;
-      })
-    );
+  const batchMarkAttendance = useCallback(async (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => {
+    try {
+      const batch = writeBatch(firestore);
+      
+      // Prepare batch updates
+      participantIds.forEach(id => {
+        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, id);
+        batch.update(docRef, {
+          [`attendance.${date}`]: status,
+          updatedAt: Timestamp.now()
+        });
+      });
+      
+      // Execute the batch
+      await batch.commit();
+      
+      // Update local state
+      setParticipants(prev => 
+        prev.map(p => {
+          if (participantIds.includes(p.id)) {
+            return {
+              ...p,
+              attendance: {
+                ...p.attendance,
+                [date]: status
+              }
+            };
+          }
+          return p;
+        })
+      );
+    } catch (err) {
+      console.error('Error batch marking attendance:', err);
+      toast.error('Failed to update attendance');
+      throw err;
+    }
   }, []);
 
   return {

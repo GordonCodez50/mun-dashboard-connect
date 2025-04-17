@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { Loader2, UserPlus } from 'lucide-react';
 
 interface ParticipantFormProps {
   onSubmit: (participant: Omit<ParticipantWithAttendance, 'id'>) => void;
@@ -21,14 +21,11 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
     name: '',
     role: 'delegate',
     council: user?.council || '',
-    country: '',
-    email: '',
-    notes: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { name: string; value: string }) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | { name: string; value: string }) => {
     const { name, value } = 'target' in e ? e.target : e;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -57,16 +54,13 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
         }
       } as Omit<ParticipantWithAttendance, 'id'>;
 
-      onSubmit(newParticipant);
+      await onSubmit(newParticipant);
       
       // Reset form
       setFormData({
         name: '',
         role: 'delegate',
         council: user?.council || '',
-        country: '',
-        email: '',
-        notes: ''
       });
       
       toast.success('Participant added successfully');
@@ -81,32 +75,23 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
   return (
     <Card className="w-full animate-fade-in">
       <CardHeader>
-        <CardTitle className="text-lg font-medium">Add New Participant</CardTitle>
+        <CardTitle className="text-lg font-medium flex items-center gap-2">
+          <UserPlus size={18} className="text-primary" />
+          Add New Participant
+        </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
               <Input
                 id="name"
                 name="name"
                 value={formData.name || ''}
                 onChange={handleChange}
                 required
-                placeholder="Full name"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email || ''}
-                onChange={handleChange}
-                placeholder="Email address"
+                placeholder="Enter participant's full name"
               />
             </div>
             
@@ -157,35 +142,22 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="country">Country/Delegation</Label>
-              <Input
-                id="country"
-                name="country"
-                value={formData.country || ''}
-                onChange={handleChange}
-                placeholder="Country or delegation"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              value={formData.notes || ''}
-              onChange={handleChange}
-              placeholder="Additional information"
-              rows={3}
-            />
           </div>
         </CardContent>
         
         <CardFooter className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Participant'}
+          <Button type="submit" disabled={isSubmitting} className="flex items-center gap-2">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              <>
+                <UserPlus size={16} />
+                Add Participant
+              </>
+            )}
           </Button>
         </CardFooter>
       </form>

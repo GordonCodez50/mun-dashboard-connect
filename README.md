@@ -1,102 +1,134 @@
 
 # MUN Conference Dashboard
 
-## Overview
+A complete dashboard solution for Model United Nations (MUN) conferences.
 
-A comprehensive, cross-platform web application designed specifically for Model United Nations conferences, providing powerful collaboration and communication tools for chairs, press, and admin users.
+## Features
 
-## Professional Featurex
+- User authentication with different roles (Admin, Chair)
+- Council management
+- Attendance tracking
+- Document sharing
+- Alert system for chairs to request assistance
+- Timer management for debates and speeches
 
-### 1. Real-Time Notification System
-- Cross-platform notification support (iOS, Android, Desktop, Web)
-- Lock screen notifications for mobile devices
-- Firebase Cloud Messaging (FCM) integration
-- Customizable notification sounds and preferences
-- Granular notification filtering (urgent vs. normal alerts)
+## Firebase Configuration
 
-### 2. Multi-Platform Compatibility
-- Fully responsive design
-- Progressive Web App (PWA) support
-- Native-like experience across devices
-- Optimized for:
-  - Chrome (Desktop & Mobile)
-  - Safari (Desktop & iOS)
-  - Firefox
-  - Edge
-  - Android
-  - iOS
+### Firestore Security Rules
 
-### 3. User Role Management
-- Differentiated dashboards for:
-  - Chairs
-  - Press Members
-  - Administrators
-- Role-based access control
-- Secure authentication via Firebase
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow admins to read and write all documents
+    match /{document=**} {
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Allow chair users to read all documents
+    match /{document=**} {
+      allow read: if request.auth != null;
+    }
+    
+    // Allow all authenticated users to read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow chair users to update their own council's information
+    match /councils/{councilId} {
+      allow update: if request.auth != null && 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
+    }
+    
+    // Participants collection rules
+    match /participants/{participantId} {
+      // All authenticated users can read participants
+      allow read: if request.auth != null;
+      
+      // Chair users can only create and update participants for their own council
+      allow create, update: if request.auth != null &&
+                              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chair' &&
+                              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == request.resource.data.council));
+      
+      // Only admins can delete participants
+      allow delete: if request.auth != null && 
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Allow chair users to create alerts
+    match /alerts/{alertId} {
+      allow create: if request.auth != null && 
+                     request.resource.data.council == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council;
+    }
+    
+    // Allow users to read documents
+    match /documents/{documentId} {
+      allow read: if request.auth != null;
+    }
+  }
+}
+```
 
-### 4. Advanced Timer Management
-- Multiple simultaneous timers
-- Customizable time presets
-- Sound notifications for timer events
-- Precise countdown tracking
+### Realtime Database Security Rules
 
-### 5. Alert and Communication System
-- Instant alert creation and tracking
-- Multi-stage alert workflow (pending, acknowledged, resolved)
-- Inline reply capabilities
-- Priority-based alert handling
+```
+{
+  "rules": {
+    // Allow all authenticated users to read data
+    ".read": "auth != null",
+    
+    "alerts": {
+      // Allow authenticated users to read and create alerts
+      ".read": "auth != null",
+      ".write": "auth != null",
+      
+      "$alertId": {
+        // Anyone can read alerts
+        ".read": true,
+        
+        // Authenticated users can update alerts
+        ".write": "auth != null"
+      }
+    },
+    
+    "timers": {
+      // Allow access to timers for authenticated users
+      ".read": "auth != null",
+      ".write": "auth != null",
+      
+      "$timerId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
+```
 
-### 6. Document and File Sharing
-- Secure document upload and management
-- Real-time file sharing
-- Access control based on user roles
+## Database Structure
 
-### 7. Performance and Reliability
-- WebSocket integration for real-time updates
-- Firebase Realtime Database synchronization
-- Efficient state management
-- Minimal latency communication
+### Firestore Collections
 
-### 8. Developer-Friendly Architecture
-- TypeScript-based
-- Modular component design
-- Tailwind CSS for responsive styling
-- Shadcn/ui component library
-- React Query for data fetching
-- Comprehensive error handling
+- **users**: User accounts with roles and council assignments
+- **councils**: Information about each council/committee
+- **participants**: Delegates and chairs with attendance records
+- **documents**: Shared documents and resources
+- **alerts**: Records of alerts and their status
 
-### 9. Mobile-First Design
-- Responsive layouts
-- Touch-friendly interfaces
-- PWA installation support
-- Optimized for small and large screens
+### Realtime Database
 
-## Technical Stack
-- React 18
-- TypeScript
-- Tailwind CSS
-- Firebase
-- React Query
-- Shadcn/ui
-- Capacitor (for mobile capabilities)
+- **alerts**: Real-time alerts from chairs
+- **timers**: Speech and debate timers with real-time synchronization
 
-## Coming Soon
-- Enhanced reporting tools
-- Advanced analytics
-- More customization options
+## Getting Started
 
-## Deployment
-Easily deployable on:
-- Vercel
-- Netlify
-- Firebase Hosting
-- Custom cloud providers
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Configure your Firebase project and add credentials
+4. Run the development server with `npm run dev`
 
-## Security
-- Secure authentication
-- Role-based permissions
-- Data encryption
-- Regular security updates
+## License
 
-## Support
-For issues, feature requests, or support, please contact our development team.
+This project is licensed under the MIT License - see the LICENSE file for details.

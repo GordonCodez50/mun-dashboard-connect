@@ -5,7 +5,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ParticipantWithAttendance } from '@/types/attendance';
 import { toast } from 'sonner';
-import { Upload, AlertCircle, Check, FileCheck, Download } from 'lucide-react';
+import { Upload, AlertCircle, Check, FileCheck, Download, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 interface CSVImportProps {
   onImport: (participants: Omit<ParticipantWithAttendance, 'id'>[]) => void;
@@ -13,6 +14,7 @@ interface CSVImportProps {
 }
 
 export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestriction }) => {
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -57,26 +59,26 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
       try {
         const csv = e.target?.result as string;
         const lines = csv.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         
-        // Check required headers
-        const requiredHeaders = ['name', 'role', 'council'];
-        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
-        
-        if (missingHeaders.length > 0) {
-          setParseError(`Missing required headers: ${missingHeaders.join(', ')}`);
+        if (lines.length === 0) {
+          setParseError('CSV file is empty');
           setPreview({ rows: 0, valid: false });
           return;
         }
         
-        // If chair is restricted to a council, make sure all entries match
-        if (councilRestriction) {
-          const councilIndex = headers.indexOf('council');
-          if (councilIndex === -1) {
-            setParseError(`CSV must include a 'council' column`);
-            setPreview({ rows: 0, valid: false });
-            return;
-          }
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        
+        // Validate that this is our template with exactly the required headers
+        const requiredHeaders = ['name', 'council', 'role'];
+        
+        // Check if the headers exactly match our template (no extra headers allowed)
+        const allHeadersValid = requiredHeaders.length === headers.length && 
+                               requiredHeaders.every(h => headers.includes(h));
+                               
+        if (!allHeadersValid) {
+          setParseError('CSV format does not match the template. Please use the template provided.');
+          setPreview({ rows: 0, valid: false });
+          return;
         }
         
         // Count valid rows (non-empty)
@@ -96,7 +98,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
     reader.readAsText(file);
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (!file) {
       toast.error('Please select a file first');
       return;
@@ -105,7 +107,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
     setIsProcessing(true);
     const reader = new FileReader();
     
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const csv = e.target?.result as string;
         const lines = csv.split('\n').filter(line => line.trim().length > 0);
@@ -121,7 +123,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         for (let i = 1; i < lines.length; i++) {
           const values = lines[i].split(',').map(v => v.trim());
           
-          if (values.length < Math.max(nameIndex, roleIndex, councilIndex) + 1) {
+          if (values.length < 3 || values.some(v => !v)) {
             continue; // Skip invalid rows
           }
           
@@ -155,7 +157,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         }
         
         // Call the import callback
-        onImport(participants);
+        await onImport(participants);
         
         // Reset state
         setFile(null);
@@ -176,15 +178,11 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
     reader.readAsText(file);
   };
 
-  // New function to download CSV template
+  // Function to download CSV template
   const downloadTemplate = () => {
     // Create CSV content with headers
     const headers = ['name', 'council', 'role'];
     const csvContent = headers.join(',') + '\n';
-    
-    // Create sample row if needed
-    // const sampleRow = ['John Doe', councilRestriction || 'UNSC', 'delegate'];
-    // csvContent += sampleRow.join(',') + '\n';
     
     // Create a blob and download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -205,13 +203,13 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
       <CardHeader>
         <CardTitle className="text-lg font-medium flex items-center gap-2">
           <Upload size={18} className="text-primary" />
-          Import Participants
+          Bulk Import Participants
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-muted-foreground">
-            Upload a CSV file with participant details
+            Upload participants from the template CSV file
           </p>
           <Button
             variant="outline"
@@ -272,7 +270,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
                 Browse Files
               </Button>
               <p className="text-xs text-muted-foreground mt-3">
-                Required columns: name, council, role
+                The CSV must match the template format with name, council, and role columns
               </p>
             </>
           )}
@@ -301,12 +299,21 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         <Button
           onClick={handleImport}
           disabled={!file || !preview.valid || isProcessing}
-          className="ml-auto"
+          className="ml-auto flex items-center gap-2"
         >
-          {isProcessing ? 'Importing...' : 'Import Participants'}
+          {isProcessing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Importing...
+            </>
+          ) : (
+            <>
+              <Upload size={16} />
+              Import Participants
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>
   );
 };
-

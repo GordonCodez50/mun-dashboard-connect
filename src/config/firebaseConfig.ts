@@ -1,3 +1,4 @@
+
 // Firebase configuration for the MUN Conference Dashboard
 
 // Firebase configuration object
@@ -25,6 +26,7 @@ export const FIRESTORE_COLLECTIONS = {
   councils: 'councils',
   alerts: 'alerts',
   documents: 'documents',
+  participants: 'participants',
 };
 
 // Data paths for Realtime Database
@@ -122,6 +124,22 @@ export const RECOMMENDED_SECURITY_RULES = {
         match /councils/{councilId} {
           allow update: if request.auth != null && 
                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
+        }
+        
+        // Participants collection rules
+        match /participants/{participantId} {
+          // All authenticated users can read participants
+          allow read: if request.auth != null;
+          
+          // Chair users can only create and update participants for their own council
+          allow create, update: if request.auth != null &&
+                                  (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                                  (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chair' &&
+                                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == request.resource.data.council));
+          
+          // Only admins can delete participants
+          allow delete: if request.auth != null && 
+                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
         }
         
         // Allow chair users to create alerts
