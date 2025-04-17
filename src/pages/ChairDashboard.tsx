@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AlertButton } from '@/components/ui/AlertButton';
@@ -41,10 +40,6 @@ const ChairDashboard = () => {
   const { data: alertsData } = useFirebaseRealtime<any[]>('NEW_ALERT');
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
-  // Track processed alerts to prevent duplicates
-  const processedAlertIds = useRef(new Set<string>());
-  const processedReplyIds = useRef(new Set<string>());
-
   useAlertsSound(recentAlerts, alertsMuted);
 
   useEffect(() => {
@@ -64,18 +59,7 @@ const ChairDashboard = () => {
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, 5);
       
-      // Deduplicate alerts based on ID
-      const newRecentAlerts = userAlerts.filter(alert => 
-        !processedAlertIds.current.has(alert.id) || 
-        (recentAlerts.some(existingAlert => existingAlert.id === alert.id))
-      );
-      
-      // Add new alert IDs to processed set
-      userAlerts.forEach(alert => {
-        processedAlertIds.current.add(alert.id);
-      });
-      
-      setRecentAlerts(newRecentAlerts);
+      setRecentAlerts(userAlerts);
     }
   }, [alertsData, user?.council]);
 
@@ -84,36 +68,17 @@ const ChairDashboard = () => {
       const processedReplies = new Set();
       
       Object.entries(alertStatusData).forEach(([alertId, data]: [string, any]) => {
-        // Create a unique reply ID to track if we've processed this reply
-        const replyId = data.reply ? `${alertId}-${data.reply}` : null;
-        
-        if (replyId && !processedReplyIds.current.has(replyId) && data.reply) {
+        if (data.reply && !processedReplies.has(alertId)) {
           const alertExists = recentAlerts.some(alert => alert.id === alertId);
           if (alertExists) {
             toast.info('New reply from admin', {
               description: data.reply,
               duration: 5000
             });
-            processedReplyIds.current.add(replyId);
+            processedReplies.add(alertId);
           }
         }
       });
-      
-      // Update alerts with replies
-      setRecentAlerts(prevAlerts => 
-        prevAlerts.map(alert => {
-          const updatedData = alertStatusData[alert.id];
-          if (updatedData) {
-            return {
-              ...alert,
-              status: updatedData.status || alert.status,
-              reply: updatedData.reply || alert.reply,
-              admin: updatedData.admin || alert.admin
-            };
-          }
-          return alert;
-        })
-      );
     }
   }, [alertStatusData]);
 
@@ -159,11 +124,7 @@ const ChairDashboard = () => {
     try {
       const message = getAlertMessage(alertType);
       
-      // Generate a unique ID for the alert
-      const alertId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
       await realtimeService.createAlert({
-        id: alertId,
         type: alertType,
         message: message,
         council: user.council,
@@ -171,18 +132,14 @@ const ChairDashboard = () => {
         priority: alertType === 'Security' ? 'urgent' : 'normal'
       });
       
-      // Add to processed IDs to prevent duplication
-      processedAlertIds.current.add(alertId);
-      
       const newAlert: Alert = {
-        id: alertId,
+        id: Date.now().toString(),
         type: alertType,
         message: message,
         timestamp: new Date(),
         status: 'pending'
       };
       
-      // Add the new alert to the UI immediately
       setRecentAlerts(prev => [newAlert, ...prev].slice(0, 5));
       toast.success(`${alertType} alert sent successfully`);
     } catch (error) {
@@ -215,11 +172,7 @@ const ChairDashboard = () => {
     setLastAlertTime(now);
     
     try {
-      // Generate a unique ID for the alert
-      const alertId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
       await realtimeService.createAlert({
-        id: alertId,
         type: 'Custom',
         message: customAlert,
         council: user?.council || 'Unknown',
@@ -227,11 +180,8 @@ const ChairDashboard = () => {
         priority: 'normal'
       });
       
-      // Add to processed IDs to prevent duplication
-      processedAlertIds.current.add(alertId);
-      
       const newAlert: Alert = {
-        id: alertId,
+        id: Date.now().toString(),
         type: 'Custom',
         message: customAlert,
         timestamp: new Date(),
@@ -256,30 +206,21 @@ const ChairDashboard = () => {
     }
     
     try {
-      // Create a unique reply ID
-      const replyId = `${alertId}-chair-${replyMessage}`;
+      await realtimeService.updateAlertStatus(alertId, 'acknowledged', {
+        chairReply: replyMessage,
+        chairName: user?.name || 'Chair',
+        replyTimestamp: Date.now()
+      });
       
-      // Only proceed if we haven't processed this exact reply before
-      if (!processedReplyIds.current.has(replyId)) {
-        await realtimeService.updateAlertStatus(alertId, 'acknowledged', {
-          chairReply: replyMessage,
-          chairName: user?.name || 'Chair',
-          replyTimestamp: Date.now()
-        });
-        
-        // Mark this reply as processed
-        processedReplyIds.current.add(replyId);
-        
-        toast.success('Reply sent to admin');
-        setReplyMessage('');
-        setActiveAlertId(null);
-        
-        setRecentAlerts(prev => prev.map(alert => 
-          alert.id === alertId 
-            ? { ...alert, status: 'acknowledged' }
-            : alert
-        ));
-      }
+      toast.success('Reply sent to admin');
+      setReplyMessage('');
+      setActiveAlertId(null);
+      
+      setRecentAlerts(prev => prev.map(alert => 
+        alert.id === alertId 
+          ? { ...alert, status: 'acknowledged' }
+          : alert
+      ));
     } catch (error) {
       console.error('Error sending reply:', error);
       toast.error('Failed to send reply');

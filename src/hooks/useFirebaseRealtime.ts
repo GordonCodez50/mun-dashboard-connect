@@ -11,10 +11,9 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   
-  // Set up listeners based on event type - with duplicate prevention
+  // Set up listeners based on event type
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
-    let isFirstUpdate = true; // Flag to handle initial data load
     
     const setupListener = async () => {
       try {
@@ -22,23 +21,7 @@ export function useFirebaseRealtime<T = any>(eventType: RealtimeEventType, entit
           case 'NEW_ALERT':
             // Listen to all alerts
             unsubscribe = realtimeService.onNewAlert((data) => {
-              if (isFirstUpdate) {
-                // This is the initial data load, set it normally
-                setData(data as T);
-                isFirstUpdate = false;
-              } else {
-                // For subsequent updates, ensure we're not duplicating
-                setData((prevData) => {
-                  // If data is an array, ensure no duplicates
-                  if (Array.isArray(prevData) && Array.isArray(data)) {
-                    // Extract IDs for comparison
-                    const prevIds = new Set(prevData.map((item: any) => item.id));
-                    const newData = data.filter((item: any) => !prevIds.has(item.id));
-                    return [...newData, ...prevData] as T;
-                  }
-                  return data as T;
-                });
-              }
+              setData(data as T);
               setIsLoading(false);
             });
             break;
