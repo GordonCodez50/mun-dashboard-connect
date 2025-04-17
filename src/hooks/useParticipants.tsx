@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
-import { ParticipantWithAttendance } from '@/types/attendance';
+import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
 import { useAuth } from '@/context/AuthContext';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { useParticipantOperations } from './useParticipantOperations';
