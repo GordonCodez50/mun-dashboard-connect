@@ -15,7 +15,7 @@ import {
   writeBatch,
   DocumentData
 } from 'firebase/firestore';
-import { firestore as db } from '@/services/firebaseService'; // Fixed: import firestore as db
+import { firestore as db } from '@/services/firebaseService'; // Correct import with 'as db'
 import { toast } from 'sonner';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 
