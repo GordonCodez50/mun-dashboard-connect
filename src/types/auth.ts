@@ -1,4 +1,5 @@
-export type UserRole = 'delegate' | 'chair' | 'not-specified';
+
+export type UserRole = 'delegate' | 'chair' | 'admin' | 'not-specified';
 
 export type User = {
   id: string;
