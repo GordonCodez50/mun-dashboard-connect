@@ -6,9 +6,7 @@ export interface Participant {
   name: string;
   council: string;
   role: 'delegate' | 'chair' | 'observer' | 'staff' | 'guest';
-  email?: string;
-  country?: string;
-  notes?: string;
+  // Removed email, country and notes fields as requested
 }
 
 export interface ParticipantWithAttendance extends Participant {

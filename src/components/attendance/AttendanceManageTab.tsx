@@ -5,8 +5,8 @@ import { CSVImport } from '@/components/attendance/CSVImport';
 import { ParticipantWithAttendance } from '@/types/attendance';
 
 interface AttendanceManageTabProps {
-  addParticipant: (participant: Omit<ParticipantWithAttendance, 'id'>) => string;
-  addMultipleParticipants: (participants: Omit<ParticipantWithAttendance, 'id'>[]) => string[];
+  addParticipant: (participant: Omit<ParticipantWithAttendance, 'id'>) => Promise<string>;
+  addMultipleParticipants: (participants: Omit<ParticipantWithAttendance, 'id'>[]) => Promise<string[]>;
   councils: string[];
 }
 

@@ -12,9 +12,10 @@ import {
   doc, 
   deleteDoc,
   Timestamp,
-  writeBatch
+  writeBatch,
+  DocumentData
 } from 'firebase/firestore';
-import { firestore } from '@/services/firebaseService';
+import { db } from '@/services/firebaseService'; // Fixed: import db instead of firestore
 import { toast } from 'sonner';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 
@@ -37,7 +38,7 @@ export const useParticipants = () => {
       setLoading(true);
       try {
         // Create the participants collection reference
-        const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+        const participantsRef = collection(db, FIRESTORE_COLLECTIONS.participants);
         
         // Build query based on user role
         let participantsQuery;
@@ -53,17 +54,14 @@ export const useParticipants = () => {
         
         // Transform the data
         const loadedParticipants = snapshot.docs.map(doc => {
-          const data = doc.data();
+          const data = doc.data() as DocumentData;
           return {
             id: doc.id,
-            name: data.name,
-            council: data.council,
-            role: data.role,
-            country: data.country || '',
+            name: data.name || '',
+            council: data.council || '',
+            role: data.role || 'delegate',
             attendance: data.attendance || { day1: 'not-marked', day2: 'not-marked' },
-            // Add other optional fields if they exist
-            ...(data.email && { email: data.email }),
-            ...(data.notes && { notes: data.notes })
+            // Removed email, country, and notes as requested
           } as ParticipantWithAttendance;
         });
         
@@ -87,7 +85,7 @@ export const useParticipants = () => {
   const addParticipant = useCallback(async (participant: Omit<ParticipantWithAttendance, 'id'>) => {
     try {
       // Add to Firestore
-      const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+      const participantsRef = collection(db, FIRESTORE_COLLECTIONS.participants);
       const docRef = await addDoc(participantsRef, {
         ...participant,
         createdAt: Timestamp.now(),
@@ -113,8 +111,8 @@ export const useParticipants = () => {
   // Add multiple participants (for CSV import)
   const addMultipleParticipants = useCallback(async (newParticipants: Omit<ParticipantWithAttendance, 'id'>[]) => {
     try {
-      const batch = writeBatch(firestore);
-      const participantsRef = collection(firestore, FIRESTORE_COLLECTIONS.participants);
+      const batch = writeBatch(db);
+      const participantsRef = collection(db, FIRESTORE_COLLECTIONS.participants);
       
       const addedIds: string[] = [];
       
@@ -151,7 +149,7 @@ export const useParticipants = () => {
   // Update a participant
   const updateParticipant = useCallback(async (id: string, data: Partial<ParticipantWithAttendance>) => {
     try {
-      const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, id);
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.participants, id);
       await updateDoc(docRef, {
         ...data,
         updatedAt: Timestamp.now()
@@ -170,7 +168,7 @@ export const useParticipants = () => {
   // Delete a participant
   const deleteParticipant = useCallback(async (id: string) => {
     try {
-      await deleteDoc(doc(firestore, FIRESTORE_COLLECTIONS.participants, id));
+      await deleteDoc(doc(db, FIRESTORE_COLLECTIONS.participants, id));
       setParticipants(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error('Error deleting participant:', err);
@@ -182,7 +180,7 @@ export const useParticipants = () => {
   // Mark attendance for a single participant
   const markAttendance = useCallback(async (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => {
     try {
-      const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, participantId);
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.participants, participantId);
       
       // Update in Firestore
       await updateDoc(docRef, {
@@ -215,11 +213,11 @@ export const useParticipants = () => {
   // Batch mark attendance for multiple participants
   const batchMarkAttendance = useCallback(async (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => {
     try {
-      const batch = writeBatch(firestore);
+      const batch = writeBatch(db);
       
       // Prepare batch updates
       participantIds.forEach(id => {
-        const docRef = doc(firestore, FIRESTORE_COLLECTIONS.participants, id);
+        const docRef = doc(db, FIRESTORE_COLLECTIONS.participants, id);
         batch.update(docRef, {
           [`attendance.${date}`]: status,
           updatedAt: Timestamp.now()

@@ -124,6 +124,7 @@ const AdminAttendance = () => {
                   
                   <TabsContent value="manage" className="space-y-4">
                     <AttendanceManageTab
+                      // Update types to match async function return types (Promises)
                       addParticipant={addParticipant}
                       addMultipleParticipants={addMultipleParticipants}
                       councils={councils}

@@ -11,7 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Loader2, UserPlus } from 'lucide-react';
 
 interface ParticipantFormProps {
-  onSubmit: (participant: Omit<ParticipantWithAttendance, 'id'>) => void;
+  onSubmit: (participant: Omit<ParticipantWithAttendance, 'id'>) => Promise<string>;
   councils: string[];
 }
 
