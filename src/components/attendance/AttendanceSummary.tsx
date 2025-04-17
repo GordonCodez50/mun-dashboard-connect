@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ParticipantWithAttendance } from '@/types/attendance';
-import { CheckCircle, UserX, Clock, CheckCheck, HelpCircle } from 'lucide-react';
+import { CheckCircle, UserX, HelpCircle } from 'lucide-react';
 
 interface AttendanceSummaryProps {
   participants: ParticipantWithAttendance[];
@@ -24,15 +24,11 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
   const total = filteredParticipants.length;
   const presentCount = filteredParticipants.filter(p => p.attendance[selectedDate] === 'present').length;
   const absentCount = filteredParticipants.filter(p => p.attendance[selectedDate] === 'absent').length;
-  const lateCount = filteredParticipants.filter(p => p.attendance[selectedDate] === 'late').length;
-  const excusedCount = filteredParticipants.filter(p => p.attendance[selectedDate] === 'excused').length;
   const notMarkedCount = filteredParticipants.filter(p => p.attendance[selectedDate] === 'not-marked').length;
   
   // Calculate percentages
   const presentPercentage = total ? Math.round((presentCount / total) * 100) : 0;
   const absentPercentage = total ? Math.round((absentCount / total) * 100) : 0;
-  const latePercentage = total ? Math.round((lateCount / total) * 100) : 0;
-  const excusedPercentage = total ? Math.round((excusedCount / total) * 100) : 0;
   const notMarkedPercentage = total ? Math.round((notMarkedCount / total) * 100) : 0;
   
   // Count by council
@@ -80,26 +76,6 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
                 </div>
                 <div className="text-sm font-medium">
                   {absentCount} <span className="text-muted-foreground">({absentPercentage}%)</span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm">Late</span>
-                </div>
-                <div className="text-sm font-medium">
-                  {lateCount} <span className="text-muted-foreground">({latePercentage}%)</span>
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <CheckCheck className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">Excused</span>
-                </div>
-                <div className="text-sm font-medium">
-                  {excusedCount} <span className="text-muted-foreground">({excusedPercentage}%)</span>
                 </div>
               </div>
               
@@ -153,16 +129,6 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
                   title={`Absent: ${absentCount} (${absentPercentage}%)`}
                 />
                 <div 
-                  className="bg-amber-500 h-full" 
-                  style={{ width: `${latePercentage}%` }}
-                  title={`Late: ${lateCount} (${latePercentage}%)`}
-                />
-                <div 
-                  className="bg-blue-500 h-full" 
-                  style={{ width: `${excusedPercentage}%` }}
-                  title={`Excused: ${excusedCount} (${excusedPercentage}%)`}
-                />
-                <div 
                   className="bg-gray-300 h-full" 
                   style={{ width: `${notMarkedPercentage}%` }}
                   title={`Not Marked: ${notMarkedCount} (${notMarkedPercentage}%)`}
@@ -171,8 +137,6 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Present</span>
                 <span>Absent</span>
-                <span>Late</span>
-                <span>Excused</span>
                 <span>Not Marked</span>
               </div>
             </div>

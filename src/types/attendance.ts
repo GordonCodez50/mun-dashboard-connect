@@ -1,5 +1,5 @@
 
-export type AttendanceStatus = 'present' | 'absent' | 'excused' | 'late' | 'not-marked';
+export type AttendanceStatus = 'present' | 'absent' | 'not-marked';
 
 export interface Participant {
   id: string;

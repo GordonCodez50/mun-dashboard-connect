@@ -10,7 +10,7 @@ import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Users, FileSpreadsheet, CheckCircle, UserCog, Loader2 } from 'lucide-react';
+import { Users, CheckCircle, UserCog, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ChairAttendance = () => {
@@ -107,7 +107,7 @@ const ChairAttendance = () => {
                       <span className="sm:hidden">Participants</span>
                     </TabsTrigger>
                     <TabsTrigger value="attendance" className="flex items-center gap-2">
-                      <Calendar size={16} /> 
+                      <CheckCircle size={16} /> 
                       <span className="hidden sm:inline">Track Attendance</span>
                       <span className="sm:hidden">Attendance</span>
                     </TabsTrigger>

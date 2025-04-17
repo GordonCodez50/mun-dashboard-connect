@@ -35,7 +35,7 @@ const mockParticipants: ParticipantWithAttendance[] = [
     council: 'UNHRC',
     role: 'delegate',
     country: 'Spain',
-    attendance: { day1: 'excused', day2: 'not-marked' }
+    attendance: { day1: 'absent', day2: 'not-marked' }
   },
   {
     id: '5',
@@ -43,7 +43,7 @@ const mockParticipants: ParticipantWithAttendance[] = [
     council: 'UNEP',
     role: 'delegate',
     country: 'China',
-    attendance: { day1: 'late', day2: 'not-marked' }
+    attendance: { day1: 'not-marked', day2: 'not-marked' }
   },
   {
     id: '6',

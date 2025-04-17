@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useParticipants } from '@/hooks/useParticipants';
+import { ParticipantForm } from '@/components/attendance/ParticipantForm';
+import { CSVImport } from '@/components/attendance/CSVImport';
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
 import { AttendanceExport } from '@/components/attendance/AttendanceExport';
@@ -10,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Users, ListFilter, Settings, RefreshCw, Loader2 } from 'lucide-react';
+import { UserPlus, ListFilter, FileText, RefreshCw, Loader2, Users, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminAttendance = () => {
@@ -25,6 +27,8 @@ const AdminAttendance = () => {
     error, 
     isDay1, 
     isDay2, 
+    addParticipant,
+    addMultipleParticipants,
     markAttendance, 
     batchMarkAttendance 
   } = useParticipants();
@@ -63,7 +67,7 @@ const AdminAttendance = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Attendance Administration</h1>
               <p className="text-gray-500 mt-1">
-                Monitor and manage attendance across all councils
+                Manage participants and monitor attendance across all councils
               </p>
             </div>
             
@@ -160,13 +164,17 @@ const AdminAttendance = () => {
               
               <div className="mt-6">
                 <Tabs defaultValue="view" className="w-full">
-                  <TabsList className="grid grid-cols-2 md:w-[400px] mb-4">
+                  <TabsList className="grid grid-cols-3 md:w-[600px] mb-4">
                     <TabsTrigger value="view" className="flex items-center gap-2">
                       <Users size={16} /> 
                       <span>View Attendance</span>
                     </TabsTrigger>
+                    <TabsTrigger value="manage" className="flex items-center gap-2">
+                      <UserPlus size={16} /> 
+                      <span>Manage Participants</span>
+                    </TabsTrigger>
                     <TabsTrigger value="export" className="flex items-center gap-2">
-                      <Calendar size={16} /> 
+                      <Download size={16} /> 
                       <span>Export Data</span>
                     </TabsTrigger>
                   </TabsList>
@@ -175,26 +183,40 @@ const AdminAttendance = () => {
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-lg font-medium">
-                          <Settings size={18} className="text-primary" />
-                          Attendance Management
+                          <FileText size={18} className="text-primary" />
+                          Attendance Overview
                         </CardTitle>
                         <CardDescription>
                           {selectedCouncil === 'all' 
-                            ? 'View and manage attendance across all councils' 
-                            : `View and manage attendance for ${selectedCouncil}`}
+                            ? 'View attendance across all councils' 
+                            : `View attendance for ${selectedCouncil}`}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <AttendanceTable
                           participants={filteredParticipants}
                           selectedDate={selectedDate}
-                          isDateLocked={false} // To be implemented with real date logic
-                          showCouncil={selectedCouncil === 'all'} // Only show council column when not filtering
+                          isDateLocked={false}
+                          showCouncil={selectedCouncil === 'all'}
                           onMarkAttendance={markAttendance}
                           onBatchMarkAttendance={batchMarkAttendance}
+                          readOnly={true}
                         />
                       </CardContent>
                     </Card>
+                  </TabsContent>
+                  
+                  <TabsContent value="manage" className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <ParticipantForm 
+                        onSubmit={addParticipant} 
+                        councils={councils} 
+                      />
+                      
+                      <CSVImport 
+                        onImport={addMultipleParticipants}
+                      />
+                    </div>
                   </TabsContent>
                   
                   <TabsContent value="export" className="space-y-4">

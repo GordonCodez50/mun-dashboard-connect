@@ -20,7 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
-import { CheckCheck, Filter, Lock, Search, UserX, Clock, CheckCircle } from 'lucide-react';
+import { CheckCircle, Filter, Lock, Search, UserX } from 'lucide-react';
 
 interface AttendanceTableProps {
   participants: ParticipantWithAttendance[];
@@ -29,6 +29,7 @@ interface AttendanceTableProps {
   showCouncil?: boolean;
   onMarkAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   onBatchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
+  readOnly?: boolean;
 }
 
 export const AttendanceTable: React.FC<AttendanceTableProps> = ({
@@ -37,7 +38,8 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   isDateLocked,
   showCouncil = false,
   onMarkAttendance,
-  onBatchMarkAttendance
+  onBatchMarkAttendance,
+  readOnly = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | AttendanceStatus>('all');
@@ -92,10 +94,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         return { color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-4 w-4" /> };
       case 'absent':
         return { color: 'bg-red-100 text-red-800', icon: <UserX className="h-4 w-4" /> };
-      case 'late':
-        return { color: 'bg-amber-100 text-amber-800', icon: <Clock className="h-4 w-4" /> };
-      case 'excused':
-        return { color: 'bg-blue-100 text-blue-800', icon: <CheckCheck className="h-4 w-4" /> };
       default:
         return { color: 'bg-gray-100 text-gray-800', icon: null };
     }
@@ -146,8 +144,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="present">Present</SelectItem>
                 <SelectItem value="absent">Absent</SelectItem>
-                <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="excused">Excused</SelectItem>
                 <SelectItem value="not-marked">Not Marked</SelectItem>
               </SelectContent>
             </Select>
@@ -155,7 +151,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         </div>
       </div>
       
-      {selectedParticipants.length > 0 && !isDateLocked && (
+      {selectedParticipants.length > 0 && !isDateLocked && !readOnly && (
         <div className="flex items-center gap-2 py-2 px-4 bg-muted/50 rounded-md">
           <span className="text-sm">{selectedParticipants.length} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
@@ -178,18 +174,10 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => handleBatchMarkAttendance('late')}
-              className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:text-amber-800"
+              onClick={() => handleBatchMarkAttendance('not-marked')}
+              className="bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-gray-800"
             >
-              Mark Late
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleBatchMarkAttendance('excused')}
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800"
-            >
-              Mark Excused
+              Clear Status
             </Button>
           </div>
         </div>
@@ -199,16 +187,18 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
-                <Checkbox 
-                  onCheckedChange={(checked) => handleSelectAll(!!checked)} 
-                  checked={
-                    selectedParticipants.length > 0 &&
-                    selectedParticipants.length === filteredParticipants.length
-                  }
-                  disabled={isDateLocked}
-                />
-              </TableHead>
+              {!readOnly && (
+                <TableHead className="w-[50px]">
+                  <Checkbox 
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)} 
+                    checked={
+                      selectedParticipants.length > 0 &&
+                      selectedParticipants.length === filteredParticipants.length
+                    }
+                    disabled={isDateLocked || readOnly}
+                  />
+                </TableHead>
+              )}
               <TableHead>Name</TableHead>
               {showCouncil && <TableHead>Council</TableHead>}
               <TableHead>Role</TableHead>
@@ -219,7 +209,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
           <TableBody>
             {filteredParticipants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={showCouncil ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={showCouncil ? (readOnly ? 5 : 6) : (readOnly ? 4 : 5)} className="text-center py-8 text-muted-foreground">
                   No participants found
                 </TableCell>
               </TableRow>
@@ -230,23 +220,25 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                 
                 return (
                   <TableRow key={participant.id}>
-                    <TableCell>
-                      <Checkbox 
-                        checked={selectedParticipants.includes(participant.id)}
-                        onCheckedChange={(checked) => handleSelectParticipant(participant.id, !!checked)}
-                        disabled={isDateLocked}
-                      />
-                    </TableCell>
+                    {!readOnly && (
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedParticipants.includes(participant.id)}
+                          onCheckedChange={(checked) => handleSelectParticipant(participant.id, !!checked)}
+                          disabled={isDateLocked || readOnly}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell className="font-medium">{participant.name}</TableCell>
                     {showCouncil && <TableCell>{participant.council}</TableCell>}
                     <TableCell className="capitalize">{participant.role}</TableCell>
                     <TableCell>{participant.country || '-'}</TableCell>
                     <TableCell>
-                      {isDateLocked ? (
+                      {isDateLocked || readOnly ? (
                         <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusDisplay.color}`}>
                           {statusDisplay.icon && <span className="mr-1">{statusDisplay.icon}</span>}
                           <span className="capitalize">{status === 'not-marked' ? 'Not Marked' : status}</span>
-                          <Lock className="ml-1 h-3 w-3 opacity-70" />
+                          {isDateLocked && <Lock className="ml-1 h-3 w-3 opacity-70" />}
                         </div>
                       ) : (
                         <Select
@@ -259,8 +251,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           <SelectContent>
                             <SelectItem value="present">Present</SelectItem>
                             <SelectItem value="absent">Absent</SelectItem>
-                            <SelectItem value="late">Late</SelectItem>
-                            <SelectItem value="excused">Excused</SelectItem>
                             <SelectItem value="not-marked">Not Marked</SelectItem>
                           </SelectContent>
                         </Select>
