@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -10,13 +9,26 @@ import {
 } from "@/components/ui/toast"
 import { Bell, AlertTriangle, MessageSquare, CheckCircle, X, Info } from "lucide-react"
 
+const displayedToasts = new Set<string>();
+
 export function Toaster() {
   const { toasts } = useToast()
 
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
-        // Determine icon based on title, description or variant
+        const toastKey = `${id}-${title}-${description}`;
+        
+        if (displayedToasts.has(toastKey)) {
+          return null;
+        }
+        
+        displayedToasts.add(toastKey);
+        
+        setTimeout(() => {
+          displayedToasts.delete(toastKey);
+        }, props.duration || 5000);
+        
         let Icon = Bell;
         
         if (variant === "destructive") {
