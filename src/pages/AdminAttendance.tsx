@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,6 +11,7 @@ import { AttendanceExport } from '@/components/attendance/AttendanceExport';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Users, UserPlus, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 
 const AdminAttendance = () => {
   const isMobile = useIsMobile();
@@ -66,6 +66,10 @@ const AdminAttendance = () => {
             handleRefreshData={handleRefreshData}
           />
           
+          <div className="mb-6">
+            <AttendanceTroubleshoot />
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -124,7 +128,6 @@ const AdminAttendance = () => {
                   
                   <TabsContent value="manage" className="space-y-4">
                     <AttendanceManageTab
-                      // Update types to match async function return types (Promises)
                       addParticipant={addParticipant}
                       addMultipleParticipants={addMultipleParticipants}
                       councils={councils}

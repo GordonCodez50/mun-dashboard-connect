@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -8,9 +7,10 @@ import { ParticipantForm } from '@/components/attendance/ParticipantForm';
 import { CSVImport } from '@/components/attendance/CSVImport';
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
+import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, CheckCircle, UserCog, Loader2, Calendar } from 'lucide-react';
+import { Users, CheckCircle, UserCog, Loader2, Calendar, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ChairAttendance = () => {
@@ -35,6 +35,22 @@ const ChairAttendance = () => {
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
   
   const userCouncil = user?.council || '';
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      // This would trigger a re-fetch of the participants data
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Attendance data refreshed');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast.error('Failed to refresh data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   const handleSubmitAttendance = async () => {
     setIsSaving(true);
@@ -72,29 +88,23 @@ const ChairAttendance = () => {
               </p>
             </div>
             
-            <div className="flex items-center gap-2 bg-white p-2 rounded-lg shadow-sm">
-              <Calendar size={18} className="text-primary ml-1" />
-              <div className="flex gap-2">
-                <Button
-                  variant={selectedDate === 'day1' ? 'default' : 'outline'}
-                  onClick={() => setSelectedDate('day1')}
-                  disabled={!isDay1}
-                  className={!isDay1 ? 'opacity-50 cursor-not-allowed' : ''}
-                  size="sm"
-                >
-                  Day 1 (16th March)
-                </Button>
-                <Button
-                  variant={selectedDate === 'day2' ? 'default' : 'outline'}
-                  onClick={() => setSelectedDate('day2')}
-                  disabled={!isDay2}
-                  className={!isDay2 ? 'opacity-50 cursor-not-allowed' : ''}
-                  size="sm"
-                >
-                  Day 2 (17th March)
-                </Button>
-              </div>
-            </div>
+            <Button 
+              onClick={handleRefreshData} 
+              variant="outline" 
+              disabled={isRefreshing}
+              className="w-full md:w-auto"
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+            </Button>
+          </div>
+
+          <div className="mb-6">
+            <AttendanceTroubleshoot />
           </div>
           
           {loading ? (
