@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
 import { useAuth } from '@/context/AuthContext';
@@ -15,11 +14,14 @@ import {
   writeBatch,
   DocumentData
 } from 'firebase/firestore';
-import { firestore as db } from '@/services/firebaseService'; // Correct import with 'as db'
+import { getFirestore } from 'firebase/firestore'; // Add this import
+import { firestoreService } from '@/services/firebaseService'; // Update this import
 import { toast } from 'sonner';
 import { FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 
 export const useParticipants = () => {
+  // Get Firestore instance
+  const db = getFirestore();
   const { user } = useAuth();
   const [participants, setParticipants] = useState<ParticipantWithAttendance[]>([]);
   const [loading, setLoading] = useState(true);
