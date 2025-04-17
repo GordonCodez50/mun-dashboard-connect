@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('participants');
+  const [activeTab, setActiveTab] = useState<string>('attendance');
   const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>('day1');
   const [isSaving, setIsSaving] = useState(false);
   
@@ -95,7 +95,7 @@ const ChairAttendance = () => {
               
               <div className="mt-6">
                 <Tabs 
-                  defaultValue="participants" 
+                  defaultValue="attendance" 
                   value={activeTab} 
                   onValueChange={setActiveTab}
                   className="w-full"
@@ -195,3 +195,4 @@ const ChairAttendance = () => {
 };
 
 export default ChairAttendance;
+

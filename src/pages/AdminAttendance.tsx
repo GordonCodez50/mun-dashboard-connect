@@ -89,11 +89,12 @@ const AdminAttendance = () => {
                 />
               </div>
               
-              <AttendanceSummary 
-                participants={filteredParticipants} 
-                selectedDate={selectedDate}
-                council={selectedCouncil !== 'all' ? selectedCouncil : undefined}
-              />
+              {selectedCouncil === 'all' && (
+                <AttendanceSummary 
+                  participants={filteredParticipants} 
+                  selectedDate={selectedDate}
+                />
+              )}
               
               <div className="mt-6">
                 <Tabs defaultValue="view" className="w-full">
@@ -147,3 +148,4 @@ const AdminAttendance = () => {
 };
 
 export default AdminAttendance;
+
