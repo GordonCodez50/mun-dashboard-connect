@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ParticipantWithAttendance } from '@/types/attendance';
@@ -7,12 +8,14 @@ interface AttendanceSummaryProps {
   participants: ParticipantWithAttendance[];
   selectedDate: 'day1' | 'day2';
   council?: string; // Optional council filter
+  showCouncilsOverview?: boolean; // New prop to control councils overview visibility
 }
 
 export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
   participants,
   selectedDate,
-  council
+  council,
+  showCouncilsOverview = true // Default to showing it
 }) => {
   // Filter by council if provided
   const filteredParticipants = council
@@ -32,7 +35,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
   
   // Count by council
   const countByCouncil = React.useMemo(() => {
-    if (!council) {
+    if (!council && showCouncilsOverview) {
       const counts: Record<string, number> = {};
       participants.forEach(p => {
         counts[p.council] = (counts[p.council] || 0) + 1;
@@ -42,7 +45,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
         .slice(0, 5); // Top 5 councils
     }
     return [];
-  }, [participants, council]);
+  }, [participants, council, showCouncilsOverview]);
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
@@ -143,7 +146,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
         </CardContent>
       </Card>
       
-      {!council && countByCouncil.length > 0 && (
+      {!council && showCouncilsOverview && countByCouncil.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium">Councils Overview</CardTitle>

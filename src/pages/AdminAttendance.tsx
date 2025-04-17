@@ -89,12 +89,11 @@ const AdminAttendance = () => {
                 />
               </div>
               
-              {selectedCouncil === 'all' && (
-                <AttendanceSummary 
-                  participants={filteredParticipants} 
-                  selectedDate={selectedDate}
-                />
-              )}
+              <AttendanceSummary 
+                participants={filteredParticipants} 
+                selectedDate={selectedDate}
+                showCouncilsOverview={false} // Explicitly disable councils overview
+              />
               
               <div className="mt-6">
                 <Tabs defaultValue="view" className="w-full">
