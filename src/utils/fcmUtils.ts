@@ -11,7 +11,26 @@ const { firestore, auth } = firebaseService;
 
 // The public VAPID key for web push
 // IMPORTANT: This should be your actual VAPID key from Firebase console
-const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';
+const VAPID_KEY = 'BBqfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ=';
+
+/**
+ * Convert base64 string to Uint8Array for applicationServerKey
+ */
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+    
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  
+  return outputArray;
+}
 
 /**
  * Request and save FCM token to Firestore
@@ -50,9 +69,12 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
     }
     
     const messaging = getMessaging();
-    console.log('Requesting FCM token with VAPID key:', VAPID_KEY.substring(0, 10) + '...');
+    console.log('Requesting FCM token with VAPID key');
     
-    // Request token with explicit VAPID key
+    // Convert the base64 VAPID key to the required UInt8Array format
+    const convertedVapidKey = urlBase64ToUint8Array(VAPID_KEY.replace(/=/g, ''));
+    
+    // Request token with properly formatted VAPID key
     const currentToken = await getToken(messaging, { 
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
