@@ -3,14 +3,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect, Suspense, lazy } from "react";
+import { useEffect, Suspense, lazy, useState } from "react";
 import { TimerProvider } from "./context/TimerContext";
 import { toast } from "sonner";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { notificationService } from "./services/notificationService";
 import { requestAndSaveFcmToken } from "./utils/fcmUtils";
+import { realtimeService } from "./services/realtimeService";
 
 // Eager loading critical components
 import Login from "./pages/Login";
@@ -78,7 +79,56 @@ const queryClient = new QueryClient({
   },
 });
 
-// Protected route component
+// AlertHandler component to handle alert ID in URL
+const AlertHandler = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Check if there's an alert ID in the URL
+    const params = new URLSearchParams(location.search);
+    const alertId = params.get('alert');
+    
+    if (alertId) {
+      console.log('Alert ID found in URL:', alertId);
+      // Clear the alertId from the URL to prevent reprocessing
+      navigate(location.pathname, { replace: true });
+      
+      // Inform user about the alert (you can customize this further)
+      toast.info('Opening alert', {
+        description: `Alert ID: ${alertId}`,
+        duration: 3000,
+      });
+      
+      // Additional logic to handle the alert (e.g., scroll to it, highlight it)
+      // This depends on your specific implementation
+    }
+    
+    // Force initialize alert listeners on every page navigation
+    realtimeService.initializeAlertListeners();
+    
+    // Ensure user role is set for notifications on each page
+    if (user) {
+      const role = user.role === 'admin' ? 'admin' : 
+                  (user.council === 'PRESS' ? 'press' : 'chair');
+                  
+      notificationService.setUserRole(role);
+      
+      // Also inform service worker about user role
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SET_USER_ROLE',
+          role
+        });
+      }
+    }
+  }, [location, user, navigate]);
+  
+  return null;
+};
+
+// Protected route component with alert handling
 const ProtectedRoute = ({ 
   element, 
   requiredRole,
@@ -105,6 +155,7 @@ const ProtectedRoute = ({
   
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
+      <AlertHandler />
       <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
     </ErrorBoundary>
   );
@@ -112,12 +163,45 @@ const ProtectedRoute = ({
 
 // App wrapper to handle auth context
 const AppWithAuth = () => {
+  const [serviceWorkerRegistered, setServiceWorkerRegistered] = useState(false);
+  
   // Initialize Firebase and check notification permissions when the app mounts
   useEffect(() => {
     const initApp = async () => {
       try {
         // Initialize Firebase
         await initializeFirebase();
+        
+        // Check if service worker is registered
+        const checkServiceWorker = async () => {
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            const hasFirebaseMessagingSW = registrations.some(reg => 
+              reg.scope.includes(window.location.origin) && 
+              reg.active && 
+              reg.active.scriptURL.includes('firebase-messaging-sw.js')
+            );
+            
+            setServiceWorkerRegistered(hasFirebaseMessagingSW);
+            
+            if (!hasFirebaseMessagingSW) {
+              console.log('Firebase messaging service worker not found, registering...');
+              try {
+                const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                  scope: '/'
+                });
+                console.log('Firebase messaging service worker registered:', reg.scope);
+                setServiceWorkerRegistered(true);
+              } catch (error) {
+                console.error('Failed to register service worker:', error);
+              }
+            } else {
+              console.log('Firebase messaging service worker already registered');
+            }
+          }
+        };
+        
+        await checkServiceWorker();
         
         // Check if notification permission is already granted
         if (notificationService.isNotificationSupported()) {
@@ -132,6 +216,9 @@ const AppWithAuth = () => {
             console.log("Notification permission not granted yet");
           }
         }
+        
+        // Initialize global alert listeners
+        realtimeService.initializeAlertListeners();
       } catch (error) {
         console.error('Failed to initialize app:', error);
         toast.error('Failed to connect to the server. Please refresh and try again.');
@@ -139,12 +226,30 @@ const AppWithAuth = () => {
     };
     
     initApp();
+    
+    // Periodically check if alert listeners are active
+    const alertListenerCheck = setInterval(() => {
+      if (!realtimeService.areAlertListenersActive()) {
+        console.log('Alert listeners not active, reinitializing...');
+        realtimeService.reinitializeAlertListeners();
+      }
+    }, 60000); // Check every minute
+    
+    return () => {
+      clearInterval(alertListenerCheck);
+    };
   }, []);
   
   return (
     <>
+      {/* Regular routes */}
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={
+          <>
+            <AlertHandler />
+            <Login />
+          </>
+        } />
 
         {/* Chair Routes */}
         <Route

@@ -1,4 +1,3 @@
-
 // Firebase Cloud Messaging Service Worker - Cross-Platform Enhanced Version
 
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
@@ -89,6 +88,39 @@ const playNotificationSound = async () => {
   }
 };
 
+// Function to get the correct URL based on user role
+const getTargetUrl = (notificationData) => {
+  // Get data from notification or use defaults
+  const type = notificationData.type || 'alert';
+  const role = notificationData.userRole || userRole || 'chair';
+  const alertId = notificationData.alertId;
+  
+  const currentOrigin = self.location.origin;
+  
+  // Base paths by role
+  let basePath = '/chair-dashboard';
+  if (role === 'admin') {
+    basePath = '/admin-panel';
+  } else if (role === 'press') {
+    basePath = '/press-dashboard';
+  }
+  
+  // Special paths based on notification type
+  if (type === 'timer') {
+    return `${currentOrigin}/timer`;
+  } else if (type === 'attendance') {
+    return `${currentOrigin}/${role === 'admin' ? 'admin-attendance' : 'chair-attendance'}`;
+  } else if (type === 'file') {
+    return `${currentOrigin}/file-share`;
+  } else if (type === 'reply' && alertId) {
+    // For replies, go directly to the respective dashboard with alert ID as query param
+    return `${currentOrigin}${basePath}?alert=${alertId}`;
+  }
+  
+  // Default fallback
+  return `${currentOrigin}${basePath}`;
+};
+
 // Handle background messages with improved cross-platform support
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message', payload);
@@ -105,6 +137,9 @@ messaging.onBackgroundMessage((payload) => {
     requireInteraction: payload.data?.requireInteraction === 'true',
     renotify: payload.data?.renotify === 'true'
   };
+
+  // Add user role from data or stored value
+  notificationOptions.data.userRole = payload.data?.userRole || userRole;
 
   // Platform-specific optimizations
   if (isAndroid()) {
@@ -124,7 +159,7 @@ messaging.onBackgroundMessage((payload) => {
   // Try to play a sound (supported on some browsers)
   playNotificationSound();
   
-  // Create and show the notification optimized for lock screen
+  // Create and show the notification optimized for lock screen/background
   self.registration.showNotification(notificationTitle, notificationOptions)
     .then(() => console.log('Notification shown successfully on lock screen/background'))
     .catch(error => console.error('Error showing notification:', error));
@@ -139,28 +174,8 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data || {};
   console.log('Notification data:', notificationData);
   
-  // Default URL if none specified is the current origin (with pathname cleared)
-  const currentOrigin = self.location.origin;
-  
-  // Get user role from notification data, or from stored value
-  const notificationUserRole = notificationData.userRole || userRole;
-  console.log('User role for notification routing:', notificationUserRole);
-  
-  // Default routes based on user role
-  let defaultRoute = '/chair-dashboard';
-  if (notificationUserRole === 'admin') {
-    defaultRoute = '/admin-panel';
-  } else if (notificationUserRole === 'press') {
-    defaultRoute = '/press-dashboard';
-  }
-  
-  // Determine URL to open
-  let urlToOpen = notificationData.url || `${currentOrigin}${defaultRoute}`;
-  
-  // Make sure the URL has the correct origin
-  if (!urlToOpen.startsWith('http')) {
-    urlToOpen = `${currentOrigin}${urlToOpen.startsWith('/') ? '' : '/'}${urlToOpen}`;
-  }
+  // Get the target URL using the helper function
+  const urlToOpen = notificationData.url || getTargetUrl(notificationData);
   
   console.log('[firebase-messaging-sw.js] Will open URL:', urlToOpen);
   
@@ -170,15 +185,14 @@ self.addEventListener('notificationclick', (event) => {
     // Handle specific action clicks
     if (notificationData.actionUrls && notificationData.actionUrls[event.action]) {
       const actionUrl = notificationData.actionUrls[event.action];
-      console.log('Opening action URL:', actionUrl);
       
       event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
           // Try to focus an existing window first
           for (let i = 0; i < windowClients.length; i++) {
             const client = windowClients[i];
-            if (client.url === actionUrl && 'focus' in client) {
-              return client.focus();
+            if (client.url.includes(self.location.origin) && 'focus' in client) {
+              return client.focus().then(() => client.navigate(actionUrl));
             }
           }
           // If no matching window, open a new one
@@ -194,42 +208,35 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // Check if there is already a window/tab open with the target URL or any window
-      let matchingClient = null;
       let anyClient = null;
       
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
         console.log('Found client with URL:', client.url);
         
+        // Store first client as fallback
         if (!anyClient && 'focus' in client) {
-          anyClient = client; // Store first focusable client as fallback
+          anyClient = client;
         }
         
-        // Check for any client with our origin
-        if (client.url.includes(currentOrigin) && 'focus' in client) {
-          matchingClient = client;
-          break;
+        // If the client is from our origin, use it regardless of path
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          console.log('Found client from our origin, focusing and navigating to:', urlToOpen);
+          return client.focus().then(() => {
+            // Give a small delay to allow focus to complete
+            return new Promise(resolve => {
+              setTimeout(() => {
+                client.navigate(urlToOpen).then(resolve);
+              }, 100);
+            });
+          });
         }
       }
       
-      // If we found a matching client, focus it and navigate
-      if (matchingClient) {
-        console.log('Found matching client, focusing and navigating to:', urlToOpen);
-        return matchingClient.focus().then(() => {
-          // Small delay before navigation seems to help reliability
-          return new Promise(resolve => {
-            setTimeout(() => {
-              matchingClient.navigate(urlToOpen).then(resolve);
-            }, 100);
-          });
-        });
-      }
-      
-      // If we found any client from our origin, use that
+      // If we found any client, use that
       if (anyClient) {
-        console.log('Found any client, focusing and navigating to:', urlToOpen);
+        console.log('Using any available client:', anyClient.url);
         return anyClient.focus().then(() => {
-          // Small delay before navigation seems to help reliability
           return new Promise(resolve => {
             setTimeout(() => {
               anyClient.navigate(urlToOpen).then(resolve);
@@ -239,7 +246,7 @@ self.addEventListener('notificationclick', (event) => {
       }
       
       // If no client found at all, open a new window
-      console.log('No existing client found, opening new window for:', urlToOpen);
+      console.log('No existing clients found, opening new window for:', urlToOpen);
       return clients.openWindow(urlToOpen);
     })
   );
@@ -267,12 +274,15 @@ self.addEventListener('push', (event) => {
       vibrate: [200, 100, 200],
       data: {
         ...data.data,
-        url: data.data?.url || '/chair-dashboard', // Default url
-        type: data.data?.type || 'alert',
         userRole: data.data?.userRole || userRole // Use notification data role or fallback to stored
       },
       requireInteraction: data.data?.requireInteraction === 'true'
     };
+    
+    // Add URL to data if not present
+    if (!options.data.url) {
+      options.data.url = getTargetUrl(options.data);
+    }
     
     // Try to play a sound
     playNotificationSound();
@@ -292,7 +302,6 @@ self.addEventListener('push', (event) => {
         badge: '/logo.png',
         vibrate: [200, 100, 200],
         data: {
-          url: '/chair-dashboard', // Default url
           userRole // Include user role for routing
         }
       })
@@ -314,8 +323,6 @@ self.addEventListener('message', (event) => {
   // Handle notification permission check
   if (event.data && event.data.type === 'CHECK_NOTIFICATION_PERMISSION') {
     if (event.source && event.source.postMessage) {
-      // Service workers don't have access to Notification.permission directly
-      // But if this code is running, we're activated and permissions should be already granted
       event.source.postMessage({ 
         type: 'NOTIFICATION_PERMISSION_RESULT',
         permission: 'granted',
@@ -329,7 +336,7 @@ self.addEventListener('message', (event) => {
     userRole = event.data.role;
     console.log('[firebase-messaging-sw.js] User role set:', userRole);
     
-    // If the event source exists, confirm receipt
+    // Confirm receipt
     if (event.source && event.source.postMessage) {
       event.source.postMessage({ 
         type: 'USER_ROLE_SET',
@@ -339,7 +346,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Make sure the service worker stays alive in the background
+// Keep-alive interval to prevent service worker from being terminated
 setInterval(() => {
   console.log('[firebase-messaging-sw.js] Keeping service worker alive');
 }, 1000 * 60 * 15); // Every 15 minutes

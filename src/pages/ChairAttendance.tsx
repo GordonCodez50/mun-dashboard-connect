@@ -11,6 +11,7 @@ import { AttendanceContent } from '@/components/attendance/AttendanceContent';
 import { getCurrentDateInfo } from '@/utils/participantUtils';
 import { Loader2 } from 'lucide-react';
 import { realtimeService } from '@/services/realtimeService';
+import { notificationService } from '@/services/notificationService';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
@@ -40,7 +41,21 @@ const ChairAttendance = () => {
   useEffect(() => {
     // Ensure global alert listeners are initialized
     realtimeService.initializeAlertListeners();
-  }, []);
+    
+    // Set user role in service worker
+    if (user && navigator.serviceWorker.controller) {
+      const notificationRole = user.role === 'admin' ? 'admin' : 
+                              (user.council === 'PRESS' ? 'press' : 'chair');
+                              
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SET_USER_ROLE',
+        role: notificationRole
+      });
+      
+      // Also set in notification service
+      notificationService.setUserRole(notificationRole);
+    }
+  }, [user]);
 
   return (
     <div className="flex h-full bg-gray-50 overflow-x-hidden">

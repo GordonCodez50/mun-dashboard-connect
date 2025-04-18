@@ -24,6 +24,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to convert UserRole to notification service role type
+const mapRoleForNotifications = (role: UserRole, council?: string): 'admin' | 'chair' | 'press' => {
+  if (role === 'admin') return 'admin';
+  if (council === 'PRESS') return 'press';
+  return 'chair';
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -40,6 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Restore notification service user role if available
     notificationService.restoreUserRole();
+    
+    // Check if alert listeners are active, if not, reinitialize them
+    if (!realtimeService.areAlertListenersActive()) {
+      console.log('Alert listeners not active, reinitializing...');
+      realtimeService.reinitializeAlertListeners();
+    }
   }, []);
 
   useEffect(() => {
@@ -60,20 +73,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
+          
+          // Set user role for notification service when restoring session
+          const notificationRole = mapRoleForNotifications(currentUser.role, currentUser.council);
+          notificationService.setUserRole(notificationRole);
+          
+          // If we have a service worker, send user role to it as well
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'SET_USER_ROLE',
+              role: notificationRole
+            });
+          }
         }
         
-        const allUsers = await authService.getUsers();
-        setUsers(allUsers);
-        
-        if (user) {
-          // Fix: Convert UserRole to accepted string values for notification service
-          if (user.role === 'admin') {
-            notificationService.setUserRole('admin');
-          } else if (user.role === 'chair') {
-            notificationService.setUserRole('chair');
-          } else if (user.council === 'PRESS') {
-            notificationService.setUserRole('press');
-          }
+        try {
+          const allUsers = await authService.getUsers();
+          setUsers(allUsers);
+        } catch (error) {
+          console.info('Permission denied when fetching users. This is expected for non-admin users.');
         }
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -90,6 +108,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const granted = await notificationService.requestPermission();
       setPermissionGranted(granted);
       setPermissionPromptShown(true);
+      
+      if (granted && user) {
+        // Set user role again after permission granted
+        const notificationRole = mapRoleForNotifications(user.role, user.council);
+        notificationService.setUserRole(notificationRole);
+      }
+      
       return granted;
     } catch (error) {
       console.error('Error requesting notification permission:', error);
@@ -104,23 +129,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const loggedInUser = await authService.signIn(email, password);
       setUser(loggedInUser);
       
-      const allUsers = await authService.getUsers();
-      setUsers(allUsers);
+      try {
+        const allUsers = await authService.getUsers();
+        setUsers(allUsers);
+      } catch (error) {
+        console.info('Permission denied when fetching users. This is expected for non-admin users.');
+      }
+      
+      // Map user role for notifications
+      const notificationRole = mapRoleForNotifications(loggedInUser.role, loggedInUser.council);
       
       // Set user role for notifications
-      if (loggedInUser.role === 'admin') {
-        notificationService.setUserRole('admin');
-      } else if (loggedInUser.role === 'chair') {
-        if (loggedInUser.council === 'PRESS') {
-          notificationService.setUserRole('press');
-        } else {
-          notificationService.setUserRole('chair');
-        }
+      notificationService.setUserRole(notificationRole);
+      
+      // Also inform service worker about user role
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SET_USER_ROLE',
+          role: notificationRole
+        });
       }
       
       // Make sure that alert listeners are registered
       realtimeService.initializeAlertListeners();
       
+      // Navigate based on user role
       if (loggedInUser.role === 'chair') {
         if (loggedInUser.council === 'PRESS') {
           navigate('/press-dashboard');
@@ -132,6 +165,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         navigate('/admin-panel');
         toast.success(`Welcome, ${loggedInUser.name}`);
+      }
+      
+      // Request notification permission after login if not already granted
+      if (notificationService.isNotificationSupported() && !notificationService.hasPermission()) {
+        // Wait a bit before showing the permission prompt
+        setTimeout(() => {
+          requestNotificationPermission();
+        }, 2000);
       }
     } catch (error: any) {
       toast.error(error.message || 'Invalid username or password');
@@ -177,6 +218,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.signOut();
       setUser(null);
+      
+      // Remove role from notification service
+      notificationService.setUserRole('admin'); // Set to a default role
+      
       navigate('/');
       toast.info('You have been logged out');
     } catch (error) {
