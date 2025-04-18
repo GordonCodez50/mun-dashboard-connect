@@ -11,7 +11,7 @@ const { firestore, auth } = firebaseService;
 
 // The public VAPID key for web push
 // IMPORTANT: This should be your actual VAPID key from Firebase console
-const VAPID_KEY = 'BIxzTfJnWCjDXJxOB7TPNP2z1AbGcxlEXhwT4tvsQWKbkZuHP5Ld8PnDFd9JzpTYFi5T7ZKAH_ZRTwJ2IfOTBuM';
+const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';
 
 /**
  * Request and save FCM token to Firestore
