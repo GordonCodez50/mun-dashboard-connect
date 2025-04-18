@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CheckCircle, UserCog, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { canEditDate } from '@/utils/participantUtils';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
