@@ -22,20 +22,55 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Register service worker for FCM with better error handling
+// Register service worker for FCM with better error handling and retries
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then(registration => {
-      console.log('Service Worker registered with scope:', registration.scope);
-    })
-    .catch(err => {
-      console.error('Service Worker registration failed:', err);
-      
-      // If we're on Android Chrome and service worker failed, log detailed info
-      if (isAndroid() && isChrome()) {
-        console.warn('Android Chrome detected with service worker failure. This may affect notifications.');
-      }
+  // Unregister any existing service workers first to ensure clean state
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    // Unregister all existing service workers
+    const unregisterPromises = registrations.map(registration => registration.unregister());
+    
+    // After unregistering, register the new service worker
+    Promise.all(unregisterPromises).then(() => {
+      // Register with a timestamp to force update
+      navigator.serviceWorker.register(`/firebase-messaging-sw.js?v=${Date.now()}`, {
+        updateViaCache: 'none', // Don't use cached version
+        scope: '/'
+      })
+      .then(registration => {
+        console.log('Service Worker registered successfully with scope:', registration.scope);
+        
+        // Immediately update the service worker if needed
+        registration.update();
+        
+        // Check for active service worker
+        if (registration.active) {
+          console.log('Service worker is active and ready');
+        } else {
+          console.log('Service worker registered but not yet active, waiting for activation');
+          registration.installing?.addEventListener('statechange', e => {
+            if ((e.target as any).state === 'activated') {
+              console.log('Service worker now activated');
+            }
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Service Worker registration failed:', err);
+        
+        // If we're on Android Chrome and service worker failed, log detailed info
+        if (isAndroid() && isChrome()) {
+          console.warn('Android Chrome detected with service worker failure. This may affect notifications.');
+        }
+      });
     });
+  });
+  
+  // Also set up a communication channel with the service worker
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SERVICE_WORKER_ACTIVATED') {
+      console.log('Received confirmation that service worker is activated');
+    }
+  });
 }
 
 // Check for notification support early and log platform information
@@ -88,6 +123,14 @@ if (notificationService.isNotificationSupported()) {
   
   // Initialize global alert listeners to work across all pages
   realtimeService.initializeAlertListeners();
+  
+  // Test service worker connection
+  if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'PING',
+      timestamp: Date.now()
+    });
+  }
 } else {
   console.warn('Browser notifications are not supported in this browser');
 }

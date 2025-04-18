@@ -24,6 +24,10 @@ const VAPID_KEY = 'BLW7VJrM3F8oL2IFysoC7monAgQ_dTWeaZZU3y3Hp0SgGK0C_jPBqknMcMs4v
 // User role for notifications (will be set from auth context)
 let currentUserRole: 'admin' | 'chair' | 'press' | null = null;
 
+// Store last notification to prevent duplicates
+let lastNotificationId: string | null = null;
+let lastNotificationTimestamp = 0;
+
 // Extended notification options type to handle additional properties
 interface ExtendedNotificationOptions {
   body?: string;
@@ -65,6 +69,9 @@ const getFcmToken = (): string | null => {
 const setUserRole = (role: 'admin' | 'chair' | 'press') => {
   console.log('Setting user role for notifications:', role);
   currentUserRole = role;
+  
+  // Save role to localStorage for persistence across page loads
+  localStorage.setItem('notificationUserRole', role);
   
   // Also try to inform the service worker about the role
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -163,8 +170,30 @@ const requestFcmToken = async (): Promise<string | null> => {
     
     console.log('Calling getToken with vapidKey:', VAPID_KEY.substring(0, 10) + '...');
     
+    // First check if service worker is registered
+    if (isServiceWorkerSupported()) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      
+      if (registrations.length === 0) {
+        console.log('No service worker registrations found, attempting to register');
+        try {
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Service worker registered');
+        } catch (swError) {
+          console.error('Error registering service worker:', swError);
+        }
+      } else {
+        console.log('Service worker registrations found:', registrations.length);
+      }
+    }
+    
+    // Get the latest service worker registration
+    const registration = await navigator.serviceWorker.ready;
+    console.log('Using service worker registration with scope:', registration.scope);
+    
     const currentToken = await getToken(messaging, { 
-      vapidKey: VAPID_KEY 
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration
     });
     
     if (currentToken) {
@@ -179,29 +208,23 @@ const requestFcmToken = async (): Promise<string | null> => {
       if (Notification.permission === 'granted') {
         console.log('Permission is granted but no token received, checking service worker');
         
-        // Check service worker registration
-        if (isServiceWorkerSupported()) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          console.log('Service worker registrations:', registrations.length);
+        // Wait a moment and try again - sometimes there's a delay in service worker activation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        try {
+          const retryToken = await getToken(messaging, { 
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: registration
+          });
           
-          if (registrations.length === 0) {
-            console.log('No service worker registrations found, attempting to register');
-            try {
-              const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-              console.log('Service worker registered with scope:', registration.scope);
-              
-              // Try getting token again after registration
-              const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-              if (retryToken) {
-                console.log('FCM token obtained after registration:', retryToken.substring(0, 10) + '...');
-                saveFcmToken(retryToken);
-                setupFcmListener();
-                return retryToken;
-              }
-            } catch (swError) {
-              console.error('Error registering service worker:', swError);
-            }
+          if (retryToken) {
+            console.log('FCM token obtained after retry:', retryToken.substring(0, 10) + '...');
+            saveFcmToken(retryToken);
+            setupFcmListener();
+            return retryToken;
           }
+        } catch (retryError) {
+          console.error('Error in token retry:', retryError);
         }
       }
       
@@ -217,40 +240,51 @@ const requestFcmToken = async (): Promise<string | null> => {
 const setupFcmListener = () => {
   if (!isFcmSupported()) return;
   
-  onMessage(messaging, (payload) => {
-    console.log('Foreground message received:', payload);
+  try {
+    onMessage(messaging, (payload) => {
+      console.log('Foreground message received:', payload);
+      
+      if (payload.notification) {
+        const title = payload.notification.title || 'New Notification';
+        const options: ExtendedNotificationOptions = {
+          body: payload.notification.body,
+          icon: '/logo.png',
+          badge: '/logo.png',
+          vibrate: [200, 100, 200],
+          requireInteraction: payload.data?.requireInteraction === 'true',
+          timestamp: Date.now(),
+          data: {
+            ...payload.data,
+            userRole: currentUserRole || localStorage.getItem('notificationUserRole') || 'chair',
+            url: getNotificationUrl(payload.data?.type || 'alert'),
+            type: payload.data?.type || 'alert'
+          }
+        };
+        
+        // Show foreground notification
+        showNotification(title, options);
+        
+        // Also show toast for better UX
+        toast(title, {
+          description: options.body,
+          duration: 5000,
+        });
+      }
+    });
     
-    if (payload.notification) {
-      const title = payload.notification.title || 'New Notification';
-      const options: ExtendedNotificationOptions = {
-        body: payload.notification.body,
-        icon: '/logo.png',
-        badge: '/logo.png',
-        vibrate: [200, 100, 200],
-        requireInteraction: payload.data?.requireInteraction === 'true',
-        timestamp: Date.now(),
-        data: {
-          ...payload.data,
-          userRole: currentUserRole,
-          url: getNotificationUrl(payload.data?.type || 'alert'),
-          type: payload.data?.type || 'alert'
-        }
-      };
-      
-      // Show foreground notification
-      showNotification(title, options);
-      
-      // Also show toast for better UX
-      toast(title, {
-        description: options.body,
-        duration: 5000,
-      });
-    }
-  });
+    console.log('FCM foreground message listener set up');
+  } catch (error) {
+    console.error('Error setting up FCM listener:', error);
+  }
 };
 
 // Get appropriate URL based on notification type and user role
 const getNotificationUrl = (type: string): string => {
+  // Try to get role from localStorage if not set in memory
+  if (!currentUserRole) {
+    currentUserRole = localStorage.getItem('notificationUserRole') as 'admin' | 'chair' | 'press' || null;
+  }
+  
   // Default URL based on user role
   const baseUrl = currentUserRole === 'admin' ? '/admin-panel' : 
                  currentUserRole === 'press' ? '/press-dashboard' : 
@@ -259,7 +293,7 @@ const getNotificationUrl = (type: string): string => {
   // For specific notification types, we might want to route differently
   switch (type) {
     case 'timer':
-      return '/timer';
+      return '/timer-manager';
     case 'attendance':
       return currentUserRole === 'admin' ? '/admin-attendance' : '/chair-attendance';
     default:
@@ -285,10 +319,27 @@ const showNotification = (title: string, options?: ExtendedNotificationOptions):
   if (!options) options = {};
   if (!options.data) options.data = {};
   
+  // Try to get role from localStorage if not set in memory
+  if (!currentUserRole) {
+    currentUserRole = localStorage.getItem('notificationUserRole') as 'admin' | 'chair' | 'press' || null;
+  }
+  
   options.data.userRole = currentUserRole;
   if (!options.data.url) {
     options.data.url = getNotificationUrl(options.data.type || 'alert');
   }
+  
+  // Check for duplicate notifications (prevent spam)
+  const now = Date.now();
+  const notificationId = `${title}-${options.body}`;
+  if (lastNotificationId === notificationId && (now - lastNotificationTimestamp) < 2000) {
+    console.log('Preventing duplicate notification:', notificationId);
+    return false;
+  }
+  
+  // Update last notification tracking
+  lastNotificationId = notificationId;
+  lastNotificationTimestamp = now;
   
   return createNotification(title, options as any);
 };
@@ -302,13 +353,19 @@ const showTimerNotification = (timerName: string): boolean => {
     timestamp: Date.now(),
     data: {
       type: 'timer',
-      url: '/timer'
+      url: '/timer-manager'
     }
   });
 };
 
 // Show alert notification
-const showAlertNotification = (alertType: string, council: string, message: string, urgent: boolean = false): boolean => {
+const showAlertNotification = (
+  alertType: string, 
+  council: string, 
+  message: string, 
+  urgent: boolean = false,
+  additionalData: any = {}
+): boolean => {
   return showNotification(
     `${urgent ? '🚨 URGENT: ' : ''}${alertType} from ${council}`,
     {
@@ -322,7 +379,8 @@ const showAlertNotification = (alertType: string, council: string, message: stri
         type: 'alert',
         alertType,
         council,
-        urgent
+        urgent,
+        ...additionalData
       }
     }
   );
@@ -363,35 +421,59 @@ const showReplyNotification = (
 
 // Function to initialize Firebase messaging with more detailed logging
 const initializeMessaging = async (): Promise<boolean> => {
-  if (!messaging && isServiceWorkerSupported()) {
-    try {
-      console.log('Initializing Firebase messaging');
+  if (!isServiceWorkerSupported()) {
+    console.warn('Service workers not supported in this browser, FCM will not work');
+    return false;
+  }
+  
+  try {
+    console.log('Initializing Firebase messaging');
+    
+    // Ensure messaging is initialized
+    if (!messaging) {
       const app = getApp();
       messaging = getMessaging(app);
+      console.log('Messaging instance created');
+    }
+    
+    // Check if service worker is registered
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    if (registrations.length === 0) {
+      console.log('No service worker registrations found, attempting to register');
       
-      console.log('Checking for existing FCM token');
-      // Check if we already have a token
-      const existingToken = getFcmToken();
-      if (existingToken) {
-        console.log('Using existing FCM token');
-        setupFcmListener();
-        return true;
-      } else if (hasPermission()) {
-        console.log('We have notification permission, requesting FCM token');
-        // If we have permission but no token, request it
-        const token = await requestFcmToken();
-        return !!token;
-      } else {
-        console.log('No notification permission yet, skipping FCM token request');
+      try {
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('Service worker registered');
+        
+        // Wait for service worker to activate
+        await navigator.serviceWorker.ready;
+        console.log('Service worker is now ready');
+      } catch (swError) {
+        console.error('Error registering service worker:', swError);
         return false;
       }
-    } catch (error) {
-      console.error('Error initializing Firebase messaging:', error);
+    } else {
+      console.log('Service worker registrations found:', registrations.length);
+    }
+    
+    // Check if we already have a token
+    const existingToken = getFcmToken();
+    if (existingToken) {
+      console.log('Using existing FCM token');
+      setupFcmListener();
+      return true;
+    } else if (hasPermission()) {
+      console.log('We have notification permission, requesting FCM token');
+      // If we have permission but no token, request it
+      const token = await requestFcmToken();
+      return !!token;
+    } else {
+      console.log('No notification permission yet, skipping FCM token request');
       return false;
     }
-  } else {
-    console.log('Messaging already initialized or service workers not supported');
-    return !!messaging;
+  } catch (error) {
+    console.error('Error initializing Firebase messaging:', error);
+    return false;
   }
 };
 
@@ -422,6 +504,18 @@ const testFcm = async (): Promise<boolean> => {
   return true;
 };
 
+// Restore user role from localStorage if available
+const restoreUserRole = () => {
+  const savedRole = localStorage.getItem('notificationUserRole') as 'admin' | 'chair' | 'press' | null;
+  if (savedRole) {
+    currentUserRole = savedRole;
+    console.log('Restored user role from localStorage:', savedRole);
+  }
+};
+
+// Call this when the service is first loaded
+restoreUserRole();
+
 export const notificationService = {
   isNotificationSupported,
   isFcmSupported,
@@ -435,5 +529,6 @@ export const notificationService = {
   requestFcmToken,
   getFcmToken,
   testFcm,
-  setUserRole
+  setUserRole,
+  restoreUserRole
 };

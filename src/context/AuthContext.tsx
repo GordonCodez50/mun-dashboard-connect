@@ -6,6 +6,7 @@ import { User, UserRole, UserFormData } from '@/types/auth';
 import { authService } from '@/services/firebaseService';
 import { extractUserInfo } from '@/config/firebaseConfig';
 import { notificationService } from '@/services/notificationService';
+import { realtimeService } from '@/services/realtimeService';
 
 type AuthContextType = {
   user: User | null;
@@ -31,6 +32,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [permissionChecked, setPermissionChecked] = useState(false);
   const [permissionPromptShown, setPermissionPromptShown] = useState(false);
   const navigate = useNavigate();
+
+  // Initialize notification service and alert listeners
+  useEffect(() => {
+    // Ensure global alert listeners are initialized
+    realtimeService.initializeAlertListeners();
+    
+    // Restore notification service user role if available
+    notificationService.restoreUserRole();
+  }, []);
 
   useEffect(() => {
     const checkNotifications = () => {
@@ -107,6 +117,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           notificationService.setUserRole('chair');
         }
       }
+      
+      // Make sure that alert listeners are registered
+      realtimeService.initializeAlertListeners();
       
       if (loggedInUser.role === 'chair') {
         if (loggedInUser.council === 'PRESS') {
