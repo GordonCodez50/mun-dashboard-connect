@@ -28,30 +28,23 @@ let currentUserRole: 'admin' | 'chair' | 'press' | null = null;
 let lastNotificationId: string | null = null;
 let lastNotificationTimestamp = 0;
 
-// Extended notification options type to handle additional properties
-interface ExtendedNotificationOptions {
-  body?: string;
-  icon?: string;
-  badge?: string;
-  vibrate?: number[];
-  timestamp?: number;
-  tag?: string;
-  requireInteraction?: boolean;
-  data?: any;
-  renotify?: boolean;
-  silent?: boolean;
+// Initialize Firebase app if not already initialized
+let firebaseApp;
+try {
+  firebaseApp = getApp();
+} catch (e) {
+  firebaseApp = initializeApp(firebaseConfig);
 }
 
 // Initialize Firebase Messaging
 let messaging: any = null;
-
 try {
-  // Try to get the existing Firebase app or initialize a new one
-  const app = getApp();
-  messaging = getMessaging(app);
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    messaging = getMessaging(firebaseApp);
+    console.log('Firebase messaging initialized successfully');
+  }
 } catch (error) {
-  // App hasn't been initialized yet
-  console.log('Firebase app not initialized yet for FCM');
+  console.error('Error initializing Firebase messaging:', error);
 }
 
 // Store FCM token in localStorage
@@ -99,35 +92,7 @@ const requestPermission = async (): Promise<boolean> => {
     return false;
   }
   
-  if (Notification.permission === 'granted') {
-    console.log('Permission already granted, requesting FCM token');
-    // Already have permission, try to get FCM token
-    if (isFcmSupported()) {
-      await requestFcmToken();
-    }
-    return true;
-  }
-  
-  if (Notification.permission === 'denied') {
-    console.warn('Notification permission was denied by the user');
-    return false;
-  }
-  
   try {
-    // Use special handling for iOS
-    if (isIOS()) {
-      console.log('iOS device detected, using specialized permission flow');
-      // On iOS, we need to provide clear instructions for best results
-      if (isSafari()) {
-        console.log('Safari on iOS has limited notification support');
-      }
-    }
-    
-    // Use special handling for Android Chrome
-    if (isAndroid() && isChrome()) {
-      console.log('Using specialized Android Chrome permission flow');
-    }
-    
     const permission = await Notification.requestPermission();
     const granted = permission === 'granted';
     
@@ -154,24 +119,9 @@ const requestFcmToken = async (): Promise<string | null> => {
   
   try {
     console.log('Requesting FCM token...');
-    console.log('Current messaging instance:', messaging ? 'exists' : 'null');
     
-    // Ensure messaging is initialized
-    if (!messaging) {
-      try {
-        const app = getApp();
-        messaging = getMessaging(app);
-        console.log('Messaging initialized');
-      } catch (error) {
-        console.error('Failed to initialize messaging:', error);
-        return null;
-      }
-    }
-    
-    console.log('Calling getToken with vapidKey:', VAPID_KEY.substring(0, 10) + '...');
-    
-    // First check if service worker is registered
-    if (isServiceWorkerSupported()) {
+    // First make sure service worker is registered
+    if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       
       if (registrations.length === 0) {
@@ -187,13 +137,12 @@ const requestFcmToken = async (): Promise<string | null> => {
       }
     }
     
-    // Get the latest service worker registration
-    const registration = await navigator.serviceWorker.ready;
-    console.log('Using service worker registration with scope:', registration.scope);
+    // Get the service worker registration
+    const swRegistration = await navigator.serviceWorker.ready;
     
     const currentToken = await getToken(messaging, { 
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration
+      serviceWorkerRegistration: swRegistration
     });
     
     if (currentToken) {
@@ -203,31 +152,6 @@ const requestFcmToken = async (): Promise<string | null> => {
       return currentToken;
     } else {
       console.warn('No FCM token available, may need permission or service worker registration');
-      
-      // Check if we have appropriate permission but still no token
-      if (Notification.permission === 'granted') {
-        console.log('Permission is granted but no token received, checking service worker');
-        
-        // Wait a moment and try again - sometimes there's a delay in service worker activation
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        try {
-          const retryToken = await getToken(messaging, { 
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: registration
-          });
-          
-          if (retryToken) {
-            console.log('FCM token obtained after retry:', retryToken.substring(0, 10) + '...');
-            saveFcmToken(retryToken);
-            setupFcmListener();
-            return retryToken;
-          }
-        } catch (retryError) {
-          console.error('Error in token retry:', retryError);
-        }
-      }
-      
       return null;
     }
   } catch (error) {
@@ -246,7 +170,7 @@ const setupFcmListener = () => {
       
       if (payload.notification) {
         const title = payload.notification.title || 'New Notification';
-        const options: ExtendedNotificationOptions = {
+        const options = {
           body: payload.notification.body,
           icon: '/logo.png',
           badge: '/logo.png',
@@ -293,7 +217,7 @@ const getNotificationUrl = (type: string): string => {
   // For specific notification types, we might want to route differently
   switch (type) {
     case 'timer':
-      return '/timer-manager';
+      return '/timer';
     case 'attendance':
       return currentUserRole === 'admin' ? '/admin-attendance' : '/chair-attendance';
     default:
@@ -310,7 +234,7 @@ const hasPermission = (): boolean => {
 };
 
 // Show a notification using our cross-platform utility
-const showNotification = (title: string, options?: ExtendedNotificationOptions): boolean => {
+const showNotification = (title: string, options?: any): boolean => {
   if (!isNotificationSupported() || !hasPermission()) {
     return false;
   }
@@ -318,16 +242,6 @@ const showNotification = (title: string, options?: ExtendedNotificationOptions):
   // Ensure data contains userRole and appropriate URL
   if (!options) options = {};
   if (!options.data) options.data = {};
-  
-  // Try to get role from localStorage if not set in memory
-  if (!currentUserRole) {
-    currentUserRole = localStorage.getItem('notificationUserRole') as 'admin' | 'chair' | 'press' || null;
-  }
-  
-  options.data.userRole = currentUserRole;
-  if (!options.data.url) {
-    options.data.url = getNotificationUrl(options.data.type || 'alert');
-  }
   
   // Check for duplicate notifications (prevent spam)
   const now = Date.now();
@@ -341,7 +255,7 @@ const showNotification = (title: string, options?: ExtendedNotificationOptions):
   lastNotificationId = notificationId;
   lastNotificationTimestamp = now;
   
-  return createNotification(title, options as any);
+  return createNotification(title, options);
 };
 
 // Show timer notification
@@ -353,7 +267,7 @@ const showTimerNotification = (timerName: string): boolean => {
     timestamp: Date.now(),
     data: {
       type: 'timer',
-      url: '/timer-manager'
+      url: '/timer'
     }
   });
 };
@@ -363,8 +277,7 @@ const showAlertNotification = (
   alertType: string, 
   council: string, 
   message: string, 
-  urgent: boolean = false,
-  additionalData: any = {}
+  urgent: boolean = false
 ): boolean => {
   return showNotification(
     `${urgent ? '🚨 URGENT: ' : ''}${alertType} from ${council}`,
@@ -372,15 +285,14 @@ const showAlertNotification = (
       body: message,
       icon: '/logo.png',
       vibrate: urgent ? [200, 100, 200, 100, 200] : [100, 50, 100],
-      tag: 'alert-notification', // Group similar notifications
-      requireInteraction: urgent, // Urgent alerts stay until clicked
+      tag: 'alert-notification',
+      requireInteraction: urgent,
       timestamp: Date.now(),
       data: {
         type: 'alert',
         alertType,
         council,
-        urgent,
-        ...additionalData
+        urgent
       }
     }
   );
@@ -408,7 +320,6 @@ const showReplyNotification = (
       tag: `reply-${alertId}`,
       timestamp: Date.now(),
       vibrate: [100, 50, 100],
-      requireInteraction: false,
       data: {
         type: 'reply',
         alertId,
@@ -419,7 +330,7 @@ const showReplyNotification = (
   );
 };
 
-// Function to initialize Firebase messaging with more detailed logging
+// Function to initialize Firebase messaging
 const initializeMessaging = async (): Promise<boolean> => {
   if (!isServiceWorkerSupported()) {
     console.warn('Service workers not supported in this browser, FCM will not work');
@@ -429,31 +340,22 @@ const initializeMessaging = async (): Promise<boolean> => {
   try {
     console.log('Initializing Firebase messaging');
     
-    // Ensure messaging is initialized
-    if (!messaging) {
-      const app = getApp();
-      messaging = getMessaging(app);
-      console.log('Messaging instance created');
-    }
-    
-    // Check if service worker is registered
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    if (registrations.length === 0) {
-      console.log('No service worker registrations found, attempting to register');
-      
-      try {
-        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('Service worker registered');
+    // Register service worker if not registered
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      if (registrations.length === 0) {
+        console.log('Firebase messaging service worker not found, registering...');
         
-        // Wait for service worker to activate
-        await navigator.serviceWorker.ready;
-        console.log('Service worker is now ready');
-      } catch (swError) {
-        console.error('Error registering service worker:', swError);
-        return false;
+        try {
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Firebase messaging service worker registered');
+        } catch (swError) {
+          console.error('Error registering service worker:', swError);
+          return false;
+        }
+      } else {
+        console.log('Service worker registrations found:', registrations.length);
       }
-    } else {
-      console.log('Service worker registrations found:', registrations.length);
     }
     
     // Check if we already have a token

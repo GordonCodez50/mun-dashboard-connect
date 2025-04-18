@@ -10,7 +10,7 @@ import {
   getNotificationPermissionStatus,
   isAndroid,
   isChrome 
-} from '@/utils/notificationPermission';
+} from '@/utils/crossPlatformNotifications';
 
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
@@ -30,9 +30,7 @@ const registerServiceWorker = async () => {
   }
 
   try {
-    // First unregister any existing service workers to ensure clean state
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    await Promise.all(registrations.map(registration => registration.unregister()));
+    console.log('Registering service worker...');
     
     // Register with cache-busting parameter to ensure latest version
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js?v=' + Date.now(), {
@@ -50,9 +48,6 @@ const registerServiceWorker = async () => {
       console.log('Service worker installing...');
       registration.installing.addEventListener('statechange', (e) => {
         console.log('Service worker state changed to:', (e.target as any).state);
-        if ((e.target as any).state === 'activated') {
-          console.log('Service worker now activated');
-        }
       });
     } else if (registration.waiting) {
       console.log('Service worker waiting...');
@@ -61,40 +56,20 @@ const registerServiceWorker = async () => {
       console.log('Service worker is active');
       
       // Test communication with service worker
-      if (registration.active) {
-        registration.active.postMessage({ 
-          type: 'PING',
-          timestamp: Date.now()
-        });
-      }
+      registration.active.postMessage({ 
+        type: 'PING',
+        timestamp: Date.now()
+      });
     }
     
     // Set up message listener for service worker messages
     navigator.serviceWorker.addEventListener('message', (event) => {
       console.log('Received message from service worker:', event.data);
-      if (event.data && event.data.type === 'PONG') {
-        console.log('Service worker responded to ping:', event.data.timestamp);
-      }
     });
     
     return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);
-    
-    // Special handling for Android Chrome
-    if (isAndroid() && isChrome()) {
-      console.warn('Android Chrome detected. This may affect notifications.');
-      // Try alternative registration approach for Android Chrome
-      try {
-        console.log('Attempting alternative registration approach for Android Chrome');
-        const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-        console.log('Alternative registration succeeded:', reg.scope);
-        return reg;
-      } catch (altError) {
-        console.error('Alternative registration also failed:', altError);
-      }
-    }
-    
     return null;
   }
 };
@@ -148,23 +123,10 @@ if (notificationService.isNotificationSupported()) {
   // Initialize Firebase Cloud Messaging with better error handling
   notificationService.initializeMessaging().catch(err => {
     console.error('Error initializing Firebase messaging:', err);
-    // Schedule a retry after a short delay
-    setTimeout(() => {
-      console.log('Retrying Firebase messaging initialization...');
-      notificationService.initializeMessaging();
-    }, 3000);
   });
   
   // Initialize global alert listeners to work across all pages
   realtimeService.initializeAlertListeners();
-  
-  // Test service worker connection
-  if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'PING',
-      timestamp: Date.now()
-    });
-  }
 } else {
   console.warn('Browser notifications are not supported in this browser');
 }

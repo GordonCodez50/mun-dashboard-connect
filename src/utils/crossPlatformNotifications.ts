@@ -1,66 +1,43 @@
+
 /**
- * Cross-Platform Notification Utility
- * Provides consistent notification functionality across different devices and browsers
- * Supports: iOS, Android, macOS, Windows, Chrome, Safari, Firefox
+ * Cross-platform notification utilities that work across different browsers and devices
  */
 
-// Detect platform/browser information
-export const isIOS = (): boolean => {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-};
+import { toast } from 'sonner';
 
-export const isMacOS = (): boolean => {
-  return /Mac/.test(navigator.userAgent) && !isIOS();
-};
-
+// Platform detection utilities
 export const isAndroid = (): boolean => {
   return /android/i.test(navigator.userAgent);
 };
 
-export const isWindows = (): boolean => {
-  return /Windows/.test(navigator.userAgent);
-};
-
-export const isMobile = (): boolean => {
-  return isIOS() || isAndroid();
-};
-
 export const isChrome = (): boolean => {
-  return /chrome|crios/i.test(navigator.userAgent.toLowerCase()) && !/edge|edg/i.test(navigator.userAgent.toLowerCase());
+  return /chrome|crios/i.test(navigator.userAgent.toLowerCase());
+};
+
+export const isIOS = (): boolean => {
+  return /ipad|iphone|ipod/i.test(navigator.userAgent.toLowerCase());
 };
 
 export const isSafari = (): boolean => {
-  return /safari/i.test(navigator.userAgent) && !/chrome|chromium|crios/i.test(navigator.userAgent.toLowerCase());
+  return /safari/i.test(navigator.userAgent.toLowerCase()) && 
+         !/chrome|crios/i.test(navigator.userAgent.toLowerCase());
 };
 
-export const isFirefox = (): boolean => {
-  return /firefox/i.test(navigator.userAgent.toLowerCase());
+export const isPwa = (): boolean => {
+  return window.matchMedia('(display-mode: standalone)').matches || 
+         (window.navigator as any).standalone === true;
 };
 
-// Check if Web Push API is supported
-export const isPushApiSupported = (): boolean => {
-  return 'PushManager' in window;
-};
-
-// Check if notifications are supported in this browser
-export const isNotificationSupported = (): boolean => {
-  return 'Notification' in window;
-};
-
-// Check if Service Workers are supported
 export const isServiceWorkerSupported = (): boolean => {
   return 'serviceWorker' in navigator;
 };
 
-// Normalize browser compatibility issues with notifications
-interface ExtendedNotificationOptions extends NotificationOptions {
-  vibrate?: number[];
-  renotify?: boolean;
-  requireInteraction?: boolean;
-  data?: any;
-}
+// Check if notifications are supported
+export const isNotificationSupported = (): boolean => {
+  return 'Notification' in window;
+};
 
-// Request notification permissions with platform-specific handling
+// Request notification permission with detailed error handling
 export const requestNotificationPermission = async (): Promise<{
   success: boolean;
   status: NotificationPermission | 'unsupported' | 'error';
@@ -68,7 +45,6 @@ export const requestNotificationPermission = async (): Promise<{
 }> => {
   try {
     if (!isNotificationSupported()) {
-      console.warn('Notifications are not supported in this browser');
       return { 
         success: false, 
         status: 'unsupported', 
@@ -76,64 +52,20 @@ export const requestNotificationPermission = async (): Promise<{
       };
     }
     
-    console.log('Requesting notification permission...');
-    console.log('Current permission status:', Notification.permission);
-    
-    // Special handling for iOS Safari which has limited notification support
-    if (isIOS() && isSafari()) {
-      console.log('iOS Safari detected - limited notification support');
-      // iOS Safari doesn't fully support the Notifications API until iOS 16.4+
-      // We'll attempt anyway but inform the user of limitations
-      if (Notification.permission === 'denied') {
-        return {
-          success: false,
-          status: 'denied',
-          error: 'Notifications are not fully supported in iOS Safari. For best experience, please use Chrome or add to home screen.'
-        };
-      }
+    // Check if permission is already granted
+    if (Notification.permission === 'granted') {
+      return { success: true, status: 'granted' };
     }
     
-    // Special handling for Android Chrome which may silently deny
-    if (isAndroid() && isChrome()) {
-      console.log('Android Chrome detected, checking current permission...');
-      
-      // If already denied, we need to guide the user to settings
-      if (Notification.permission === 'denied') {
-        console.log('Permission previously denied on Android Chrome');
-        return {
-          success: false,
-          status: 'denied',
-          error: 'Permission previously denied. Please enable notifications manually in browser settings.'
-        };
-      }
+    // Special handling for iOS which has limited notification support
+    if (isIOS()) {
+      console.log('iOS detected, may have limited notification support');
     }
     
-    // Force showing the permission dialog by creating a temporary service worker
-    // This is a workaround specifically for Android Chrome
-    if (isAndroid() && isChrome() && Notification.permission === 'default') {
-      try {
-        console.log('Using service worker approach to trigger permission dialog on Android');
-        
-        // Try to register a temporary service worker to force the permission dialog
-        if (isServiceWorkerSupported()) {
-          const tempRegistration = await navigator.serviceWorker.register('/temp-notification-sw.js', {
-            scope: '/'
-          });
-          console.log('Temporary service worker registered:', tempRegistration);
-        }
-      } catch (swError) {
-        console.warn('Error with service worker approach:', swError);
-        // Continue with standard approach even if this fails
-      }
-    }
-    
+    // Request permission
     const permission = await Notification.requestPermission();
-    const granted = permission === 'granted';
-    
-    console.log(`Permission request result: ${permission}`);
-    
     return {
-      success: granted,
+      success: permission === 'granted',
       status: permission
     };
   } catch (error) {
@@ -141,75 +73,77 @@ export const requestNotificationPermission = async (): Promise<{
     return { 
       success: false, 
       status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error requesting permission'
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 };
 
-// Get current permission status
-export const getNotificationPermissionStatus = (): NotificationPermission | 'unsupported' => {
-  if (!isNotificationSupported()) {
-    return 'unsupported';
+// Get instructions for enabling notifications based on platform
+export const getNotificationInstructions = (): string => {
+  if (isAndroid() && isChrome()) {
+    return "To enable notifications: tap the three dots (⋮) in Chrome → Settings → Site Settings → Notifications → find this site and allow.";
+  } else if (isIOS() && isSafari()) {
+    return "iOS has limited notification support. For best experience, add this site to your home screen.";
+  } else if (isIOS()) {
+    return "iOS has limited notification support in browsers. Please add to home screen for better notifications.";
+  } else if (isChrome()) {
+    return "Click the lock icon in your address bar, then select 'Notifications' and change to 'Allow'.";
+  } else {
+    return "Please check your browser settings to enable notifications for this site.";
   }
-  return Notification.permission;
 };
 
-// Create and display a notification with platform-specific optimizations
-export const createNotification = (
-  title: string, 
-  options: ExtendedNotificationOptions = {}
-): boolean => {
-  if (!isNotificationSupported() || Notification.permission !== 'granted') {
-    return false;
+// Get instructions for installing as PWA
+export const getPwaInstructions = (): string => {
+  if (isIOS() && isSafari()) {
+    return "Tap the share icon (box with arrow) at the bottom of Safari, then 'Add to Home Screen'.";
+  } else if (isAndroid() && isChrome()) {
+    return "Tap the three dots (⋮) menu, then 'Add to Home screen'.";
+  } else if (isChrome()) {
+    return "Click the install icon in the address bar or three dots (⋮) menu → 'Install'.";
+  } else {
+    return "Use Chrome or Safari for the option to install this application to your home screen.";
   }
+};
+
+// Check if platform can show notifications on lock screen
+export const canShowLockScreenNotifications = (): boolean => {
+  // Android can show notifications on lock screen
+  if (isAndroid()) return true;
   
+  // iOS can show notifications on lock screen if added to home screen
+  if (isIOS() && isPwa()) return true;
+  
+  // Most desktop browsers can show system notifications
+  if (!isAndroid() && !isIOS()) return true;
+  
+  return false;
+};
+
+// Cross-platform notification creation
+export const createNotification = (title: string, options: NotificationOptions & { 
+  data?: any;
+  timestamp?: number;
+}): boolean => {
   try {
-    // Platform-specific adjustments
-    let platformOptions: ExtendedNotificationOptions = { ...options };
-    
-    // Add vibration for Android
-    if (isAndroid()) {
-      platformOptions.vibrate = options.vibrate || [200, 100, 200];
+    if (!isNotificationSupported() || Notification.permission !== 'granted') {
+      return false;
     }
     
-    // iOS Safari doesn't support vibration or requireInteraction
-    if (isIOS() && isSafari()) {
-      delete platformOptions.vibrate;
-      delete platformOptions.requireInteraction;
-    }
+    // Create and show notification
+    const notification = new Notification(title, options);
     
-    // Make sure we always have icon and badge for better visibility
-    platformOptions.icon = platformOptions.icon || '/logo.png';
-    platformOptions.badge = platformOptions.badge || '/logo.png';
-    
-    // For mobile devices we want to ensure the notification is noticeable
-    if (isMobile()) {
-      platformOptions.requireInteraction = options.requireInteraction !== false;
-    }
-    
-    // For desktop browsers
-    if (!isMobile()) {
-      // Keep notifications a bit longer on desktop
-      platformOptions.requireInteraction = options.requireInteraction === true;
-    }
-    
-    // Create notification with adjusted options
-    const notification = new Notification(title, platformOptions as NotificationOptions);
-    
-    // Add click handler
-    notification.onclick = (event) => {
-      event.preventDefault(); // Prevent the browser from focusing the tab
-      window.focus();
+    // Add click handler to notification
+    notification.onclick = () => {
+      // Close the notification
       notification.close();
       
-      // Handle custom click actions if provided
-      if (platformOptions.data?.url) {
-        window.location.href = platformOptions.data.url;
-      }
+      // Focus the window
+      window.focus();
       
-      // Execute custom callback if provided
-      if (platformOptions.data?.onClick && typeof platformOptions.data.onClick === 'function') {
-        platformOptions.data.onClick();
+      // Navigate to specified URL if present in data
+      if (options.data && options.data.url) {
+        window.location.href = options.data.url;
       }
     };
     
@@ -220,89 +154,35 @@ export const createNotification = (
   }
 };
 
-// Create a basic test notification
-export const testNotification = async (): Promise<boolean> => {
-  if (!isNotificationSupported()) {
-    return false;
-  }
-  
-  if (Notification.permission !== 'granted') {
-    return false;
-  }
-  
+// Play notification sound
+export const playNotificationSound = () => {
   try {
-    return createNotification('Test Notification', {
-      body: 'This is a test notification',
-      icon: '/logo.png',
-      requireInteraction: false
+    const audio = new Audio('/notification.mp3');
+    audio.play().catch(err => {
+      console.warn('Could not play notification sound:', err);
     });
-  } catch (error) {
-    console.error('Error creating test notification:', error);
-    return false;
-  }
-};
-
-// Platform-specific guidance for notification settings
-export const getNotificationInstructions = (): string => {
-  if (isAndroid() && isChrome()) {
-    return "To enable notifications: tap the three dots (⋮) in Chrome → Settings → Site Settings → Notifications → find this site and allow notifications.";
-  } else if (isAndroid()) {
-    return "To enable notifications: open browser settings → Site Settings → Notifications → find this site and allow notifications.";
-  } else if (isIOS() && isSafari()) {
-    return "For iOS Safari: go to Settings → Safari → Advanced → Website Data → find this site and manage permissions. For best experience, add this app to your home screen.";
-  } else if (isIOS()) {
-    return "For iOS browsers: add this website to your home screen for the best notification experience.";
-  } else if (isMacOS() && isSafari()) {
-    return "For Safari on Mac: click Safari → Preferences → Websites → Notifications → find this site and allow notifications.";
-  } else if (isWindows() && isChrome()) {
-    return "For Chrome on Windows: click the lock icon in address bar → Site Settings → Notifications → Allow.";
-  }
-  
-  return "Please check your browser settings to enable notifications for this site.";
-};
-
-// Detect if the app is running in standalone mode (PWA)
-export const isPwa = (): boolean => {
-  return window.matchMedia('(display-mode: standalone)').matches || 
-         (window.navigator as any).standalone === true;
-};
-
-// Show PWA install instructions
-export const getPwaInstructions = (): string => {
-  if (isIOS() && isSafari()) {
-    return "To install this app on your iOS device: tap the share button, then 'Add to Home Screen'.";
-  } else if (isAndroid() && isChrome()) {
-    return "To install this app on your Android device: tap the menu button, then 'Add to Home Screen'.";
-  } else if (isChrome()) {
-    return "To install this app: click the install icon in the address bar.";
-  }
-  
-  return "This web app can be installed on your device for a better experience.";
-};
-
-// Check if the device has physically installed the PWA
-export const checkPwaInstalled = async (): Promise<boolean> => {
-  // Check if running in standalone mode
-  if (isPwa()) {
     return true;
+  } catch (error) {
+    console.error('Error playing sound:', error);
+    return false;
   }
-  
-  // BeforeInstallPrompt is only available in supporting browsers (mainly Chrome)
-  if ('BeforeInstallPromptEvent' in window) {
-    // If we can detect the install prompt, it means it's not installed yet
+};
+
+// Test notification feature
+export const testNotification = async (): Promise<boolean> => {
+  if (!isNotificationSupported() || Notification.permission !== 'granted') {
+    toast.error("Notification permission not granted");
     return false;
   }
   
-  // For iOS we can only detect when it's actually running in standalone mode
-  // For other browsers, we have to assume it's not installed if we can't detect it
-  return false;
-};
-
-export const isWebPushAllowed = (): boolean => {
-  return isPushApiSupported() && isServiceWorkerSupported();
-};
-
-export const canShowLockScreenNotifications = (): boolean => {
-  // Most accurate on Android Chrome and newer iOS versions
-  return (isAndroid() || (isIOS() && isPwa())) && Notification.permission === 'granted';
+  return createNotification('Test Notification', {
+    body: 'This is a test notification. If you can see this, notifications are working!',
+    icon: '/logo.png',
+    badge: '/logo.png',
+    timestamp: Date.now(),
+    data: {
+      type: 'test',
+      url: window.location.origin
+    }
+  });
 };
