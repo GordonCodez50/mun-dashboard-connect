@@ -10,8 +10,8 @@ import { isAndroid, isChrome } from '@/utils/notificationPermission';
 const { firestore, auth } = firebaseService;
 
 // The public VAPID key for web push
-// IMPORTANT: This should be your actual VAPID key from Firebase console
-const VAPID_KEY = 'BBqfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ=';
+// This is the public key, safe to include in client-side code
+const VAPID_KEY = 'BLW7VJrM3F8oL2IFysoC7monAgQ_dTWeaZZU3y3Hp0SgGK0C_jPBqknMcMs4v6v6NxJAaa0mqJDoNEn3Ce1Y0F8';
 
 /**
  * Convert base64 string to Uint8Array for applicationServerKey
@@ -71,8 +71,8 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
     const messaging = getMessaging();
     console.log('Requesting FCM token with VAPID key');
     
-    // Convert the base64 VAPID key to the required UInt8Array format
-    const convertedVapidKey = urlBase64ToUint8Array(VAPID_KEY.replace(/=/g, ''));
+    // Convert the base64 VAPID key to the required format if needed
+    // Most modern browsers now accept the plain base64 key directly
     
     // Request token with properly formatted VAPID key
     const currentToken = await getToken(messaging, { 
