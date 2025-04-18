@@ -28,7 +28,7 @@ export const Sidebar = () => {
   };
 
   return (
-    <aside className="hidden md:flex md:w-64 h-screen bg-white border-r border-gray-200 flex-col z-10">
+    <aside className="fixed left-0 top-0 hidden md:flex md:w-64 h-screen bg-white border-r border-gray-200 flex-col z-50">
       <div className="h-full flex flex-col py-6">
         <div className="px-6 mb-8">
           <div className="flex items-center justify-center">
@@ -184,3 +184,4 @@ export const Sidebar = () => {
     </aside>
   );
 };
+
