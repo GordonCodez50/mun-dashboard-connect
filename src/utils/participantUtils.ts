@@ -20,13 +20,14 @@ export const getCurrentDateInfo = () => {
   const year = currentDate.getFullYear();
 
   // Check if it's March 16th or 17th, 2024
+  // This is only used to set the default selected date
   return {
     isDay1: day === 16 && month === 2 && year === 2024, // March is 2 (0-based)
     isDay2: day === 17 && month === 2 && year === 2024
   };
 };
 
-// Always allow editing - we'll use this just to determine which day to show by default
+// Always allow editing for both days
 export const canEditDate = (date: 'day1' | 'day2'): boolean => {
   return true;
 };

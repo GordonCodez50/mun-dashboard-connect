@@ -13,10 +13,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Users, UserPlus, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
+import { getCurrentDateInfo } from '@/utils/participantUtils';
 
 const AdminAttendance = () => {
   const isMobile = useIsMobile();
-  const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>('day1');
+  
+  // Get the current date info to set default selected date
+  const { isDay1, isDay2 } = getCurrentDateInfo();
+  
+  // Set the default selected date based on current date, default to day1 if neither
+  const defaultSelectedDate = isDay2 ? 'day2' : 'day1';
+  const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>(defaultSelectedDate);
+  
   const [selectedCouncil, setSelectedCouncil] = useState<string>('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -24,13 +32,10 @@ const AdminAttendance = () => {
     participants, 
     loading, 
     error, 
-    isDay1, 
-    isDay2, 
     addParticipant,
     addMultipleParticipants,
     markAttendance, 
-    batchMarkAttendance,
-    deleteParticipant
+    batchMarkAttendance
   } = useParticipants();
 
   const councils = Array.from(new Set(participants.map(p => p.council))).sort();
@@ -77,8 +82,8 @@ const AdminAttendance = () => {
                   selectedDate={selectedDate}
                   setSelectedDate={setSelectedDate}
                   councils={councils}
-                  isDay1={isDay1}
-                  isDay2={isDay2}
+                  isDay1={true} // Always enable both days
+                  isDay2={true} // Always enable both days
                 />
               </div>
               

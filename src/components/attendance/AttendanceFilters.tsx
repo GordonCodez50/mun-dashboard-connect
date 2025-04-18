@@ -61,18 +61,16 @@ export const AttendanceFilters: React.FC<AttendanceFiltersProps> = ({
               <Button
                 variant={selectedDate === 'day1' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day1')}
-                disabled={!isDay1}
                 size="sm"
-                className={`flex-1 sm:flex-none ${!isDay1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="flex-1 sm:flex-none whitespace-nowrap"
               >
                 Day 1 (16th March)
               </Button>
               <Button
                 variant={selectedDate === 'day2' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day2')}
-                disabled={!isDay2}
                 size="sm"
-                className={`flex-1 sm:flex-none ${!isDay2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="flex-1 sm:flex-none whitespace-nowrap"
               >
                 Day 2 (17th March)
               </Button>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,21 +13,25 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CheckCircle, UserCog, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { canEditDate } from '@/utils/participantUtils';
+import { canEditDate, getCurrentDateInfo } from '@/utils/participantUtils';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('attendance');
-  const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>('day1');
+  
+  // Get the current date info to set default selected date
+  const { isDay1, isDay2 } = getCurrentDateInfo();
+  
+  // Set the default selected date based on current date, default to day1 if neither
+  const defaultSelectedDate = isDay2 ? 'day2' : 'day1';
+  const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>(defaultSelectedDate);
   const [isSaving, setIsSaving] = useState(false);
   
   const { 
     participants, 
     loading, 
     error, 
-    isDay1, 
-    isDay2, 
     addParticipant, 
     addMultipleParticipants, 
     markAttendance, 
@@ -39,7 +44,8 @@ const ChairAttendance = () => {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const canEdit = canEditDate(selectedDate);
+  // We'll always allow editing regardless of the date
+  const canEdit = true;
 
   const handleRefreshData = async () => {
     setIsRefreshing(true);
@@ -91,16 +97,16 @@ const ChairAttendance = () => {
               <Button
                 variant={selectedDate === 'day1' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day1')}
-                disabled={!isDay1 && !isDay2}
-                className={`${!isDay1 && !isDay2 ? 'opacity-50' : ''}`}
+                // Enable button always
+                className="whitespace-nowrap"
               >
                 Day 1 (16th March)
               </Button>
               <Button
                 variant={selectedDate === 'day2' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day2')}
-                disabled={!isDay1 && !isDay2}
-                className={`${!isDay1 && !isDay2 ? 'opacity-50' : ''}`}
+                // Enable button always
+                className="whitespace-nowrap"
               >
                 Day 2 (17th March)
               </Button>
@@ -182,11 +188,6 @@ const ChairAttendance = () => {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             Mark attendance for {userCouncil} participants
-                            {!canEdit && (
-                              <span className="text-yellow-600 ml-2">
-                                (View only - can only edit on the respective day)
-                              </span>
-                            )}
                           </p>
                         </div>
                       </div>
