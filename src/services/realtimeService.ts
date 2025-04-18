@@ -1,4 +1,3 @@
-
 import { getDatabase, ref, set, push, onChildAdded, onValue, serverTimestamp } from 'firebase/database';
 import { initializeApp } from 'firebase/app';
 import { firebaseConfig } from '@/config/firebaseConfig';
@@ -45,15 +44,7 @@ const initializeAlertListeners = () => {
           alert.type || 'New Alert',
           alert.council || 'Unknown Council',
           alert.message || 'No message provided',
-          isUrgent,
-          { 
-            alertId: snapshot.key,
-            timestamp: alertTime,
-            chairName: alert.chairName,
-            status: alert.status || 'pending',
-            priority: alert.priority || 'normal',
-            council: alert.council
-          }
+          isUrgent
         );
         
         // Also show a toast

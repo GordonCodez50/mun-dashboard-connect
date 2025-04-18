@@ -7,7 +7,7 @@ import { notificationService } from './services/notificationService';
 import { realtimeService } from './services/realtimeService';
 import { 
   isNotificationSupported,
-  getNotificationPermissionStatus,
+  requestNotificationPermission,
   isAndroid,
   isChrome 
 } from '@/utils/crossPlatformNotifications';
@@ -80,7 +80,7 @@ registerServiceWorker();
 // Check for notification support early and log platform information
 const notificationStatus = {
   supported: isNotificationSupported(),
-  permission: getNotificationPermissionStatus(),
+  permission: Notification.permission, // Using native Notification.permission instead
   platform: {
     isAndroid: isAndroid(),
     isChrome: isChrome(),
