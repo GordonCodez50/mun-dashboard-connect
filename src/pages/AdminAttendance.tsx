@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -111,7 +112,6 @@ const AdminAttendance = () => {
                       selectedCouncil={selectedCouncil}
                       markAttendance={markAttendance}
                       batchMarkAttendance={batchMarkAttendance}
-                      deleteParticipant={deleteParticipant}
                     />
                   </TabsContent>
                   
