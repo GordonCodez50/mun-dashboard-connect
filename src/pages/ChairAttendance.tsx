@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -30,7 +29,8 @@ const ChairAttendance = () => {
     addParticipant, 
     addMultipleParticipants, 
     markAttendance, 
-    batchMarkAttendance 
+    batchMarkAttendance,
+    deleteParticipant
   } = useParticipants();
 
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
@@ -168,9 +168,10 @@ const ChairAttendance = () => {
                       <AttendanceTable
                         participants={participants}
                         selectedDate={selectedDate}
-                        isDateLocked={false} // We'll implement date locking later
+                        isDateLocked={false}
                         onMarkAttendance={markAttendance}
                         onBatchMarkAttendance={batchMarkAttendance}
+                        onDeleteParticipant={deleteParticipant}
                       />
                       
                       <div className="mt-6 flex justify-end">
@@ -192,7 +193,6 @@ const ChairAttendance = () => {
                 </Tabs>
               </div>
               
-              {/* Troubleshoot accordion moved to the bottom of the page */}
               <div className="mt-10">
                 <AttendanceTroubleshoot />
               </div>
