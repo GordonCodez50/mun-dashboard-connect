@@ -43,8 +43,24 @@ function App() {
     }
   }, []);
 
+  // Create a fallback UI for the error boundary
+  const fallbackUI = (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+        <p className="text-gray-700 mb-4">The application encountered an unexpected error. Please try refreshing the page.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/80 transition-colors"
+        >
+          Refresh Page
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <ErrorBoundary>
+    <ErrorBoundary fallback={fallbackUI}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TimerProvider>
