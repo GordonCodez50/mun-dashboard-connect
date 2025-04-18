@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -14,16 +13,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, CheckCircle, UserCog, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { canEditDate, getCurrentDateInfo } from '@/utils/participantUtils';
+import { realtimeService } from '@/services/realtimeService';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('attendance');
   
-  // Get the current date info to set default selected date
   const { isDay1, isDay2 } = getCurrentDateInfo();
-  
-  // Set the default selected date based on current date, default to day1 if neither
   const defaultSelectedDate = isDay2 ? 'day2' : 'day1';
   const [selectedDate, setSelectedDate] = useState<'day1' | 'day2'>(defaultSelectedDate);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,14 +41,12 @@ const ChairAttendance = () => {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // We'll always allow editing regardless of the date
   const canEdit = true;
 
   const handleRefreshData = async () => {
     setIsRefreshing(true);
     toast.info('Refreshing page...');
     
-    // Short timeout to allow the toast to show before refresh
     setTimeout(() => {
       window.location.reload();
     }, 500);
@@ -66,6 +61,16 @@ const ChairAttendance = () => {
       const dayField = selectedDate === 'day1' ? 'day1' : 'day2';
       const markedCount = participants.filter(p => p.attendance[dayField] !== 'not-marked').length;
       const totalCount = participants.length;
+      
+      await realtimeService.createAlert({
+        type: 'Attendance Submission',
+        council: userCouncil,
+        message: `${userCouncil} submitted attendance for ${selectedDate === 'day1' ? 'Day 1' : 'Day 2'}`,
+        chairName: user?.name || 'Chair',
+        timestamp: Date.now(),
+        status: 'pending',
+        priority: 'normal'
+      });
       
       toast.success(
         `Attendance submitted successfully`, 
@@ -97,7 +102,6 @@ const ChairAttendance = () => {
               <Button
                 variant={selectedDate === 'day1' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day1')}
-                // Enable button always
                 className="whitespace-nowrap"
               >
                 Day 1 (16th March)
@@ -105,7 +109,6 @@ const ChairAttendance = () => {
               <Button
                 variant={selectedDate === 'day2' ? 'default' : 'outline'}
                 onClick={() => setSelectedDate('day2')}
-                // Enable button always
                 className="whitespace-nowrap"
               >
                 Day 2 (17th March)
