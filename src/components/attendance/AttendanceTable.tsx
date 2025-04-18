@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -14,22 +15,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
-import { CheckCircle, Filter, Lock, Search, UserX, Trash2 } from 'lucide-react';
+import { CheckCircle, Filter, Lock, Search, UserX } from 'lucide-react';
 
 interface AttendanceTableProps {
   participants: ParticipantWithAttendance[];
@@ -38,7 +29,6 @@ interface AttendanceTableProps {
   showCouncil?: boolean;
   onMarkAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   onBatchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
-  onDeleteParticipant?: (participantId: string) => void;
   readOnly?: boolean;
 }
 
@@ -49,17 +39,17 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   showCouncil = false,
   onMarkAttendance,
   onBatchMarkAttendance,
-  onDeleteParticipant,
   readOnly = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | AttendanceStatus>('all');
   const [councilFilter, setCouncilFilter] = useState('all');
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
-  const [participantToDelete, setParticipantToDelete] = useState<ParticipantWithAttendance | null>(null);
 
+  // Get unique council list from participants
   const councils = [...new Set(participants.map(p => p.council))].sort();
   
+  // Apply filters
   const filteredParticipants = participants.filter(participant => {
     const matchesSearch = participant.name.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -96,14 +86,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
     toast.success(`Marked ${selectedParticipants.length} participants as ${status}`);
   };
 
-  const handleDeleteParticipant = () => {
-    if (participantToDelete && onDeleteParticipant) {
-      onDeleteParticipant(participantToDelete.id);
-      toast.success(`Deleted participant: ${participantToDelete.name}`);
-      setParticipantToDelete(null);
-    }
-  };
-
+  // Get attendance status color and icon
   const getStatusDisplay = (status: AttendanceStatus) => {
     switch(status) {
       case 'present':
@@ -219,18 +202,12 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               {showCouncil && <TableHead>Council</TableHead>}
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              {!readOnly && onDeleteParticipant && (
-                <TableHead className="w-[80px]">Actions</TableHead>
-              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredParticipants.length === 0 ? (
               <TableRow>
-                <TableCell 
-                  colSpan={showCouncil ? (readOnly ? 4 : 6) : (readOnly ? 3 : 5)} 
-                  className="text-center py-8 text-muted-foreground"
-                >
+                <TableCell colSpan={showCouncil ? (readOnly ? 4 : 5) : (readOnly ? 3 : 4)} className="text-center py-8 text-muted-foreground">
                   No participants found
                 </TableCell>
               </TableRow>
@@ -276,18 +253,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                         </Select>
                       )}
                     </TableCell>
-                    {!readOnly && onDeleteParticipant && (
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setParticipantToDelete(participant)}
-                          className="hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    )}
                   </TableRow>
                 );
               })
@@ -299,26 +264,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
       <div className="text-sm text-muted-foreground">
         Showing {filteredParticipants.length} of {participants.length} participants
       </div>
-
-      <AlertDialog open={!!participantToDelete} onOpenChange={() => setParticipantToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Participant</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {participantToDelete?.name}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteParticipant}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

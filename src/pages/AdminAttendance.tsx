@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -8,10 +9,10 @@ import { AttendanceSummary } from '@/components/attendance/AttendanceSummary';
 import { AttendanceViewTab } from '@/components/attendance/AttendanceViewTab';
 import { AttendanceManageTab } from '@/components/attendance/AttendanceManageTab';
 import { AttendanceExport } from '@/components/attendance/AttendanceExport';
-import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Users, UserPlus, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 
 const AdminAttendance = () => {
   const isMobile = useIsMobile();
@@ -28,20 +29,23 @@ const AdminAttendance = () => {
     addParticipant,
     addMultipleParticipants,
     markAttendance, 
-    batchMarkAttendance,
-    deleteParticipant
+    batchMarkAttendance 
   } = useParticipants();
 
+  // Get list of councils for filtering
   const councils = Array.from(new Set(participants.map(p => p.council))).sort();
   
+  // Filter participants by selected council
   const filteredParticipants = selectedCouncil === 'all'
     ? participants
     : participants.filter(p => p.council === selectedCouncil);
   
+  // Handle refresh data - now refreshes the whole page
   const handleRefreshData = async () => {
     setIsRefreshing(true);
     toast.info('Refreshing page...');
     
+    // Short timeout to allow the toast to show before refresh
     setTimeout(() => {
       window.location.reload();
     }, 500);
@@ -84,7 +88,7 @@ const AdminAttendance = () => {
               <AttendanceSummary 
                 participants={filteredParticipants} 
                 selectedDate={selectedDate}
-                showCouncilsOverview={false}
+                showCouncilsOverview={false} // Explicitly disable councils overview
               />
               
               <div className="mt-6">
@@ -111,7 +115,6 @@ const AdminAttendance = () => {
                       selectedCouncil={selectedCouncil}
                       markAttendance={markAttendance}
                       batchMarkAttendance={batchMarkAttendance}
-                      deleteParticipant={deleteParticipant}
                     />
                   </TabsContent>
                   
@@ -132,6 +135,7 @@ const AdminAttendance = () => {
                 </Tabs>
               </div>
               
+              {/* Troubleshoot accordion moved to the bottom of the page */}
               <div className="mt-10">
                 <AttendanceTroubleshoot />
               </div>
