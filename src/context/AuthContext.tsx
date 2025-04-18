@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -7,7 +6,6 @@ import { authService } from '@/services/firebaseService';
 import { extractUserInfo } from '@/config/firebaseConfig';
 import { notificationService } from '@/services/notificationService';
 
-// Auth context type
 type AuthContextType = {
   user: User | null;
   users: User[];
@@ -22,10 +20,8 @@ type AuthContextType = {
   permissionGranted: boolean;
 };
 
-// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -35,7 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [permissionPromptShown, setPermissionPromptShown] = useState(false);
   const navigate = useNavigate();
 
-  // Check notification support on mount
   useEffect(() => {
     const checkNotifications = () => {
       if (notificationService.isNotificationSupported()) {
@@ -48,20 +43,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkNotifications();
   }, []);
 
-  // Load users and check authentication state on mount
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // Check if user is already logged in
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           setUser(currentUser);
         }
         
-        // Load all users for admin functions
         const allUsers = await authService.getUsers();
         setUsers(allUsers);
         
+        if (user) {
+          notificationService.setUserRole(user.role);
+        }
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
@@ -72,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadInitialData();
   }, []);
 
-  // Request notification permission
   const requestNotificationPermission = async () => {
     try {
       const granted = await notificationService.requestPermission();
@@ -85,27 +79,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Login function
   const login = async (email: string, password: string) => {
-    // Simulate network request
     setLoading(true);
     
     try {
       const loggedInUser = await authService.signIn(email, password);
       setUser(loggedInUser);
       
-      // Reload users list
       const allUsers = await authService.getUsers();
       setUsers(allUsers);
       
-      // Request notification permission for chairs and press users
-      if ((loggedInUser.role === 'chair' || loggedInUser.council === 'PRESS') 
-          && notificationService.isNotificationSupported() 
-          && !notificationService.hasPermission()) {
-        // We'll handle this in the UI components now, not automatically
+      if (loggedInUser.role === 'chair' || loggedInUser.council === 'PRESS') {
+        if (notificationService.isNotificationSupported() && !notificationService.hasPermission()) {
+          // We'll handle this in the UI components now, not automatically
+        }
       }
       
-      // Navigate based on role and council
       if (loggedInUser.role === 'chair') {
         if (loggedInUser.council === 'PRESS') {
           navigate('/press-dashboard');
@@ -125,12 +114,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Create user function (admin only)
   const createUser = async (userData: UserFormData): Promise<boolean> => {
     try {
       const newUser = await authService.createUser(userData);
       
-      // Update users list
       setUsers(prev => [...prev, newUser]);
       
       toast.success(`User ${newUser.name} created successfully`);
@@ -141,9 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Delete user function (admin only)
   const deleteUser = async (userId: string): Promise<boolean> => {
-    // Cannot delete yourself
     if (user?.id === userId) {
       toast.error('You cannot delete your own account');
       return false;
@@ -152,7 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.deleteUser(userId);
       
-      // Update users list
       setUsers(prev => prev.filter(u => u.id !== userId));
       
       toast.success('User deleted successfully');
@@ -163,7 +147,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Logout function
   const logout = async () => {
     try {
       await authService.signOut();
@@ -175,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Determine if notification prompt should be shown - only show once per session
   const showNotificationPrompt = permissionChecked && 
                                 !permissionGranted && 
                                 !permissionPromptShown &&
@@ -183,7 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 user !== null && 
                                 (user?.role === 'chair' || user?.council === 'PRESS');
 
-  // Return provider
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -203,7 +184,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Custom hook for using auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

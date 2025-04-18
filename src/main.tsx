@@ -51,6 +51,29 @@ const notificationStatus = {
 
 console.log('Notification support status:', notificationStatus);
 
+// User role detection from localStorage (if the user was previously logged in)
+const getUserRoleFromStorage = (): 'admin' | 'chair' | 'press' | null => {
+  const userData = localStorage.getItem('user');
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      if (user && user.role) {
+        return user.role as 'admin' | 'chair' | 'press';
+      }
+    } catch (e) {
+      console.error('Error parsing user data from localStorage', e);
+    }
+  }
+  return null;
+};
+
+// Get user role from storage if available
+const userRole = getUserRoleFromStorage();
+if (userRole) {
+  console.log('User role found in storage:', userRole);
+  notificationService.setUserRole(userRole);
+}
+
 // Check for notification support early
 if (notificationService.isNotificationSupported()) {
   console.log('Browser notifications are supported');

@@ -19,7 +19,10 @@ import {
 } from '@/utils/crossPlatformNotifications';
 
 // The public VAPID key for web push
-const VAPID_KEY = 'BDWcbZw6VGnWZ_wucBdtVT70I6Ixq_bFgGHt-VUiPkqpO7ZG_VoviT76hfvNIJ37LTfP2Z6QdJ1WV0kjuIAqQaI';
+const VAPID_KEY = 'BLW7VJrM3F8oL2IFysoC7monAgQ_dTWeaZZU3y3Hp0SgGK0C_jPBqknMcMs4v6v6NxJAaa0mqJDoNEn3Ce1Y0F8';
+
+// User role for notifications (will be set from auth context)
+let currentUserRole: 'admin' | 'chair' | 'press' | null = null;
 
 // Extended notification options type to handle additional properties
 interface ExtendedNotificationOptions {
@@ -56,6 +59,20 @@ const saveFcmToken = (token: string) => {
 // Get stored FCM token
 const getFcmToken = (): string | null => {
   return localStorage.getItem('fcmToken');
+};
+
+// Set user role for better notification routing
+const setUserRole = (role: 'admin' | 'chair' | 'press') => {
+  console.log('Setting user role for notifications:', role);
+  currentUserRole = role;
+  
+  // Also try to inform the service worker about the role
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SET_USER_ROLE',
+      role: role
+    });
+  }
 };
 
 // Check if notifications are supported in this browser
@@ -212,7 +229,12 @@ const setupFcmListener = () => {
         vibrate: [200, 100, 200],
         requireInteraction: payload.data?.requireInteraction === 'true',
         timestamp: Date.now(),
-        data: payload.data || {}
+        data: {
+          ...payload.data,
+          userRole: currentUserRole,
+          url: getNotificationUrl(payload.data?.type || 'alert'),
+          type: payload.data?.type || 'alert'
+        }
       };
       
       // Show foreground notification
@@ -225,6 +247,24 @@ const setupFcmListener = () => {
       });
     }
   });
+};
+
+// Get appropriate URL based on notification type and user role
+const getNotificationUrl = (type: string): string => {
+  // Default URL based on user role
+  const baseUrl = currentUserRole === 'admin' ? '/admin-panel' : 
+                 currentUserRole === 'press' ? '/press-dashboard' : 
+                 '/chair-dashboard';
+                 
+  // For specific notification types, we might want to route differently
+  switch (type) {
+    case 'timer':
+      return '/timer';
+    case 'attendance':
+      return currentUserRole === 'admin' ? '/admin-attendance' : '/chair-attendance';
+    default:
+      return baseUrl;
+  }
 };
 
 // Check current permission status
@@ -241,6 +281,15 @@ const showNotification = (title: string, options?: ExtendedNotificationOptions):
     return false;
   }
   
+  // Ensure data contains userRole and appropriate URL
+  if (!options) options = {};
+  if (!options.data) options.data = {};
+  
+  options.data.userRole = currentUserRole;
+  if (!options.data.url) {
+    options.data.url = getNotificationUrl(options.data.type || 'alert');
+  }
+  
   return createNotification(title, options as any);
 };
 
@@ -251,6 +300,10 @@ const showTimerNotification = (timerName: string): boolean => {
     icon: '/logo.png',
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
+    data: {
+      type: 'timer',
+      url: '/timer'
+    }
   });
 };
 
@@ -265,6 +318,12 @@ const showAlertNotification = (alertType: string, council: string, message: stri
       tag: 'alert-notification', // Group similar notifications
       requireInteraction: urgent, // Urgent alerts stay until clicked
       timestamp: Date.now(),
+      data: {
+        type: 'alert',
+        alertType,
+        council,
+        urgent
+      }
     }
   );
 };
@@ -279,6 +338,10 @@ const showReplyNotification = (
   const emoji = userType === 'admin' ? '👨‍💼' : 
                 userType === 'chair' ? '🪑' : '📰';
   
+  const targetRoute = userType === 'admin' ? '/admin-panel' : 
+                      userType === 'press' ? '/press-dashboard' : 
+                      '/chair-dashboard';
+  
   return showNotification(
     `${emoji} New reply from ${fromName}`,
     {
@@ -288,6 +351,12 @@ const showReplyNotification = (
       timestamp: Date.now(),
       vibrate: [100, 50, 100],
       requireInteraction: false,
+      data: {
+        type: 'reply',
+        alertId,
+        fromName,
+        url: targetRoute
+      }
     }
   );
 };
@@ -344,6 +413,10 @@ const testFcm = async (): Promise<boolean> => {
   showNotification('FCM Test Successful', {
     body: 'Firebase Cloud Messaging is working correctly.',
     timestamp: Date.now(),
+    data: {
+      type: 'test',
+      url: getNotificationUrl('test')
+    }
   });
   
   return true;
@@ -361,5 +434,6 @@ export const notificationService = {
   initializeMessaging,
   requestFcmToken,
   getFcmToken,
-  testFcm
+  testFcm,
+  setUserRole
 };

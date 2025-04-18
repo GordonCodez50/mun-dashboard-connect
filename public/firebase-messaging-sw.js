@@ -93,8 +93,22 @@ self.addEventListener('notificationclick', (event) => {
   // Get notification data
   const notificationData = event.notification.data || {};
   
-  // Handle the user clicking on the notification - universal handling for all platforms
-  const urlToOpen = notificationData.url || '/';
+  // Default URL if none specified is the current origin (with pathname cleared)
+  const currentOrigin = self.location.origin;
+  // Default to chair dashboard or a reasonable fallback
+  let urlToOpen = notificationData.url || `${currentOrigin}/chair-dashboard`;
+  
+  // For alerts, we explicitly route to chair dashboard or admin panel
+  if (notificationData.type === 'alert') {
+    // If we have a userRole specified in the data, use that to determine destination
+    if (notificationData.userRole === 'admin') {
+      urlToOpen = `${currentOrigin}/admin-panel`;
+    } else {
+      urlToOpen = `${currentOrigin}/chair-dashboard`;
+    }
+  }
+  
+  console.log('[firebase-messaging-sw.js] Will open URL:', urlToOpen);
   
   // Check if specific action was clicked (Android feature)
   if (event.action) {
@@ -124,19 +138,43 @@ self.addEventListener('notificationclick', (event) => {
     }
   }
   
-  // Normal notification click handling
+  // Normal notification click handling with improved client focus/navigation
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open with the target URL or any window
+      let matchingClient = null;
+      let anyClient = null;
+      
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        // If so, focus it
-        if ('focus' in client) {
-          client.navigate(urlToOpen);
-          return client.focus();
+        if (!anyClient && 'focus' in client) {
+          anyClient = client; // Store first focusable client as fallback
+        }
+        
+        if (client.url.includes(currentOrigin) && 'focus' in client) {
+          matchingClient = client;
+          break;
         }
       }
-      // If not, open a new window/tab
+      
+      // If we found a matching client, focus it and navigate
+      if (matchingClient) {
+        console.log('Found matching client, focusing and navigating to:', urlToOpen);
+        return matchingClient.focus().then(() => {
+          return matchingClient.navigate(urlToOpen);
+        });
+      }
+      
+      // If we found any client from our origin, use that
+      if (anyClient) {
+        console.log('Found any client, focusing and navigating to:', urlToOpen);
+        return anyClient.focus().then(() => {
+          return anyClient.navigate(urlToOpen);
+        });
+      }
+      
+      // If no client found at all, open a new window
+      console.log('No existing client found, opening new window for:', urlToOpen);
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
@@ -164,7 +202,11 @@ self.addEventListener('push', (event) => {
       icon: '/logo.png',
       badge: '/logo.png',
       vibrate: [200, 100, 200],
-      data: data.data || {},
+      data: {
+        ...data.data,
+        url: data.data?.url || '/chair-dashboard', // Default url
+        type: data.data?.type || 'alert'
+      },
       requireInteraction: data.data?.requireInteraction === 'true'
     };
     
@@ -181,7 +223,10 @@ self.addEventListener('push', (event) => {
         body: text,
         icon: '/logo.png',
         badge: '/logo.png',
-        vibrate: [200, 100, 200]
+        vibrate: [200, 100, 200],
+        data: {
+          url: '/chair-dashboard' // Default url
+        }
       })
     );
   }
@@ -207,6 +252,20 @@ self.addEventListener('message', (event) => {
         type: 'NOTIFICATION_PERMISSION_RESULT',
         permission: 'granted',
         serviceWorkerActive: true
+      });
+    }
+  }
+  
+  // Store user role for better navigation on notification click
+  if (event.data && event.data.type === 'SET_USER_ROLE') {
+    // We can't persist this in the service worker easily, but we can log it
+    console.log('[firebase-messaging-sw.js] User role set:', event.data.role);
+    
+    // If the event source exists, confirm receipt
+    if (event.source && event.source.postMessage) {
+      event.source.postMessage({ 
+        type: 'USER_ROLE_SET',
+        role: event.data.role
       });
     }
   }

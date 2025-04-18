@@ -56,14 +56,30 @@ export const realtimeService = {
     council: string;
     message: string;
     chairName: string;
-    timestamp: number;
-    status: string;
-    priority: string;
+    timestamp?: number;
+    status?: string;
+    priority?: string;
   }) => {
     try {
+      // Ensure timestamp is set
+      if (!alertData.timestamp) {
+        alertData.timestamp = Date.now();
+      }
+      
+      // Set defaults for status and priority if not provided
+      if (!alertData.status) {
+        alertData.status = 'pending';
+      }
+      
+      if (!alertData.priority) {
+        alertData.priority = alertData.type === 'Security' ? 'urgent' : 'normal';
+      }
+      
       const alertsRef = ref(realtimeDb, 'alerts');
       const newAlertRef = push(alertsRef);
       await set(newAlertRef, alertData);
+      
+      console.log('Alert created successfully:', alertData);
       return true;
     } catch (error) {
       console.error('Error creating alert:', error);
