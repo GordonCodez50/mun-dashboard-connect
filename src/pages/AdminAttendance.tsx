@@ -54,7 +54,7 @@ const AdminAttendance = () => {
   };
 
   return (
-    <div className="flex h-full bg-gray-50 overflow-x-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-x-hidden">
       {!isMobile && <Sidebar />}
       
       <div className="flex-1 overflow-y-auto w-full">
