@@ -1,12 +1,12 @@
-// Firebase Cloud Messaging Service Worker - Professional Production Version
+// Firebase Cloud Messaging Service Worker - Cross-Platform Enhanced Version
 
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 // Log successful service worker initialization
-console.log('[FCM-SW] Service worker initialized (v1.2.0)');
+console.log('Firebase messaging service worker initialized');
 
-// Initialize the Firebase app in the service worker with the correct config
+// Initialize the Firebase app in the service worker
 firebase.initializeApp({
   apiKey: "AIzaSyAmlEDVo8OJhGV-3Sr-jIwcY3UdD5kQBMU",
   authDomain: "isbmun-dashboard-prod-red.firebaseapp.com",
@@ -20,99 +20,80 @@ firebase.initializeApp({
 
 // Retrieve an instance of Firebase Messaging
 const messaging = firebase.messaging();
-console.log('[FCM-SW] Firebase messaging instance created');
+console.log('Firebase messaging instance created in service worker');
 
-// Storage for user role and other persistent data
+// Track user role for better navigation (will be set by the application)
 let userRole = null;
-let lastNotificationData = null;
 
-// Enhanced install handler
+// Log service worker installation
 self.addEventListener('install', (event) => {
-  console.log('[FCM-SW] Service worker installing');
+  console.log('Firebase messaging service worker installed');
   // Force activation without waiting for tabs to close
   self.skipWaiting();
   
-  // Cache important assets
+  // Cache important files
   event.waitUntil(
-    caches.open('fcm-assets-v2').then((cache) => {
+    caches.open('fcm-assets').then((cache) => {
       return cache.addAll([
         '/logo.png',
         '/notification.mp3',
-        '/ringtonenotification.mp3',
-        '/manifest.json'
+        '/ringtonenotification.mp3'
       ]);
     })
   );
 });
 
-// Enhanced activation handler
+// Log service worker activation
 self.addEventListener('activate', (event) => {
-  console.log('[FCM-SW] Service worker activating');
-  
-  // Take control of all clients immediately for consistent behavior
-  event.waitUntil(
-    clients.claim().then(() => {
-      // Notify all clients that the service worker is active
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-          client.postMessage({
-            type: 'SERVICE_WORKER_ACTIVATED',
-            timestamp: Date.now(),
-            version: '1.2.0'
-          });
+  console.log('Firebase messaging service worker activated');
+  // Take control of all clients immediately
+  event.waitUntil(clients.claim().then(() => {
+    // Notify all clients that the service worker is active
+    self.clients.matchAll().then(clients => {
+      clients.forEach(client => {
+        client.postMessage({
+          type: 'SERVICE_WORKER_ACTIVATED',
+          timestamp: Date.now()
         });
       });
-      
-      // Clear old caches
-      return caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.filter(cacheName => {
-            return cacheName.startsWith('fcm-assets-') && cacheName !== 'fcm-assets-v2';
-          }).map(cacheName => {
-            return caches.delete(cacheName);
-          })
-        );
-      });
-    })
-  );
+    });
+  }));
 });
 
-// Device detection utilities
-const isIOS = () => /iPad|iPhone|iPod/.test(self.navigator.userAgent);
-const isAndroid = () => /android/i.test(self.navigator.userAgent);
-const isMobile = () => isIOS() || isAndroid();
+// Determine if the device is iOS
+const isIOS = () => {
+  return /iPad|iPhone|iPod/.test(self.navigator.userAgent);
+};
 
-// Sound playback helper
+// Determine if the device is Android
+const isAndroid = () => {
+  return /android/i.test(self.navigator.userAgent);
+};
+
+// Play notification sound (if supported)
 const playNotificationSound = async () => {
   try {
-    const cache = await caches.open('fcm-assets-v2');
+    // First try to get from cache
+    const cache = await caches.open('fcm-assets');
     const response = await cache.match('/notification.mp3');
     
     if (response) {
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       const audio = new self.Audio(objectURL);
-      await audio.play();
+      audio.play();
     }
   } catch (e) {
-    console.error('[FCM-SW] Error playing notification sound:', e);
+    console.error('Error playing notification sound:', e);
   }
 };
 
-// URL generation based on notification type and user role
+// Function to get the correct URL based on user role
 const getTargetUrl = (notificationData) => {
-  // Extract data or use defaults
-  const type = notificationData?.type || 'alert';
-  const role = notificationData?.userRole || userRole || 'chair';
-  const alertId = notificationData?.alertId;
-  const customUrl = notificationData?.url;
-  
-  // If a specific URL was provided, use that
-  if (customUrl && customUrl.startsWith('/')) {
-    return `${self.location.origin}${customUrl}`;
-  } else if (customUrl) {
-    return customUrl;
-  }
+  // Get data from notification or use defaults
+  const type = notificationData.type || 'alert';
+  const role = notificationData.userRole || userRole || 'chair';
+  const alertId = notificationData.alertId;
   
   const currentOrigin = self.location.origin;
   
@@ -126,7 +107,7 @@ const getTargetUrl = (notificationData) => {
   
   // Special paths based on notification type
   if (type === 'timer') {
-    return `${currentOrigin}/timer-manager`;
+    return `${currentOrigin}/timer`;
   } else if (type === 'attendance') {
     return `${currentOrigin}/${role === 'admin' ? 'admin-attendance' : 'chair-attendance'}`;
   } else if (type === 'file') {
@@ -134,332 +115,238 @@ const getTargetUrl = (notificationData) => {
   } else if (type === 'reply' && alertId) {
     // For replies, go directly to the respective dashboard with alert ID as query param
     return `${currentOrigin}${basePath}?alert=${alertId}`;
-  } else if (type === 'document') {
-    return `${currentOrigin}/documents`;
   }
   
   // Default fallback
   return `${currentOrigin}${basePath}`;
 };
 
-// Get the client to focus or open, with enhanced reliability
-const getClientToFocus = async (targetUrl) => {
-  const allClients = await clients.matchAll({ 
-    type: 'window', 
-    includeUncontrolled: true 
-  });
+// Handle background messages with improved cross-platform support
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message', payload);
   
-  console.log(`[FCM-SW] Found ${allClients.length} clients`);
+  const notificationTitle = payload.notification.title || 'New Notification';
   
-  // First, look for an exact URL match
-  for (const client of allClients) {
-    if (client.url === targetUrl && 'focus' in client) {
-      console.log(`[FCM-SW] Found exact match: ${client.url}`);
-      return client;
-    }
-  }
-  
-  // Next, look for any client from our origin
-  for (const client of allClients) {
-    if (client.url.includes(self.location.origin) && 'focus' in client) {
-      console.log(`[FCM-SW] Found client from our origin: ${client.url}`);
-      return client;
-    }
-  }
-  
-  // If no match, return the first focusable client
-  for (const client of allClients) {
-    if ('focus' in client) {
-      console.log(`[FCM-SW] Found focusable client: ${client.url}`);
-      return client;
-    }
-  }
-  
-  // No suitable client found
-  return null;
-};
-
-// Enhanced background message handler with improved reliability
-messaging.onBackgroundMessage(async (payload) => {
-  console.log('[FCM-SW] Received background message', payload);
-  
-  // Store last notification data for debugging
-  lastNotificationData = payload;
-  
-  // Extract notification details
-  const notificationTitle = payload.notification?.title || 'New Notification';
-  const notificationBody = payload.notification?.body || '';
-  
-  // Create rich notification options
+  // Base notification options
   const notificationOptions = {
-    body: notificationBody,
+    body: payload.notification.body || '',
     icon: '/logo.png',
     badge: '/logo.png',
-    data: {
-      ...(payload.data || {}),
-      userRole: payload.data?.userRole || userRole,
-      timestamp: Date.now()
-    },
+    data: payload.data || {},
     tag: payload.data?.tag || 'general',
     requireInteraction: payload.data?.requireInteraction === 'true',
-    renotify: payload.data?.renotify === 'true',
-    silent: false
+    renotify: payload.data?.renotify === 'true'
   };
 
-  // Mobile-specific enhancements
-  if (isMobile()) {
+  // Add user role from data or stored value
+  notificationOptions.data.userRole = payload.data?.userRole || userRole;
+
+  // Platform-specific optimizations
+  if (isAndroid()) {
+    // Add vibration for Android lock screen notifications
     notificationOptions.vibrate = [200, 100, 200];
     
-    if (isAndroid()) {
-      // Android supports notification actions
-      if (payload.data?.actions) {
-        try {
-          notificationOptions.actions = JSON.parse(payload.data.actions);
-        } catch (e) {
-          console.error('[FCM-SW] Error parsing notification actions:', e);
-        }
+    // Android can show actions on lock screen
+    if (payload.data?.actions) {
+      try {
+        notificationOptions.actions = JSON.parse(payload.data.actions);
+      } catch (e) {
+        console.error('Error parsing notification actions:', e);
       }
     }
   }
   
-  // Ensure we have a URL for the notification click
-  if (!notificationOptions.data.url) {
-    notificationOptions.data.url = getTargetUrl(notificationOptions.data);
-  }
+  // Try to play a sound (supported on some browsers)
+  playNotificationSound();
   
-  // Add sound (will work on some platforms)
-  try {
-    await playNotificationSound();
-  } catch (error) {
-    console.error('[FCM-SW] Error playing sound:', error);
-  }
-  
-  // Show the notification
-  try {
-    await self.registration.showNotification(notificationTitle, notificationOptions);
-    console.log('[FCM-SW] Notification shown successfully in background');
-  } catch (error) {
-    console.error('[FCM-SW] Error showing notification:', error);
-  }
+  // Create and show the notification optimized for lock screen/background
+  self.registration.showNotification(notificationTitle, notificationOptions)
+    .then(() => console.log('Notification shown successfully on lock screen/background'))
+    .catch(error => console.error('Error showing notification:', error));
 });
 
-// Improved notification click handler with reliable navigation
+// Handle notification click with improved navigation
 self.addEventListener('notificationclick', (event) => {
-  console.log('[FCM-SW] Notification clicked', event);
-  
-  // Close the notification
+  console.log('[firebase-messaging-sw.js] Notification click', event);
   event.notification.close();
   
   // Get notification data
   const notificationData = event.notification.data || {};
+  console.log('Notification data:', notificationData);
   
-  // Handle action clicks (Android feature)
-  const actionUrl = event.action && notificationData.actionUrls ? 
-    notificationData.actionUrls[event.action] : null;
+  // Get the target URL using the helper function
+  const urlToOpen = notificationData.url || getTargetUrl(notificationData);
   
-  // Get the target URL
-  const urlToOpen = actionUrl || 
-    notificationData.url || 
-    getTargetUrl(notificationData);
+  console.log('[firebase-messaging-sw.js] Will open URL:', urlToOpen);
   
-  console.log('[FCM-SW] Will navigate to:', urlToOpen);
-  
-  // Enhanced client focus and navigation with retries
-  event.waitUntil((async () => {
-    try {
-      // First try to get an existing client
-      const client = await getClientToFocus(urlToOpen);
+  // Check if specific action was clicked (Android feature)
+  if (event.action) {
+    console.log('[firebase-messaging-sw.js] Action clicked:', event.action);
+    // Handle specific action clicks
+    if (notificationData.actionUrls && notificationData.actionUrls[event.action]) {
+      const actionUrl = notificationData.actionUrls[event.action];
       
-      if (client) {
-        // Focus the client
-        await client.focus();
-        console.log('[FCM-SW] Focused client:', client.url);
+      event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+          // Try to focus an existing window first
+          for (let i = 0; i < windowClients.length; i++) {
+            const client = windowClients[i];
+            if (client.url.includes(self.location.origin) && 'focus' in client) {
+              return client.focus().then(() => client.navigate(actionUrl));
+            }
+          }
+          // If no matching window, open a new one
+          return clients.openWindow(actionUrl);
+        })
+      );
+      
+      return;
+    }
+  }
+  
+  // Normal notification click handling with improved client focus/navigation
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open with the target URL or any window
+      let anyClient = null;
+      
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        console.log('Found client with URL:', client.url);
         
-        // Navigate after a short delay to ensure focus completes
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Store first client as fallback
+        if (!anyClient && 'focus' in client) {
+          anyClient = client;
+        }
         
-        try {
-          await client.navigate(urlToOpen);
-          console.log('[FCM-SW] Successfully navigated to:', urlToOpen);
-          return;
-        } catch (navError) {
-          console.error('[FCM-SW] Navigation failed, opening new window:', navError);
+        // If the client is from our origin, use it regardless of path
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          console.log('Found client from our origin, focusing and navigating to:', urlToOpen);
+          return client.focus().then(() => {
+            // Give a small delay to allow focus to complete
+            return new Promise(resolve => {
+              setTimeout(() => {
+                client.navigate(urlToOpen).then(resolve);
+              }, 100);
+            });
+          });
         }
       }
       
-      // If no suitable client or navigation failed, open a new window
-      console.log('[FCM-SW] Opening new window for:', urlToOpen);
-      await clients.openWindow(urlToOpen);
-      
-    } catch (error) {
-      console.error('[FCM-SW] Error handling notification click:', error);
-      
-      // Last resort: try opening a new window
-      try {
-        await clients.openWindow(urlToOpen);
-      } catch (finalError) {
-        console.error('[FCM-SW] Final fallback failed:', finalError);
+      // If we found any client, use that
+      if (anyClient) {
+        console.log('Using any available client:', anyClient.url);
+        return anyClient.focus().then(() => {
+          return new Promise(resolve => {
+            setTimeout(() => {
+              anyClient.navigate(urlToOpen).then(resolve);
+            }, 100);
+          });
+        });
       }
-    }
-  })());
+      
+      // If no client found at all, open a new window
+      console.log('No existing clients found, opening new window for:', urlToOpen);
+      return clients.openWindow(urlToOpen);
+    })
+  );
 });
 
-// Web Push API support (separate from FCM)
-self.addEventListener('push', async (event) => {
-  console.log('[FCM-SW] Push event received:', event);
+// Handle push notifications (separate from FCM, for Web Push API support)
+self.addEventListener('push', (event) => {
+  console.log('[firebase-messaging-sw.js] Push received:', event);
   
   if (!event.data) {
-    console.log('[FCM-SW] No data in push event');
+    console.log('No data in push event');
     return;
   }
   
-  event.waitUntil((async () => {
-    try {
-      // Try to parse as JSON first (FCM format)
-      const data = event.data.json();
-      
-      // Extract notification details
-      const title = data.notification?.title || 'New Notification';
-      const options = {
-        body: data.notification?.body || '',
-        icon: '/logo.png',
-        badge: '/logo.png',
-        vibrate: [200, 100, 200],
-        data: {
-          ...(data.data || {}),
-          userRole: data.data?.userRole || userRole,
-          timestamp: Date.now()
-        },
-        requireInteraction: data.data?.requireInteraction === 'true'
-      };
-      
-      // Ensure we have a URL
-      if (!options.data.url) {
-        options.data.url = getTargetUrl(options.data);
-      }
-      
-      try {
-        await playNotificationSound();
-      } catch (soundError) {
-        console.error('[FCM-SW] Sound playback error:', soundError);
-      }
-      
-      await self.registration.showNotification(title, options);
-      console.log('[FCM-SW] Push notification displayed');
-      
-    } catch (e) {
-      // Fallback for non-JSON payloads
-      console.log('[FCM-SW] Not JSON format, using text payload');
-      const text = event.data.text();
-      
-      await self.registration.showNotification('New Notification', {
+  try {
+    // Try to parse as JSON first (FCM format)
+    const data = event.data.json();
+    
+    // Extract notification details
+    const title = data.notification?.title || 'New Notification';
+    const options = {
+      body: data.notification?.body || '',
+      icon: '/logo.png',
+      badge: '/logo.png',
+      vibrate: [200, 100, 200],
+      data: {
+        ...data.data,
+        userRole: data.data?.userRole || userRole // Use notification data role or fallback to stored
+      },
+      requireInteraction: data.data?.requireInteraction === 'true'
+    };
+    
+    // Add URL to data if not present
+    if (!options.data.url) {
+      options.data.url = getTargetUrl(options.data);
+    }
+    
+    // Try to play a sound
+    playNotificationSound();
+    
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+  } catch (e) {
+    // Fall back to text if not JSON
+    console.log('Push event was not JSON, using text');
+    const text = event.data.text();
+    
+    event.waitUntil(
+      self.registration.showNotification('New Notification', {
         body: text,
         icon: '/logo.png',
         badge: '/logo.png',
         vibrate: [200, 100, 200],
         data: {
-          userRole,
-          timestamp: Date.now(),
-          url: getTargetUrl({ userRole })
+          userRole // Include user role for routing
         }
-      });
-    }
-  })());
+      })
+    );
+  }
 });
 
-// Enhanced messaging between service worker and pages
+// Add message handlers to communicate with the page
 self.addEventListener('message', (event) => {
-  const data = event.data;
-  console.log('[FCM-SW] Message received:', data);
+  console.log('[firebase-messaging-sw.js] Message received', event.data);
   
-  // Handle ping/pong for service worker status checks
-  if (data && data.type === 'PING') {
+  if (event.data && event.data.type === 'PING') {
+    // Respond to ping message to verify service worker is running
+    if (event.source && event.source.postMessage) {
+      event.source.postMessage({ type: 'PONG', timestamp: Date.now() });
+    }
+  }
+  
+  // Handle notification permission check
+  if (event.data && event.data.type === 'CHECK_NOTIFICATION_PERMISSION') {
     if (event.source && event.source.postMessage) {
       event.source.postMessage({ 
-        type: 'PONG', 
-        timestamp: Date.now(),
-        version: '1.2.0'
+        type: 'NOTIFICATION_PERMISSION_RESULT',
+        permission: 'granted',
+        serviceWorkerActive: true
       });
     }
   }
   
   // Store user role for better navigation on notification click
-  if (data && data.type === 'SET_USER_ROLE') {
-    userRole = data.role;
-    console.log('[FCM-SW] User role set:', userRole);
+  if (event.data && event.data.type === 'SET_USER_ROLE') {
+    userRole = event.data.role;
+    console.log('[firebase-messaging-sw.js] User role set:', userRole);
     
     // Confirm receipt
     if (event.source && event.source.postMessage) {
       event.source.postMessage({ 
         type: 'USER_ROLE_SET',
-        role: userRole,
-        timestamp: Date.now()
+        role: userRole
       });
     }
-  }
-  
-  // Request for service worker diagnostics
-  if (data && data.type === 'DIAGNOSTICS_REQUEST') {
-    if (event.source && event.source.postMessage) {
-      event.source.postMessage({
-        type: 'DIAGNOSTICS_RESPONSE',
-        version: '1.2.0',
-        userRole: userRole,
-        lastNotification: lastNotificationData,
-        timestamp: Date.now()
-      });
-    }
-  }
-  
-  // Test notification request
-  if (data && data.type === 'TEST_NOTIFICATION') {
-    const { title, body, options } = data;
-    self.registration.showNotification(title || 'Test Notification', {
-      body: body || 'This is a test notification from the service worker',
-      icon: '/logo.png',
-      ...(options || {}),
-      data: {
-        ...(options?.data || {}),
-        timestamp: Date.now(),
-        isTest: true
-      }
-    }).then(() => {
-      if (event.source && event.source.postMessage) {
-        event.source.postMessage({
-          type: 'TEST_NOTIFICATION_SHOWN',
-          timestamp: Date.now()
-        });
-      }
-    }).catch(error => {
-      if (event.source && event.source.postMessage) {
-        event.source.postMessage({
-          type: 'TEST_NOTIFICATION_ERROR',
-          error: error.toString(),
-          timestamp: Date.now()
-        });
-      }
-    });
   }
 });
 
-// Keep service worker alive
-const keepAliveInterval = 15 * 60 * 1000; // 15 minutes
+// Keep-alive interval to prevent service worker from being terminated
 setInterval(() => {
-  console.log('[FCM-SW] Keeping service worker alive');
-  
-  // Check caches and refresh if needed
-  caches.open('fcm-assets-v2').then(cache => {
-    cache.match('/logo.png').then(response => {
-      if (!response) {
-        console.log('[FCM-SW] Refreshing cache assets');
-        cache.addAll([
-          '/logo.png',
-          '/notification.mp3',
-          '/ringtonenotification.mp3'
-        ]);
-      }
-    });
-  });
-}, keepAliveInterval);
-
-console.log('[FCM-SW] Service worker setup complete');
+  console.log('[firebase-messaging-sw.js] Keeping service worker alive');
+}, 1000 * 60 * 15); // Every 15 minutes

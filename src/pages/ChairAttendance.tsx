@@ -12,7 +12,6 @@ import { getCurrentDateInfo } from '@/utils/participantUtils';
 import { Loader2 } from 'lucide-react';
 import { realtimeService } from '@/services/realtimeService';
 import { notificationService } from '@/services/notificationService';
-import { AlertHandler } from '@/components/notifications/AlertHandler';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
@@ -38,37 +37,29 @@ const ChairAttendance = () => {
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
   const userCouncil = user?.council || '';
   
-  // Initialize notifications when page loads
+  // Initialize realtime listeners when page loads
   useEffect(() => {
-    // Ensure notifications are working properly
-    if (user && notificationService.isNotificationSupported()) {
+    // Ensure global alert listeners are initialized
+    realtimeService.initializeAlertListeners();
+    
+    // Set user role in service worker
+    if (user && navigator.serviceWorker.controller) {
       const notificationRole = user.role === 'admin' ? 'admin' : 
                               (user.council === 'PRESS' ? 'press' : 'chair');
                               
-      // Set in notification service
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SET_USER_ROLE',
+        role: notificationRole
+      });
+      
+      // Also set in notification service
       notificationService.setUserRole(notificationRole);
-      
-      // Also set in service worker
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SET_USER_ROLE',
-          role: notificationRole
-        });
-      }
-      
-      // If we have permission, ensure FCM token is current
-      if (notificationService.hasPermission() && !localStorage.getItem('fcmToken')) {
-        notificationService.requestFcmToken();
-      }
     }
   }, [user]);
 
   return (
     <div className="flex h-full bg-gray-50 overflow-x-hidden">
       {!isMobile && <Sidebar />}
-      
-      {/* Include AlertHandler component to ensure alerts work on this page */}
-      <AlertHandler />
       
       <div className="flex-1 overflow-y-auto w-full">
         <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
