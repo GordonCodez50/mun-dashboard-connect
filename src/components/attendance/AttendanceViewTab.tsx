@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
@@ -12,7 +11,6 @@ interface AttendanceViewTabProps {
   selectedCouncil: string;
   markAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   batchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
-  deleteParticipant: (id: string) => Promise<void>;
 }
 
 export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
@@ -21,9 +19,8 @@ export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
   selectedCouncil,
   markAttendance,
   batchMarkAttendance,
-  deleteParticipant
 }) => {
-  const canEdit = canEditDate(selectedDate);
+  const canEdit = true; // Always allow editing
 
   return (
     <Card>
@@ -51,7 +48,6 @@ export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
           showCouncil={selectedCouncil === 'all'}
           onMarkAttendance={markAttendance}
           onBatchMarkAttendance={batchMarkAttendance}
-          deleteParticipant={deleteParticipant}
           readOnly={false}
         />
       </CardContent>

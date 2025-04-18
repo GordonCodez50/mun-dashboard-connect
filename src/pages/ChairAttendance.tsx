@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -31,8 +30,7 @@ const ChairAttendance = () => {
     addParticipant, 
     addMultipleParticipants, 
     markAttendance, 
-    batchMarkAttendance,
-    deleteParticipant
+    batchMarkAttendance
   } = useParticipants();
 
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
@@ -196,16 +194,15 @@ const ChairAttendance = () => {
                       <AttendanceTable
                         participants={participants}
                         selectedDate={selectedDate}
-                        isDateLocked={!canEdit}
+                        isDateLocked={false}
                         onMarkAttendance={markAttendance}
                         onBatchMarkAttendance={batchMarkAttendance}
-                        deleteParticipant={deleteParticipant}
                       />
                       
                       <div className="mt-6 flex justify-end">
                         <Button 
                           onClick={handleSubmitAttendance}
-                          disabled={isSaving || !canEdit}
+                          disabled={isSaving}
                           className="flex items-center gap-2"
                         >
                           {isSaving ? (

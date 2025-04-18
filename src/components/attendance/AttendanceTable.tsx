@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Table, 
@@ -20,7 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
-import { CheckCircle, Filter, Lock, Search, UserX, Trash2 } from 'lucide-react';
+import { CheckCircle, Filter, Lock, Search, UserX } from 'lucide-react';
 
 interface AttendanceTableProps {
   participants: ParticipantWithAttendance[];
@@ -29,7 +28,6 @@ interface AttendanceTableProps {
   showCouncil?: boolean;
   onMarkAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   onBatchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
-  deleteParticipant: (id: string) => Promise<void>;
   readOnly?: boolean;
 }
 
@@ -40,7 +38,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   showCouncil = false,
   onMarkAttendance,
   onBatchMarkAttendance,
-  deleteParticipant,
   readOnly = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,13 +201,15 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               {showCouncil && <TableHead>Council</TableHead>}
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredParticipants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={showCouncil ? (readOnly ? 5 : 6) : (readOnly ? 4 : 5)} className="text-center py-8 text-muted-foreground">
+                <TableCell 
+                  colSpan={showCouncil ? (readOnly ? 4 : 5) : (readOnly ? 3 : 4)} 
+                  className="text-center py-8 text-muted-foreground"
+                >
                   No participants found
                 </TableCell>
               </TableRow>
@@ -255,21 +254,6 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                           </SelectContent>
                         </Select>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => {
-                          if (confirm(`Are you sure you want to delete ${participant.name}?`)) {
-                            deleteParticipant(participant.id);
-                            toast.success(`Deleted ${participant.name}`);
-                          }
-                        }}
-                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </TableCell>
                   </TableRow>
                 );

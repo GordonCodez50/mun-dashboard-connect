@@ -26,8 +26,7 @@ export const getCurrentDateInfo = () => {
   };
 };
 
+// Always allow editing - we'll use this just to determine which day to show by default
 export const canEditDate = (date: 'day1' | 'day2'): boolean => {
-  const { isDay1, isDay2 } = getCurrentDateInfo();
-  return (date === 'day1' && isDay1) || (date === 'day2' && isDay2);
+  return true;
 };
-
