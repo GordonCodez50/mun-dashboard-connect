@@ -15,10 +15,19 @@ export const transformParticipantData = (doc: DocumentData): ParticipantWithAtte
 
 export const getCurrentDateInfo = () => {
   const currentDate = new Date();
-  // IMPORTANT: This would be replaced with real date comparison in production
-  // For the prototype, we just enable both days
+  const day = currentDate.getDate();
+  const month = currentDate.getMonth();
+  const year = currentDate.getFullYear();
+
+  // Check if it's March 16th or 17th, 2024
   return {
-    isDay1: true,
-    isDay2: true
+    isDay1: day === 16 && month === 2 && year === 2024, // March is 2 (0-based)
+    isDay2: day === 17 && month === 2 && year === 2024
   };
 };
+
+export const canEditDate = (date: 'day1' | 'day2'): boolean => {
+  const { isDay1, isDay2 } = getCurrentDateInfo();
+  return (date === 'day1' && isDay1) || (date === 'day2' && isDay2);
+};
+

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -30,7 +29,8 @@ const ChairAttendance = () => {
     addParticipant, 
     addMultipleParticipants, 
     markAttendance, 
-    batchMarkAttendance 
+    batchMarkAttendance,
+    deleteParticipant
   } = useParticipants();
 
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
@@ -38,6 +38,8 @@ const ChairAttendance = () => {
   const userCouncil = user?.council || '';
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const canEdit = canEditDate(selectedDate);
 
   const handleRefreshData = async () => {
     setIsRefreshing(true);
@@ -83,6 +85,25 @@ const ChairAttendance = () => {
               <p className="text-gray-500 mt-1">
                 Manage participants and track attendance for {userCouncil}
               </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant={selectedDate === 'day1' ? 'default' : 'outline'}
+                onClick={() => setSelectedDate('day1')}
+                disabled={!isDay1 && !isDay2}
+                className={`${!isDay1 && !isDay2 ? 'opacity-50' : ''}`}
+              >
+                Day 1 (16th March)
+              </Button>
+              <Button
+                variant={selectedDate === 'day2' ? 'default' : 'outline'}
+                onClick={() => setSelectedDate('day2')}
+                disabled={!isDay1 && !isDay2}
+                className={`${!isDay1 && !isDay2 ? 'opacity-50' : ''}`}
+              >
+                Day 2 (17th March)
+              </Button>
             </div>
             
             <Button 
@@ -161,6 +182,11 @@ const ChairAttendance = () => {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             Mark attendance for {userCouncil} participants
+                            {!canEdit && (
+                              <span className="text-yellow-600 ml-2">
+                                (View only - can only edit on the respective day)
+                              </span>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -168,15 +194,16 @@ const ChairAttendance = () => {
                       <AttendanceTable
                         participants={participants}
                         selectedDate={selectedDate}
-                        isDateLocked={false} // We'll implement date locking later
+                        isDateLocked={!canEdit}
                         onMarkAttendance={markAttendance}
                         onBatchMarkAttendance={batchMarkAttendance}
+                        deleteParticipant={deleteParticipant}
                       />
                       
                       <div className="mt-6 flex justify-end">
                         <Button 
                           onClick={handleSubmitAttendance}
-                          disabled={isSaving}
+                          disabled={isSaving || !canEdit}
                           className="flex items-center gap-2"
                         >
                           {isSaving ? (
@@ -192,7 +219,6 @@ const ChairAttendance = () => {
                 </Tabs>
               </div>
               
-              {/* Troubleshoot accordion moved to the bottom of the page */}
               <div className="mt-10">
                 <AttendanceTroubleshoot />
               </div>

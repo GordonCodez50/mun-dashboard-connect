@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AttendanceTable } from '@/components/attendance/AttendanceTable';
 import { ParticipantWithAttendance, AttendanceStatus } from '@/types/attendance';
 import { FileText } from 'lucide-react';
+import { canEditDate } from '@/utils/participantUtils';
 
 interface AttendanceViewTabProps {
   filteredParticipants: ParticipantWithAttendance[];
@@ -11,6 +12,7 @@ interface AttendanceViewTabProps {
   selectedCouncil: string;
   markAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   batchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
+  deleteParticipant: (id: string) => Promise<void>;
 }
 
 export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
@@ -18,8 +20,11 @@ export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
   selectedDate,
   selectedCouncil,
   markAttendance,
-  batchMarkAttendance
+  batchMarkAttendance,
+  deleteParticipant
 }) => {
+  const canEdit = canEditDate(selectedDate);
+
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -31,17 +36,23 @@ export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
           {selectedCouncil === 'all' 
             ? 'View attendance across all councils' 
             : `View attendance for ${selectedCouncil}`}
+          {!canEdit && (
+            <span className="text-yellow-600 block mt-1">
+              (View only - editing is only available on the respective day)
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <AttendanceTable
           participants={filteredParticipants}
           selectedDate={selectedDate}
-          isDateLocked={false}
+          isDateLocked={!canEdit}
           showCouncil={selectedCouncil === 'all'}
           onMarkAttendance={markAttendance}
           onBatchMarkAttendance={batchMarkAttendance}
-          readOnly={true}
+          deleteParticipant={deleteParticipant}
+          readOnly={false}
         />
       </CardContent>
     </Card>
