@@ -31,23 +31,69 @@ interface TimerContextType {
   updateTimerLabel: (timerId: string, newLabel: string) => void;
 }
 
+// Store timer state in sessionStorage to persist across page navigations
+const TIMER_STORAGE_KEY = 'mun-dashboard-timers';
+const SOUND_STORAGE_KEY = 'mun-dashboard-sound-enabled';
+
+// Helper to load timers from storage
+const loadTimersFromStorage = (): Timer[] => {
+  try {
+    const storedTimers = sessionStorage.getItem(TIMER_STORAGE_KEY);
+    if (storedTimers) {
+      return JSON.parse(storedTimers);
+    }
+  } catch (e) {
+    console.error('Error loading timers from storage:', e);
+  }
+  
+  // Default timer if none in storage
+  return [{ 
+    id: 'main-timer', 
+    label: 'Main Timer', 
+    duration: 300, 
+    initialDuration: 300,
+    isEditing: false,
+    isRunning: false,
+    isPaused: false
+  }];
+};
+
+// Helper to load sound preference from storage
+const loadSoundPrefFromStorage = (): boolean => {
+  try {
+    const storedPref = localStorage.getItem(SOUND_STORAGE_KEY);
+    return storedPref ? JSON.parse(storedPref) : true;
+  } catch (e) {
+    return true;
+  }
+};
+
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [timers, setTimers] = useState<Timer[]>([
-    { 
-      id: 'main-timer', 
-      label: 'Main Timer', 
-      duration: 300, 
-      initialDuration: 300,
-      isEditing: false,
-      isRunning: false,
-      isPaused: false
-    }
-  ]);
+  // Load initial state from storage to persist across page navigations
+  const [soundEnabled, setSoundEnabled] = useState(() => loadSoundPrefFromStorage());
+  const [timers, setTimers] = useState<Timer[]>(() => loadTimersFromStorage());
   
   const intervalRefs = useRef<Record<string, NodeJS.Timeout | null>>({});
+  
+  // Persist timer state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timers));
+    } catch (e) {
+      console.error('Error saving timers to storage:', e);
+    }
+  }, [timers]);
+  
+  // Persist sound preference to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(SOUND_STORAGE_KEY, JSON.stringify(soundEnabled));
+    } catch (e) {
+      console.error('Error saving sound preference:', e);
+    }
+  }, [soundEnabled]);
   
   // Clean up intervals on unmount
   useEffect(() => {
@@ -166,7 +212,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
     });
     
-    // Show browser notification
+    // Show browser notification (works even when on different pages)
     notificationService.showTimerNotification(timerName);
   };
   

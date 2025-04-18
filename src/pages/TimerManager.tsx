@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +9,7 @@ import { TimerGuide } from '@/components/timer/TimerGuide';
 import { SoundToggle } from '@/components/timer/SoundToggle';
 import { timePresets } from '@/constants/timePresets';
 import { useTimers } from '@/context/TimerContext';
+import { realtimeService } from '@/services/realtimeService';
 
 const TimerManager = () => {
   const { user } = useAuth();
@@ -25,6 +26,12 @@ const TimerManager = () => {
     removeTimer,
     updateTimerLabel
   } = useTimers();
+  
+  // Initialize realtime listeners when page loads
+  useEffect(() => {
+    // Ensure global alert listeners are initialized
+    realtimeService.initializeAlertListeners();
+  }, []);
   
   // Toggle sound
   const toggleSound = () => {

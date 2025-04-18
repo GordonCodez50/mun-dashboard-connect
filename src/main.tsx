@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 import { notificationService } from './services/notificationService';
+import { realtimeService } from './services/realtimeService';
 import { 
   isNotificationSupported,
   getNotificationPermissionStatus,
@@ -58,6 +59,9 @@ if (notificationService.isNotificationSupported()) {
   notificationService.initializeMessaging().catch(err => {
     console.error('Error initializing Firebase messaging:', err);
   });
+  
+  // Initialize global alert listeners to work across all pages
+  realtimeService.initializeAlertListeners();
 } else {
   console.warn('Browser notifications are not supported in this browser');
 }

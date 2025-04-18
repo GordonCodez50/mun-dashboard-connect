@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/context/AuthContext';
@@ -10,6 +10,7 @@ import { AttendanceHeader } from '@/components/attendance/AttendanceHeader';
 import { AttendanceContent } from '@/components/attendance/AttendanceContent';
 import { getCurrentDateInfo } from '@/utils/participantUtils';
 import { Loader2 } from 'lucide-react';
+import { realtimeService } from '@/services/realtimeService';
 
 const ChairAttendance = () => {
   const isMobile = useIsMobile();
@@ -34,6 +35,12 @@ const ChairAttendance = () => {
 
   const allCouncils = Array.from(new Set(participants.map(p => p.council))).sort();
   const userCouncil = user?.council || '';
+  
+  // Initialize realtime listeners when page loads
+  useEffect(() => {
+    // Ensure global alert listeners are initialized
+    realtimeService.initializeAlertListeners();
+  }, []);
 
   return (
     <div className="flex h-full bg-gray-50 overflow-x-hidden">
