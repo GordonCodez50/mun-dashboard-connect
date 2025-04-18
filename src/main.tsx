@@ -58,7 +58,10 @@ const getUserRoleFromStorage = (): 'admin' | 'chair' | 'press' | null => {
     try {
       const user = JSON.parse(userData);
       if (user && user.role) {
-        return user.role as 'admin' | 'chair' | 'press';
+        if (user.role === 'admin') return 'admin';
+        if (user.role === 'chair') {
+          return user.council === 'PRESS' ? 'press' : 'chair';
+        }
       }
     } catch (e) {
       console.error('Error parsing user data from localStorage', e);

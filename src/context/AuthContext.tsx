@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
@@ -55,7 +56,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUsers(allUsers);
         
         if (user) {
-          notificationService.setUserRole(user.role);
+          // Fix: Convert UserRole to accepted string values for notification service
+          if (user.role === 'admin') {
+            notificationService.setUserRole('admin');
+          } else if (user.role === 'chair') {
+            notificationService.setUserRole('chair');
+          } else if (user.council === 'PRESS') {
+            notificationService.setUserRole('press');
+          }
         }
       } catch (error) {
         console.error('Error loading initial data:', error);
@@ -89,9 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const allUsers = await authService.getUsers();
       setUsers(allUsers);
       
-      if (loggedInUser.role === 'chair' || loggedInUser.council === 'PRESS') {
-        if (notificationService.isNotificationSupported() && !notificationService.hasPermission()) {
-          // We'll handle this in the UI components now, not automatically
+      // Set user role for notifications
+      if (loggedInUser.role === 'admin') {
+        notificationService.setUserRole('admin');
+      } else if (loggedInUser.role === 'chair') {
+        if (loggedInUser.council === 'PRESS') {
+          notificationService.setUserRole('press');
+        } else {
+          notificationService.setUserRole('chair');
         }
       }
       
