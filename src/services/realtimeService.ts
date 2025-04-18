@@ -27,5 +27,33 @@ export const realtimeService = {
       toast.error('Failed to create alert');
       return false;
     }
+  },
+  
+  // New function for sending attendance submission alerts
+  createAttendanceSubmissionAlert: async (data: {
+    council: string;
+    date: string;
+    chairName: string;
+  }) => {
+    try {
+      const alertData = {
+        type: 'Attendance Submission',
+        council: data.council,
+        message: `${data.council} has submitted attendance for ${data.date}`,
+        chairName: data.chairName,
+        timestamp: Date.now(),
+        status: 'pending',
+        priority: 'normal'
+      };
+      
+      const alertsRef = ref(realtimeDb, 'alerts');
+      const newAlertRef = push(alertsRef);
+      await set(newAlertRef, alertData);
+      console.log('Attendance submission alert created');
+      return true;
+    } catch (error) {
+      console.error('Error creating attendance submission alert:', error);
+      return false;
+    }
   }
 };

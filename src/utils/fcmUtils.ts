@@ -10,7 +10,8 @@ import { isAndroid, isChrome } from '@/utils/notificationPermission';
 const { firestore, auth } = firebaseService;
 
 // The public VAPID key for web push
-const VAPID_KEY = '6QrfVAqgqA3d9rrUbrXfiT6t3XlUxFAKl4mFs5itDIQ';
+// IMPORTANT: This should be your actual VAPID key from Firebase console
+const VAPID_KEY = 'BIxzTfJnWCjDXJxOB7TPNP2z1AbGcxlEXhwT4tvsQWKbkZuHP5Ld8PnDFd9JzpTYFi5T7ZKAH_ZRTwJ2IfOTBuM';
 
 /**
  * Request and save FCM token to Firestore
@@ -51,7 +52,11 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
     const messaging = getMessaging();
     console.log('Requesting FCM token with VAPID key:', VAPID_KEY.substring(0, 10) + '...');
     
-    const currentToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+    // Request token with explicit VAPID key
+    const currentToken = await getToken(messaging, { 
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+    });
     
     if (currentToken) {
       console.log('FCM token available:', currentToken.substring(0, 10) + '...');
@@ -100,7 +105,10 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
             console.log('New service worker registered:', registration.scope);
             
             // Try getting token again
-            const retryToken = await getToken(messaging, { vapidKey: VAPID_KEY });
+            const retryToken = await getToken(messaging, { 
+              vapidKey: VAPID_KEY,
+              serviceWorkerRegistration: registration
+            });
             if (retryToken) {
               console.log('FCM token obtained after service worker refresh');
               localStorage.setItem('fcmToken', retryToken);
