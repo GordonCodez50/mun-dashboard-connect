@@ -42,7 +42,7 @@ const TimerManager = () => {
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto ml-64 w-full">
         <div className="p-6 md:p-8 animate-fade-in">
           <header className="mb-8">
             <h1 className="text-3xl font-bold text-primary dark:text-white">Timer Management</h1>

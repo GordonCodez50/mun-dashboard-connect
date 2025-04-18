@@ -58,10 +58,10 @@ const ChairAttendance = () => {
   }, [user]);
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="page-with-sidebar">
       {!isMobile && <Sidebar />}
       
-      <div className="flex-1 overflow-y-auto ml-64 w-full">
+      <div className="main-content">
         <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
           <AttendanceHeader
             userCouncil={userCouncil}
