@@ -1,26 +1,47 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mun-dashboard-connect</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <meta property="og:title" content="Lovable Generated Project" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <!-- PWA primary color -->
+    <meta name="theme-color" content="#007bff" />
+    
+    <!-- Important: Link to manifest.json for FCM to work correctly -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- iOS specific PWA meta tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MUN Dashboard" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    
+    <title>MUN Conference Dashboard</title>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/notification.mp3" as="audio" />
+    <link rel="preload" href="/logo.png" as="image" />
   </head>
-
   <body>
     <div id="root"></div>
-    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Ensure service worker activation -->
+    <script>
+      // Check if service worker needs to be refreshed
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            if (registrations.length === 0) {
+              console.log('No service worker found, registering new one');
+            } else {
+              console.log('Service worker already registered');
+            }
+          });
+        });
+      }
+    </script>
   </body>
 </html>

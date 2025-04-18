@@ -1,323 +1,79 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { useEffect, Suspense, lazy, useState } from "react";
-import { TimerProvider } from "./context/TimerContext";
-import { toast } from "sonner";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { notificationService } from "./services/notificationService";
-import { requestAndSaveFcmToken } from "./utils/fcmUtils";
-import { realtimeService } from "./services/realtimeService";
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from './components/ui/toaster';
+import { AuthProvider } from './context/AuthContext';
+import { TimerProvider } from './context/TimerContext';
+import Index from './pages/Index';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+import ChairDashboard from './pages/ChairDashboard';
+import AdminPanel from './pages/AdminPanel';
+import PressDashboard from './pages/PressDashboard';
+import ChairAttendance from './pages/ChairAttendance';
+import AdminAttendance from './pages/AdminAttendance';
+import TimerManager from './pages/TimerManager';
+import Documents from './pages/Documents';
+import FileShare from './pages/FileShare';
+import UserManagement from './pages/UserManagement';
+import ErrorBoundary from './components/ErrorBoundary';
+import { AlertHandler } from '@/components/notifications/AlertHandler';
+import './App.css';
 
-// Eager loading critical components
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
-import { initializeFirebase } from "./services/firebaseService";
-
-// Error boundary fallback component
-const ErrorFallback = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-    <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-      <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
-      <p className="text-gray-700 mb-4">
-        We're sorry, but there was an error loading this page. Please try refreshing.
-      </p>
-      <button
-        onClick={() => window.location.reload()}
-        className="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded"
-      >
-        Refresh Page
-      </button>
-    </div>
-  </div>
-);
-
-// Lazy loading less critical components
-const ChairDashboard = lazy(() => import("./pages/ChairDashboard"));
-const PressDashboard = lazy(() => import("./pages/PressDashboard"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const TimerManager = lazy(() => import("./pages/TimerManager"));
-const UserManagement = lazy(() => import("./pages/UserManagement"));
-const FileShare = lazy(() => import("./pages/FileShare"));
-const ChairAttendance = lazy(() => import("./pages/ChairAttendance"));
-const AdminAttendance = lazy(() => import("./pages/AdminAttendance"));
-
-// Setup loading fallback
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-    <span className="ml-3 text-gray-600">Loading...</span>
-  </div>
-);
-
-// Initialize query client with production settings
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 2,
-      refetchOnWindowFocus: false,
-      staleTime: 30000,
-      gcTime: 60000,
-      meta: {
-        onError: (error: Error) => {
-          console.error('Query error:', error);
-        },
-      },
-    },
-    mutations: {
       retry: 1,
-      meta: {
-        onError: (error: Error) => {
-          console.error('Mutation error:', error);
-        },
-      },
+      refetchOnWindowFocus: false,
     },
   },
 });
 
-// AlertHandler component to handle alert ID in URL
-const AlertHandler = () => {
-  const location = useLocation();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  
+function App() {
+  // Register service worker early in the app lifecycle
   useEffect(() => {
-    // Check if there's an alert ID in the URL
-    const params = new URLSearchParams(location.search);
-    const alertId = params.get('alert');
-    
-    if (alertId) {
-      console.log('Alert ID found in URL:', alertId);
-      // Clear the alertId from the URL to prevent reprocessing
-      navigate(location.pathname, { replace: true });
-      
-      // Inform user about the alert (you can customize this further)
-      toast.info('Opening alert', {
-        description: `Alert ID: ${alertId}`,
-        duration: 3000,
+    // Test service worker if available
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'PING',
+        timestamp: Date.now()
       });
-      
-      // Additional logic to handle the alert (e.g., scroll to it, highlight it)
-      // This depends on your specific implementation
     }
-    
-    // Force initialize alert listeners on every page navigation
-    realtimeService.initializeAlertListeners();
-    
-    // Ensure user role is set for notifications on each page
-    if (user) {
-      const role = user.role === 'admin' ? 'admin' : 
-                  (user.council === 'PRESS' ? 'press' : 'chair');
-                  
-      notificationService.setUserRole(role);
-      
-      // Also inform service worker about user role
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SET_USER_ROLE',
-          role
-        });
-      }
-    }
-  }, [location, user, navigate]);
-  
-  return null;
-};
-
-// Protected route component with alert handling
-const ProtectedRoute = ({ 
-  element, 
-  requiredRole,
-}: { 
-  element: React.ReactNode; 
-  requiredRole?: 'chair' | 'admin' | 'both';
-}) => {
-  const { isAuthenticated, user, loading = false } = useAuth();
-  
-  // Show loading indicator while authentication is being checked
-  if (loading) {
-    return <LoadingFallback />;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  
-  if (requiredRole && requiredRole !== 'both') {
-    if (user?.role !== requiredRole) {
-      return <Navigate to={user?.role === 'chair' ? '/chair-dashboard' : '/admin-panel'} replace />;
-    }
-  }
-  
-  return (
-    <ErrorBoundary fallback={<ErrorFallback />}>
-      <AlertHandler />
-      <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
-    </ErrorBoundary>
-  );
-};
-
-// App wrapper to handle auth context
-const AppWithAuth = () => {
-  const [serviceWorkerRegistered, setServiceWorkerRegistered] = useState(false);
-  
-  // Initialize Firebase and check notification permissions when the app mounts
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        // Initialize Firebase
-        await initializeFirebase();
-        
-        // Check if service worker is registered
-        const checkServiceWorker = async () => {
-          if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            const hasFirebaseMessagingSW = registrations.some(reg => 
-              reg.scope.includes(window.location.origin) && 
-              reg.active && 
-              reg.active.scriptURL.includes('firebase-messaging-sw.js')
-            );
-            
-            setServiceWorkerRegistered(hasFirebaseMessagingSW);
-            
-            if (!hasFirebaseMessagingSW) {
-              console.log('Firebase messaging service worker not found, registering...');
-              try {
-                const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-                  scope: '/'
-                });
-                console.log('Firebase messaging service worker registered:', reg.scope);
-                setServiceWorkerRegistered(true);
-              } catch (error) {
-                console.error('Failed to register service worker:', error);
-              }
-            } else {
-              console.log('Firebase messaging service worker already registered');
-            }
-          }
-        };
-        
-        await checkServiceWorker();
-        
-        // Check if notification permission is already granted
-        if (notificationService.isNotificationSupported()) {
-          if (notificationService.hasPermission()) {
-            console.log("Notification permission already granted");
-            
-            // Initialize FCM if supported
-            if (notificationService.isFcmSupported()) {
-              await requestAndSaveFcmToken();
-            }
-          } else {
-            console.log("Notification permission not granted yet");
-          }
-        }
-        
-        // Initialize global alert listeners
-        realtimeService.initializeAlertListeners();
-      } catch (error) {
-        console.error('Failed to initialize app:', error);
-        toast.error('Failed to connect to the server. Please refresh and try again.');
-      }
-    };
-    
-    initApp();
-    
-    // Periodically check if alert listeners are active
-    const alertListenerCheck = setInterval(() => {
-      if (!realtimeService.areAlertListenersActive()) {
-        console.log('Alert listeners not active, reinitializing...');
-        realtimeService.reinitializeAlertListeners();
-      }
-    }, 60000); // Check every minute
-    
-    return () => {
-      clearInterval(alertListenerCheck);
-    };
   }, []);
-  
+
   return (
-    <>
-      {/* Regular routes */}
-      <Routes>
-        <Route path="/" element={
-          <>
-            <AlertHandler />
-            <Login />
-          </>
-        } />
-
-        {/* Chair Routes */}
-        <Route
-          path="/chair-dashboard"
-          element={<ProtectedRoute element={<ChairDashboard />} requiredRole="chair" />}
-        />
-        <Route
-          path="/timer"
-          element={<ProtectedRoute element={<TimerManager />} requiredRole="chair" />}
-        />
-        <Route
-          path="/chair-attendance"
-          element={<ProtectedRoute element={<ChairAttendance />} requiredRole="chair" />}
-        />
-        <Route
-          path="/file-share"
-          element={<ProtectedRoute element={<FileShare />} requiredRole="chair" />}
-        />
-
-        {/* Press Route */}
-        <Route
-          path="/press-dashboard"
-          element={<ProtectedRoute element={<PressDashboard />} requiredRole="chair" />}
-        />
-
-        {/* Admin Routes */}
-        <Route
-          path="/admin-panel"
-          element={<ProtectedRoute element={<AdminPanel />} requiredRole="admin" />}
-        />
-        <Route
-          path="/user-management"
-          element={<ProtectedRoute element={<UserManagement />} requiredRole="admin" />}
-        />
-        <Route
-          path="/admin-attendance"
-          element={<ProtectedRoute element={<AdminAttendance />} requiredRole="admin" />}
-        />
-
-        {/* Index route redirect */}
-        <Route path="/index" element={<Navigate to="/" replace />} />
-
-        {/* Catch All */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
-  );
-};
-
-const App = () => {
-  // Add error handling for the entire app
-  return (
-    <ErrorBoundary fallback={<ErrorFallback />}>
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <TimerProvider>
-                <AppWithAuth />
-              </TimerProvider>
-            </AuthProvider>
-          </BrowserRouter>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
+        <AuthProvider>
+          <TimerProvider>
+            <Router>
+              {/* Global notification handler that works across all pages */}
+              <AlertHandler />
+              
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/chair-dashboard" element={<ChairDashboard />} />
+                <Route path="/admin-panel" element={<AdminPanel />} />
+                <Route path="/press-dashboard" element={<PressDashboard />} />
+                <Route path="/chair-attendance" element={<ChairAttendance />} />
+                <Route path="/admin-attendance" element={<AdminAttendance />} />
+                <Route path="/timer-manager" element={<TimerManager />} />
+                <Route path="/documents" element={<Documents />} />
+                <Route path="/file-share" element={<FileShare />} />
+                <Route path="/user-management" element={<UserManagement />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              
+              <Toaster />
+            </Router>
+          </TimerProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
-};
+}
 
 export default App;

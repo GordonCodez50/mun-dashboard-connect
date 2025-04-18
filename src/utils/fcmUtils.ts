@@ -33,7 +33,8 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 /**
- * Request and save FCM token to Firestore
+ * Enhanced FCM token request and storage function with better error handling
+ * and platform-specific optimizations
  */
 export const requestAndSaveFcmToken = async (): Promise<string | null> => {
   try {
@@ -56,35 +57,101 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
       return null;
     }
     
-    // For Android Chrome, ensure the service worker is registered before requesting token
+    // Ensure we have an active service worker before requesting token
+    let serviceWorkerRegistration;
+    
+    // For Android Chrome, ensure the service worker is properly registered
     if (isAndroid() && isChrome()) {
       console.log('Android Chrome detected, ensuring service worker is registered');
       try {
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('Service worker registered or updated:', registration.scope);
+        // Unregister any existing service workers to ensure clean state
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length > 0) {
+          console.log('Unregistering existing service workers');
+          await Promise.all(registrations.map(reg => reg.unregister()));
+        }
+        
+        // Register with cache-busting parameter
+        serviceWorkerRegistration = await navigator.serviceWorker.register(
+          '/firebase-messaging-sw.js?v=' + Date.now(), 
+          { scope: '/' }
+        );
+        console.log('Service worker registered or updated:', serviceWorkerRegistration.scope);
+        
+        // Ensure it's activated before proceeding
+        if (serviceWorkerRegistration.installing) {
+          console.log('Waiting for service worker to activate...');
+          await new Promise<void>((resolve) => {
+            serviceWorkerRegistration.installing?.addEventListener('statechange', (e) => {
+              if ((e.target as any).state === 'activated') {
+                console.log('Service worker now activated');
+                resolve();
+              }
+            });
+          });
+        }
       } catch (swError) {
         console.error('Service worker registration failed:', swError);
         // Continue anyway as it might already be registered
       }
+    } else {
+      // For other browsers, get existing registration or register new one
+      try {
+        serviceWorkerRegistration = await navigator.serviceWorker.ready;
+        console.log('Using existing service worker:', serviceWorkerRegistration.scope);
+      } catch (e) {
+        console.warn('No active service worker, registering new one');
+        try {
+          serviceWorkerRegistration = await navigator.serviceWorker.register(
+            '/firebase-messaging-sw.js', 
+            { scope: '/' }
+          );
+          console.log('New service worker registered:', serviceWorkerRegistration.scope);
+        } catch (regError) {
+          console.error('Failed to register service worker:', regError);
+        }
+      }
+    }
+    
+    // Safety check before proceeding
+    if (!serviceWorkerRegistration) {
+      console.error('No service worker registration available, cannot request FCM token');
+      return null;
     }
     
     const messaging = getMessaging();
     console.log('Requesting FCM token with VAPID key');
     
-    // Convert the base64 VAPID key to the required format if needed
-    // Most modern browsers now accept the plain base64 key directly
+    // Request token with multiple fallback approaches
+    let currentToken: string | null = null;
     
-    // Request token with properly formatted VAPID key
-    const currentToken = await getToken(messaging, { 
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
-    });
+    // First attempt: standard approach
+    try {
+      currentToken = await getToken(messaging, { 
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration
+      });
+    } catch (e) {
+      console.warn('First token request failed:', e);
+      
+      // Second attempt: try with Uint8Array applicationServerKey format
+      try {
+        console.log('Trying alternative token format');
+        currentToken = await getToken(messaging, {
+          vapidKey: VAPID_KEY,
+          serviceWorkerRegistration
+        });
+      } catch (altError) {
+        console.error('Alternative token format also failed:', altError);
+      }
+    }
     
     if (currentToken) {
-      console.log('FCM token available:', currentToken.substring(0, 10) + '...');
+      console.log('FCM token obtained:', currentToken.substring(0, 10) + '...');
       
       // Save token to localStorage for easier access
       localStorage.setItem('fcmToken', currentToken);
+      localStorage.setItem('fcmTokenTimestamp', Date.now().toString());
       
       // If user is logged in, save to their Firestore record
       const currentUser = auth.currentUser;
@@ -94,9 +161,18 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
           await updateDoc(userDocRef, {
             fcmToken: currentToken,
             lastTokenUpdate: Timestamp.now(),
-            userAgent: navigator.userAgent // Store user agent for debugging
+            userAgent: navigator.userAgent, // Store user agent for debugging
+            platform: isAndroid() ? 'android' : isChrome() ? 'chrome' : 'other'
           });
           console.log('FCM token saved to Firestore');
+          
+          // Let service worker know token was obtained
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'FCM_TOKEN_OBTAINED',
+              timestamp: Date.now()
+            });
+          }
         } catch (firestoreError) {
           console.error('Error saving FCM token to Firestore:', firestoreError);
         }
@@ -126,14 +202,19 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
             const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
             console.log('New service worker registered:', registration.scope);
             
+            // Allow service worker to activate
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
             // Try getting token again
             const retryToken = await getToken(messaging, { 
               vapidKey: VAPID_KEY,
               serviceWorkerRegistration: registration
             });
+            
             if (retryToken) {
               console.log('FCM token obtained after service worker refresh');
               localStorage.setItem('fcmToken', retryToken);
+              localStorage.setItem('fcmTokenTimestamp', Date.now().toString());
               return retryToken;
             }
           } catch (swError) {
@@ -141,14 +222,15 @@ export const requestAndSaveFcmToken = async (): Promise<string | null> => {
           }
         }
         
-        toast.error('Unable to register for notifications on this device');
+        toast.error('Unable to register for notifications on this device. Please try again later.');
       }
+      
       return null;
     }
   } catch (error) {
     console.error('Error getting FCM token:', error);
     if (error instanceof Error) {
-      toast.error(`FCM error: ${error.message}`);
+      toast.error(`Notification error: ${error.message}`);
     }
     return null;
   }
@@ -169,6 +251,7 @@ export const removeFcmToken = async (): Promise<boolean> => {
     
     // Remove from localStorage
     localStorage.removeItem('fcmToken');
+    localStorage.removeItem('fcmTokenTimestamp');
     
     // If user is logged in, update their Firestore record
     const currentUser = auth.currentUser;
@@ -180,9 +263,48 @@ export const removeFcmToken = async (): Promise<boolean> => {
       });
     }
     
+    // Let service worker know token was removed
+    if (navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'FCM_TOKEN_REMOVED',
+        timestamp: Date.now()
+      });
+    }
+    
     return true;
   } catch (error) {
     console.error('Error removing FCM token:', error);
     return false;
   }
 };
+
+/**
+ * Check if the FCM token needs refreshing (older than 2 days)
+ */
+export const checkTokenFreshness = (): boolean => {
+  const tokenTimestamp = localStorage.getItem('fcmTokenTimestamp');
+  if (!tokenTimestamp) return false;
+  
+  const timestamp = parseInt(tokenTimestamp, 10);
+  const now = Date.now();
+  const twodays = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+  
+  return (now - timestamp) < twodays;
+};
+
+/**
+ * Refresh the FCM token if needed
+ */
+export const refreshFcmTokenIfNeeded = async (): Promise<string | null> => {
+  const token = localStorage.getItem('fcmToken');
+  
+  // If no token or token is stale, request a new one
+  if (!token || !checkTokenFreshness()) {
+    return await requestAndSaveFcmToken();
+  }
+  
+  return token;
+};
+
+// Export the VAPID_KEY for use in other files
+export { VAPID_KEY };

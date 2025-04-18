@@ -1,10 +1,11 @@
+
 /**
  * Cross-Platform Notification Utility
  * Provides consistent notification functionality across different devices and browsers
- * Supports: iOS, Android, macOS, Windows, Chrome, Safari, Firefox
+ * Optimized for production use during conferences
  */
 
-// Detect platform/browser information
+// Detect platform/browser information with improved reliability
 export const isIOS = (): boolean => {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
 };
@@ -22,15 +23,18 @@ export const isWindows = (): boolean => {
 };
 
 export const isMobile = (): boolean => {
-  return isIOS() || isAndroid();
+  return isIOS() || isAndroid() || 
+    (typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches);
 };
 
 export const isChrome = (): boolean => {
-  return /chrome|crios/i.test(navigator.userAgent.toLowerCase()) && !/edge|edg/i.test(navigator.userAgent.toLowerCase());
+  return /chrome|crios/i.test(navigator.userAgent.toLowerCase()) && 
+    !/edge|edg/i.test(navigator.userAgent.toLowerCase());
 };
 
 export const isSafari = (): boolean => {
-  return /safari/i.test(navigator.userAgent) && !/chrome|chromium|crios/i.test(navigator.userAgent.toLowerCase());
+  return /safari/i.test(navigator.userAgent) && 
+    !/chrome|chromium|crios/i.test(navigator.userAgent.toLowerCase());
 };
 
 export const isFirefox = (): boolean => {
@@ -52,15 +56,17 @@ export const isServiceWorkerSupported = (): boolean => {
   return 'serviceWorker' in navigator;
 };
 
-// Normalize browser compatibility issues with notifications
+// Enhanced notification options interface
 interface ExtendedNotificationOptions extends NotificationOptions {
   vibrate?: number[];
   renotify?: boolean;
   requireInteraction?: boolean;
   data?: any;
+  timestamp?: number;
+  silent?: boolean;
 }
 
-// Request notification permissions with platform-specific handling
+// Request notification permissions with optimized platform-specific handling
 export const requestNotificationPermission = async (): Promise<{
   success: boolean;
   status: NotificationPermission | 'unsupported' | 'error';
@@ -82,8 +88,7 @@ export const requestNotificationPermission = async (): Promise<{
     // Special handling for iOS Safari which has limited notification support
     if (isIOS() && isSafari()) {
       console.log('iOS Safari detected - limited notification support');
-      // iOS Safari doesn't fully support the Notifications API until iOS 16.4+
-      // We'll attempt anyway but inform the user of limitations
+      
       if (Notification.permission === 'denied') {
         return {
           success: false,
@@ -97,7 +102,6 @@ export const requestNotificationPermission = async (): Promise<{
     if (isAndroid() && isChrome()) {
       console.log('Android Chrome detected, checking current permission...');
       
-      // If already denied, we need to guide the user to settings
       if (Notification.permission === 'denied') {
         console.log('Permission previously denied on Android Chrome');
         return {
@@ -106,31 +110,73 @@ export const requestNotificationPermission = async (): Promise<{
           error: 'Permission previously denied. Please enable notifications manually in browser settings.'
         };
       }
-    }
-    
-    // Force showing the permission dialog by creating a temporary service worker
-    // This is a workaround specifically for Android Chrome
-    if (isAndroid() && isChrome() && Notification.permission === 'default') {
-      try {
-        console.log('Using service worker approach to trigger permission dialog on Android');
-        
-        // Try to register a temporary service worker to force the permission dialog
-        if (isServiceWorkerSupported()) {
-          const tempRegistration = await navigator.serviceWorker.register('/temp-notification-sw.js', {
-            scope: '/'
-          });
-          console.log('Temporary service worker registered:', tempRegistration);
+      
+      // Force showing the permission dialog by creating a temporary service worker
+      if (Notification.permission === 'default') {
+        try {
+          console.log('Using service worker approach to trigger permission dialog on Android');
+          
+          if (isServiceWorkerSupported()) {
+            const tempRegistration = await navigator.serviceWorker.register('/temp-notification-sw.js', {
+              scope: '/'
+            });
+            console.log('Temporary service worker registered:', tempRegistration);
+            
+            // Wait for it to activate
+            if (tempRegistration.installing) {
+              await new Promise<void>((resolve) => {
+                tempRegistration.installing?.addEventListener('statechange', (e) => {
+                  if ((e.target as any).state === 'activated') {
+                    resolve();
+                  }
+                });
+              });
+            }
+          }
+        } catch (swError) {
+          console.warn('Error with service worker approach:', swError);
         }
-      } catch (swError) {
-        console.warn('Error with service worker approach:', swError);
-        // Continue with standard approach even if this fails
       }
     }
     
-    const permission = await Notification.requestPermission();
-    const granted = permission === 'granted';
+    // Request permission with improved reliability
+    let permission: NotificationPermission;
     
+    try {
+      permission = await Notification.requestPermission();
+    } catch (error) {
+      // Some older browsers use the callback pattern
+      if (error instanceof TypeError) {
+        permission = await new Promise<NotificationPermission>((resolve) => {
+          Notification.requestPermission((result) => {
+            resolve(result);
+          });
+        });
+      } else {
+        throw error;
+      }
+    }
+    
+    const granted = permission === 'granted';
     console.log(`Permission request result: ${permission}`);
+    
+    // If granted on mobile, ensure sound and vibration work
+    if (granted && isMobile()) {
+      try {
+        // Create and immediately close a notification to ensure proper activation
+        const testNotification = new Notification('Notifications Enabled', {
+          body: 'You will now receive important updates.',
+          silent: true
+        });
+        
+        // Close it after a moment
+        setTimeout(() => {
+          testNotification.close();
+        }, 500);
+      } catch (e) {
+        console.warn('Test notification error:', e);
+      }
+    }
     
     return {
       success: granted,
@@ -146,15 +192,22 @@ export const requestNotificationPermission = async (): Promise<{
   }
 };
 
-// Get current permission status
+// Get current permission status with reliable fallbacks
 export const getNotificationPermissionStatus = (): NotificationPermission | 'unsupported' => {
   if (!isNotificationSupported()) {
     return 'unsupported';
   }
-  return Notification.permission;
+  
+  // Check if permission is available
+  try {
+    return Notification.permission;
+  } catch (e) {
+    console.warn('Error accessing Notification.permission:', e);
+    return 'default'; // Safer fallback
+  }
 };
 
-// Create and display a notification with platform-specific optimizations
+// Create and display a notification with robust cross-platform optimizations
 export const createNotification = (
   title: string, 
   options: ExtendedNotificationOptions = {}
@@ -164,12 +217,25 @@ export const createNotification = (
   }
   
   try {
-    // Platform-specific adjustments
+    // Platform-specific adjustments for maximum compatibility
     let platformOptions: ExtendedNotificationOptions = { ...options };
     
-    // Add vibration for Android
+    // Ensure we always have icon and badge for better visibility
+    platformOptions.icon = platformOptions.icon || '/logo.png';
+    platformOptions.badge = platformOptions.badge || '/logo.png';
+    
+    // Add timestamp if not present
+    if (!platformOptions.timestamp) {
+      platformOptions.timestamp = Date.now();
+    }
+    
+    // Add vibration for Android - important for lock screen visibility
     if (isAndroid()) {
       platformOptions.vibrate = options.vibrate || [200, 100, 200];
+      // Android needs interaction to be required for lock screen
+      if (platformOptions.requireInteraction !== false) {
+        platformOptions.requireInteraction = true;
+      }
     }
     
     // iOS Safari doesn't support vibration or requireInteraction
@@ -178,19 +244,26 @@ export const createNotification = (
       delete platformOptions.requireInteraction;
     }
     
-    // Make sure we always have icon and badge for better visibility
-    platformOptions.icon = platformOptions.icon || '/logo.png';
-    platformOptions.badge = platformOptions.badge || '/logo.png';
-    
     // For mobile devices we want to ensure the notification is noticeable
-    if (isMobile()) {
-      platformOptions.requireInteraction = options.requireInteraction !== false;
+    if (isMobile() && platformOptions.requireInteraction !== false) {
+      platformOptions.requireInteraction = true;
     }
     
     // For desktop browsers
     if (!isMobile()) {
       // Keep notifications a bit longer on desktop
       platformOptions.requireInteraction = options.requireInteraction === true;
+    }
+    
+    // Try to play sound (supported in Chrome)
+    try {
+      if (!platformOptions.silent) {
+        const audio = new Audio('/notification.mp3');
+        audio.volume = 0.7;
+        audio.play().catch(e => console.warn('Could not play notification sound:', e));
+      }
+    } catch (soundError) {
+      console.warn('Error playing notification sound:', soundError);
     }
     
     // Create notification with adjusted options
@@ -220,7 +293,7 @@ export const createNotification = (
   }
 };
 
-// Create a basic test notification
+// Create a production-ready test notification
 export const testNotification = async (): Promise<boolean> => {
   if (!isNotificationSupported()) {
     return false;
@@ -231,10 +304,23 @@ export const testNotification = async (): Promise<boolean> => {
   }
   
   try {
+    // Try to play a sound
+    try {
+      const audio = new Audio('/notification.mp3');
+      audio.volume = 0.5;
+      await audio.play().catch(e => console.warn('Could not play notification sound:', e));
+    } catch (e) {
+      console.warn('Sound playback error:', e);
+    }
+    
     return createNotification('Test Notification', {
-      body: 'This is a test notification',
+      body: 'This is a test notification. If you see this, notifications are working correctly.',
       icon: '/logo.png',
-      requireInteraction: false
+      requireInteraction: false,
+      data: {
+        isTest: true,
+        timestamp: Date.now()
+      }
     });
   } catch (error) {
     console.error('Error creating test notification:', error);
@@ -280,7 +366,7 @@ export const getPwaInstructions = (): string => {
   return "This web app can be installed on your device for a better experience.";
 };
 
-// Check if the device has physically installed the PWA
+// Enhanced check for PWA installation status
 export const checkPwaInstalled = async (): Promise<boolean> => {
   // Check if running in standalone mode
   if (isPwa()) {
@@ -298,11 +384,48 @@ export const checkPwaInstalled = async (): Promise<boolean> => {
   return false;
 };
 
+// Check if Web Push API is allowed
 export const isWebPushAllowed = (): boolean => {
   return isPushApiSupported() && isServiceWorkerSupported();
 };
 
+// Check if notifications can appear on lock screen
 export const canShowLockScreenNotifications = (): boolean => {
   // Most accurate on Android Chrome and newer iOS versions
   return (isAndroid() || (isIOS() && isPwa())) && Notification.permission === 'granted';
+};
+
+// Production-focused enhancement: Check if we're on a real device (not emulator)
+export const isRealDevice = (): boolean => {
+  const ua = navigator.userAgent.toLowerCase();
+  return !ua.includes('emulator') && !ua.includes('simulator');
+};
+
+// Check if device has a reliable internet connection
+export const hasReliableConnection = (): boolean => {
+  if ('connection' in navigator) {
+    const conn = (navigator as any).connection;
+    if (conn) {
+      if (conn.saveData) {
+        return false; // Data saving mode is on, connection might be limited
+      }
+      if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') {
+        return false; // Connection too slow for reliable notifications
+      }
+    }
+  }
+  return true;
+};
+
+// Production-ready function to optimize notification settings based on device
+export const getOptimalNotificationSettings = () => {
+  return {
+    requireInteraction: isMobile(), // Only require interaction on mobile
+    renotify: isAndroid(), // Android needs this for repeated notifications
+    silent: false, // Always play sound if possible
+    vibrate: isAndroid() ? [200, 100, 200] : undefined, // Only vibrate on Android
+    maxActions: isAndroid() ? 2 : 0, // Android supports notification actions
+    tag: 'default', // Group notifications by default
+    priority: 'high', // Use high priority for better visibility
+  };
 };
