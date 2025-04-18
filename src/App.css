@@ -40,3 +40,34 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Global layout styles for pages with sidebar */
+.layout-with-sidebar {
+  display: flex;
+  min-height: 100vh;
+  background-color: rgb(249 250 251);
+}
+
+.layout-with-sidebar .sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 16rem; /* 256px */
+  z-index: 40;
+}
+
+.layout-with-sidebar .main-content {
+  flex: 1;
+  margin-left: 16rem; /* Match sidebar width */
+  min-height: 100vh;
+  width: calc(100% - 16rem);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .layout-with-sidebar .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+}
