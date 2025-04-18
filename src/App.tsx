@@ -61,10 +61,11 @@ function App() {
 
   return (
     <ErrorBoundary fallback={fallbackUI}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TimerProvider>
-            <Router>
+      {/* Rearranged order: Router needs to be before AuthProvider */}
+      <Router>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TimerProvider>
               {/* Global notification handler that works across all pages */}
               <AlertHandler />
               
@@ -84,10 +85,10 @@ function App() {
               </Routes>
               
               <Toaster />
-            </Router>
-          </TimerProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+            </TimerProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </Router>
     </ErrorBoundary>
   );
 }
