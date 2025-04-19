@@ -332,7 +332,7 @@ const UserManagement = () => {
                             className="text-red-600 hover:text-red-900 inline-flex items-center gap-1"
                           >
                             <UserX size={0} />
-                            Delete
+                            
                           </button>
                         </td>
                       </tr>
