@@ -18,7 +18,7 @@ const FileShare = () => {
   const councilName = extractCouncilName(user?.email || '');
 
   const handlePrintEmail = () => {
-    const recipient = 'admin-print@isbmun.com';
+    const recipient = 'isbmunconference@gmail.com';
     const printCode = generatePrintCode(councilName);
     const subject = encodeURIComponent(`${printCode} — File for Printing`);
     const body = encodeURIComponent(
@@ -29,7 +29,7 @@ const FileShare = () => {
   };
 
   const handleOtherEmail = () => {
-    const recipient = 'admin-support@isbmun.com';
+    const recipient = 'isbmunconference@gmail.com';
     const subject = encodeURIComponent(`File Share – ${councilName.toUpperCase()}`);
     const body = encodeURIComponent(
       `Dear Admins,\n\nPlease find the attached file regarding [brief description]. This is not for printing, but for your attention.\n\nRegards,\nChair – ${councilName.toUpperCase()}`
