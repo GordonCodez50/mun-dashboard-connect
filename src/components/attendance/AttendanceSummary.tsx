@@ -74,7 +74,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <UserX className="h-4 w-4 text-red-500" />
-                  <span className="text-sm"></span>
+                  <span className="text-sm">Absent</span>
                 </div>
                 <div className="text-sm font-medium">
                   {absentCount} <span className="text-muted-foreground">({absentPercentage}%)</span>
@@ -84,7 +84,7 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <HelpCircle className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Absent</span>
+                  <span className="text-sm">Not Marked</span>
                 </div>
                 <div className="text-sm font-medium">
                   {notMarkedCount} <span className="text-muted-foreground">({notMarkedPercentage}%)</span>
@@ -138,8 +138,8 @@ export const AttendanceSummary: React.FC<AttendanceSummaryProps> = ({
               </div>
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Present</span>
+                <span></span>
                 <span>Absent</span>
-                <span>Not Marked</span>
               </div>
             </div>
           </div>
