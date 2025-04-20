@@ -1,8 +1,9 @@
+
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
 import { Button } from "@/components/ui/button";
-import { LogIn, Hexagon, Github, Twitter, Instagram, Globe } from "lucide-react";
+import { LogIn, Globe, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 
