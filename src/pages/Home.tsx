@@ -20,7 +20,7 @@ export default function Home() {
           }
         >
           <img
-            src="/logo.png"
+            src="/Screenshot%202025-04-20%20180839.png"
             alt="ISBMUN"
             className="mx-auto rounded-2xl object-contain h-full"
             draggable={false}
