@@ -47,7 +47,7 @@ export default function Home() {
       </div>
 
       <Footer
-        logo={<Hexagon className="h-10 w-10" />}
+        logo="/logo.png"
         brandName="ISBMUN"
         socialLinks={[
           {
