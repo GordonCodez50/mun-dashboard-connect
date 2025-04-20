@@ -2,6 +2,8 @@
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -27,6 +29,17 @@ export default function Home() {
             draggable={false}
           />
         </ContainerScroll>
+
+        <div className="max-w-3xl mx-auto px-4 text-center mt-4">
+          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+            Access our comprehensive conference dashboard, designed specifically for ISBMUN 2025 delegates. 
+            Track your committee sessions, manage documents, and stay updated with real-time notifications. 
+            Join us in making this conference a seamless digital experience.
+          </p>
+          <RainbowButton asChild>
+            <Link to="/login">Login to Dashboard</Link>
+          </RainbowButton>
+        </div>
       </div>
     </div>
   );
