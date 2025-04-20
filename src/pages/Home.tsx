@@ -66,7 +66,7 @@ export default function Home() {
         legalLinks={[]}
         copyright={{
           text: "© 2025 ISBMUN",
-          license: "All rights reserved to the centre",
+          license: "All rights reserved",
         }}
       />
     </div>
