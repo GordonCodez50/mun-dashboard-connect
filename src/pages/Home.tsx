@@ -2,6 +2,8 @@
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -27,6 +29,11 @@ export default function Home() {
             draggable={false}
           />
         </ContainerScroll>
+        <div className="flex justify-center mt-8">
+          <RainbowButton asChild>
+            <Link to="/login">Login</Link>
+          </RainbowButton>
+        </div>
       </div>
     </div>
   );
