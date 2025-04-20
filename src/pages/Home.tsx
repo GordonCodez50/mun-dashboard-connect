@@ -1,6 +1,7 @@
 
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
+import { GradientText } from "@/components/ui/gradient-text";
 
 export default function Home() {
   return (
@@ -12,9 +13,9 @@ export default function Home() {
             <>
               <h1 className="text-4xl font-semibold text-black dark:text-white">
                 Welcome to <br />
-                <span className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
                   ISBMUN 2025
-                </span>
+                </GradientText>
               </h1>
             </>
           }
