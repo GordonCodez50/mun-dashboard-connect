@@ -1,14 +1,16 @@
+
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
-import { RainbowButton } from "@/components/ui/rainbow-button";
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
       <Navbar />
-      <div className="flex flex-col pb-[200px] pt-[100px]">
+      <div className="flex flex-col pb-[50px] pt-[100px]">
         <ContainerScroll
           titleComponent={
             <>
@@ -35,9 +37,12 @@ export default function Home() {
             Track your committee sessions, manage documents, and stay updated with real-time notifications. 
             Join us in making this conference a seamless digital experience.
           </p>
-          <RainbowButton>
-            <Link to="/login" className="text-white">Login to Dashboard</Link>
-          </RainbowButton>
+          <Button asChild className="group px-8 py-3 text-base">
+            <Link to="/login" className="flex items-center gap-2">
+              Login to Dashboard
+              <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
