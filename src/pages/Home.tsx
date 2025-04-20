@@ -1,9 +1,8 @@
-
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
 import { Button } from "@/components/ui/button";
-import { LogIn, Hexagon, Github, Twitter } from "lucide-react";
+import { LogIn, Hexagon, Github, Twitter, Instagram, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 
@@ -52,32 +51,23 @@ export default function Home() {
         brandName="ISBMUN"
         socialLinks={[
           {
-            icon: <Twitter className="h-5 w-5" />,
-            href: "https://twitter.com/isbmun",
-            label: "Twitter",
+            icon: <Globe className="h-5 w-5" />,
+            href: "https://isbmun.com",
+            label: "Website",
           },
           {
-            icon: <Github className="h-5 w-5" />,
-            href: "https://github.com/isbmun",
-            label: "GitHub",
+            icon: <Instagram className="h-5 w-5" />,
+            href: "https://instagram.com/isbmun",
+            label: "Instagram",
           },
         ]}
-        mainLinks={[
-          { href: "/about", label: "About Conference" },
-          { href: "/committees", label: "Committees" },
-          { href: "/resources", label: "Resources" },
-          { href: "/contact", label: "Contact" },
-        ]}
-        legalLinks={[
-          { href: "/privacy", label: "Privacy Policy" },
-          { href: "/terms", label: "Terms of Service" },
-        ]}
+        mainLinks={[]}
+        legalLinks={[]}
         copyright={{
           text: "© 2024 ISBMUN",
-          license: "All rights reserved",
+          license: "All rights reserved to the centre",
         }}
       />
     </div>
   );
 }
-
