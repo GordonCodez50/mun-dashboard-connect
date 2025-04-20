@@ -29,9 +29,15 @@ export default function Home() {
             draggable={false}
           />
         </ContainerScroll>
-        <div className="flex justify-center mt-8">
+
+        <div className="max-w-3xl mx-auto px-4 text-center mt-16">
+          <p className="text-lg text-gray-700 dark:text-gray-300 mb-8 leading-relaxed">
+            Access our comprehensive conference dashboard, designed specifically for ISBMUN 2025 delegates. 
+            Track your committee sessions, manage documents, and stay updated with real-time notifications. 
+            Join us in making this conference a seamless digital experience.
+          </p>
           <RainbowButton asChild>
-            <Link to="/login">Login</Link>
+            <Link to="/login">Login to Dashboard</Link>
           </RainbowButton>
         </div>
       </div>
