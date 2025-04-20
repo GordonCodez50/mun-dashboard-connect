@@ -18,7 +18,7 @@ export default function Home() {
               <h1 className="text-4xl font-semibold text-black dark:text-white">
                 Welcome to <br />
                 <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
-                  ISBMUN 2025
+                  ISBMUN Dashhoard 2025
                 </GradientText>
               </h1>
             </>
@@ -65,7 +65,7 @@ export default function Home() {
         mainLinks={[]}
         legalLinks={[]}
         copyright={{
-          text: "© 2024 ISBMUN",
+          text: "© 2025 ISBMUN",
           license: "All rights reserved to the centre",
         }}
       />
