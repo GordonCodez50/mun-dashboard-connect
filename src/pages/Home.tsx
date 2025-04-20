@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
       <Navbar />
-      <div className="flex flex-col pb-[50px] pt-[100px]">
+      <div className="flex flex-col pb-4 pt-[100px] -mt-20">
         <ContainerScroll
           titleComponent={
             <>
@@ -31,7 +31,7 @@ export default function Home() {
           />
         </ContainerScroll>
 
-        <div className="max-w-3xl mx-auto px-4 text-center mt-4">
+        <div className="max-w-3xl mx-auto px-4 text-center -mt-20">
           <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
             Access our comprehensive conference dashboard, designed specifically for ISBMUN 2025 delegates. 
             Track your committee sessions, manage documents, and stay updated with real-time notifications. 
@@ -48,3 +48,4 @@ export default function Home() {
     </div>
   );
 }
+
