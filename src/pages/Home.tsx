@@ -48,7 +48,7 @@ export default function Home() {
       </div>
 
       <Footer
-        logo="/logo.png"
+        logo={<img src="/logo.png" alt="ISBMUN Logo" className="h-10 w-10" />}
         brandName="ISBMUN"
         socialLinks={[
           {
