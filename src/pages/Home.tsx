@@ -1,3 +1,4 @@
+
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
@@ -5,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Home() {
+  const isMobile = useIsMobile();
+
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
       <Navbar />
@@ -24,7 +28,11 @@ export default function Home() {
           }
         >
           <img
-            src="/Screenshot%202025-04-20%20180839.png"
+            src={
+              isMobile
+                ? "/mun-dashboard-connect.png"
+                : "/Screenshot%202025-04-20%20180839.png"
+            }
             alt="ISBMUN"
             className="mx-auto rounded-2xl object-contain h-full"
             draggable={false}
