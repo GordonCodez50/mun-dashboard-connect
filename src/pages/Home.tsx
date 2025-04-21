@@ -16,7 +16,7 @@ export default function Home() {
             <>
               <h1 className="text-4xl font-semibold text-black dark:text-white">
                 Welcome to <br />
-                <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-[1] md:leading-[0.9]">
                   ISBMUN Dashboard 2025
                 </GradientText>
               </h1>
