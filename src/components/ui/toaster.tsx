@@ -15,8 +15,8 @@ export function Toaster() {
   
   // Deduplicate toasts based on title and description (prevents double notifications)
   const uniqueToasts = toasts.reduce((acc, toast) => {
-    const key = `${toast.title}-${toast.description}`;
-    if (!acc.some(t => `${t.title}-${t.description}` === key)) {
+    const key = `${toast.title || ''}-${toast.description || ''}`;
+    if (!acc.some(t => `${t.title || ''}-${t.description || ''}` === key)) {
       acc.push(toast);
     }
     return acc;
@@ -25,29 +25,33 @@ export function Toaster() {
   return (
     <ToastProvider>
       {uniqueToasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Default values to prevent undefined showing up
+        const safeTitle = title || 'Notification';
+        const safeDescription = description || '';
+        
         // Determine icon based on title, description or variant
         let Icon = Bell;
         
         if (variant === "destructive") {
           Icon = AlertTriangle;
         } else if (
-          (typeof title === 'string' && title.toLowerCase().includes('reply')) || 
-          (typeof description === 'string' && description.toLowerCase().includes('reply'))
+          (typeof safeTitle === 'string' && safeTitle.toLowerCase().includes('reply')) || 
+          (typeof safeDescription === 'string' && safeDescription.toLowerCase().includes('reply'))
         ) {
           Icon = MessageSquare;
         } else if (
-          (typeof title === 'string' && (
-            title.toLowerCase().includes('success') || 
-            title.toLowerCase().includes('resolved') ||
-            title.toLowerCase().includes('completed')
+          (typeof safeTitle === 'string' && (
+            safeTitle.toLowerCase().includes('success') || 
+            safeTitle.toLowerCase().includes('resolved') ||
+            safeTitle.toLowerCase().includes('completed')
           ))
         ) {
           Icon = CheckCircle;
         } else if (
-          (typeof title === 'string' && (
-            title.toLowerCase().includes('info') ||
-            title.toLowerCase().includes('requesting') ||
-            title.toLowerCase().includes('testing')
+          (typeof safeTitle === 'string' && (
+            safeTitle.toLowerCase().includes('info') ||
+            safeTitle.toLowerCase().includes('requesting') ||
+            safeTitle.toLowerCase().includes('testing')
           ))
         ) {
           Icon = Info;
@@ -64,9 +68,9 @@ export function Toaster() {
                 }`} />
               </div>
               <div className="grid gap-1 flex-grow">
-                {title && <ToastTitle>{title}</ToastTitle>}
-                {description && (
-                  <ToastDescription>{description}</ToastDescription>
+                {safeTitle && <ToastTitle>{safeTitle}</ToastTitle>}
+                {safeDescription && (
+                  <ToastDescription>{safeDescription}</ToastDescription>
                 )}
               </div>
               <ToastClose />
