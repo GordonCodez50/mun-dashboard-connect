@@ -1,7 +1,7 @@
 
 # MUN Conference Dashboard
 
-A complete dashboard solution for Model United Nations (MUN) conferences.
+A completex dashboard solution for Model United Nations (MUN) conferences.
 
 ## Features
 
