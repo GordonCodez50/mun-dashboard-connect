@@ -136,9 +136,8 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
                 <SelectContent>
                   <SelectItem value="delegate">Delegate</SelectItem>
                   <SelectItem value="chair">Chair</SelectItem>
-                  <SelectItem value="observer">Observer</SelectItem>
-                  <SelectItem value="staff">Staff</SelectItem>
-                  <SelectItem value="guest">Guest</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
+                  <SelectItem value="runner">Runner</SelectItem>
                 </SelectContent>
               </Select>
             </div>
