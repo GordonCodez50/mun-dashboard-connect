@@ -3,7 +3,7 @@ import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
 import { Button } from "@/components/ui/button";
-import { LogIn, Globe, Instagram } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 
@@ -18,7 +18,7 @@ export default function Home() {
               <h1 className="text-4xl font-semibold text-black dark:text-white">
                 Welcome to <br />
                 <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
-                  ISBMUN Dashhoard 2025
+                  ISBMUN Dashboard 2025
                 </GradientText>
               </h1>
             </>
@@ -48,20 +48,9 @@ export default function Home() {
       </div>
 
       <Footer
-        logo={<img src="/logo.png" alt="ISBMUN Logo" className="h-10 w-10" />}
+        logo={null}
         brandName="ISBMUN"
-        socialLinks={[
-          {
-            icon: <Globe className="h-5 w-5" />,
-            href: "https://isbmun.com",
-            label: "Website",
-          },
-          {
-            icon: <Instagram className="h-5 w-5" />,
-            href: "https://instagram.com/isbmun",
-            label: "Instagram",
-          },
-        ]}
+        socialLinks={[]}
         mainLinks={[]}
         legalLinks={[]}
         copyright={{
@@ -72,3 +61,4 @@ export default function Home() {
     </div>
   );
 }
+
