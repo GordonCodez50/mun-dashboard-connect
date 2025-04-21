@@ -1,4 +1,3 @@
-
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
@@ -47,18 +46,7 @@ export default function Home() {
         </div>
       </div>
 
-      <Footer
-        logo={null}
-        brandName="ISBMUN"
-        socialLinks={[]}
-        mainLinks={[]}
-        legalLinks={[]}
-        copyright={{
-          text: "© 2025 ISBMUN",
-          license: "All rights reserved",
-        }}
-      />
+      <Footer brandName="ISBMUN" />
     </div>
   );
 }
-
