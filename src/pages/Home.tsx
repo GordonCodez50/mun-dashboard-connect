@@ -40,7 +40,7 @@ export default function Home() {
           </p>
           <Button asChild className="group px-8 py-3 text-base">
             <Link to="/login" className="flex items-center gap-2">
-              Login to Dashboard
+              Login
               <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
