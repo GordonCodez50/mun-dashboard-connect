@@ -1,5 +1,5 @@
 
-"use client";
+"use client"
 import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -8,35 +8,12 @@ interface GradientTextProps extends React.HTMLAttributes<HTMLElement> {
   className?: string;
   children: React.ReactNode;
   as?: React.ElementType;
-  animate?: boolean; // enable animation if true
 }
-
-// Animated gradient style for the text
-const animatedGradientStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, #1a2544 0%, #4578b6 50%, #1a2544 100%)",
-  backgroundSize: "200% auto",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-  textFillColor: "transparent",
-  animation: "gradientMove 3s linear infinite"
-};
-
-const staticGradientStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, #1a2544 0%, #4578b6 100%)",
-  WebkitBackgroundClip: "text",
-  WebkitTextFillColor: "transparent",
-  backgroundClip: "text",
-  textFillColor: "transparent"
-};
-
-/* Note: The @keyframes for gradientMove must be in global CSS. We'll add it in index.css. */
 
 function GradientText({
   className,
   children,
   as: Component = "span",
-  animate = false,
   ...props
 }: GradientTextProps) {
   const MotionComponent = motion(Component);
@@ -46,9 +23,7 @@ function GradientText({
       className={cn(
         "relative inline-flex overflow-hidden bg-white dark:bg-black",
         className,
-        animate ? "gradient-animated-text" : ""
       )}
-      style={animate ? animatedGradientStyle : staticGradientStyle}
       {...props}
     >
       {children}
@@ -62,4 +37,4 @@ function GradientText({
   );
 }
 
-export { GradientText };
+export { GradientText }

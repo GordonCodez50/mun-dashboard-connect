@@ -17,11 +17,8 @@ export default function Home() {
             <>
               <h1 className="text-4xl font-semibold text-black dark:text-white">
                 Welcome to <br />
-                <GradientText
-                  className="text-4xl md:text-[6rem] font-bold mt-1 leading-none animated-gradient"
-                  animate
-                >
-                  ISBMUN Dashboard 2025
+                <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-none">
+                  ISBMUN Dashhoard 2025
                 </GradientText>
               </h1>
             </>
@@ -49,17 +46,28 @@ export default function Home() {
           </Button>
         </div>
       </div>
+
       <Footer
         logo={<img src="/logo.png" alt="ISBMUN Logo" className="h-10 w-10" />}
         brandName="ISBMUN"
-        copyright={{
-          text: "© 2024 ISBMUN",
-          license: "All rights reserved",
-        }}
-        // Remove all socialLinks, mainLinks, and legalLinks for a minimal footer
-        socialLinks={[]}
+        socialLinks={[
+          {
+            icon: <Globe className="h-5 w-5" />,
+            href: "https://isbmun.com",
+            label: "Website",
+          },
+          {
+            icon: <Instagram className="h-5 w-5" />,
+            href: "https://instagram.com/isbmun",
+            label: "Instagram",
+          },
+        ]}
         mainLinks={[]}
         legalLinks={[]}
+        copyright={{
+          text: "© 2025 ISBMUN",
+          license: "All rights reserved",
+        }}
       />
     </div>
   );
