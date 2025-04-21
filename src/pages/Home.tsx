@@ -31,7 +31,7 @@ export default function Home() {
           />
         </ContainerScroll>
 
-        <div className="max-w-3xl mx-auto px-4 text-center -mt-30 md:-mt-32">
+        <div className="max-w-3xl mx-auto px-4 text-center -mt-30 md:-mt-32 mb-12">
           <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
             Access our comprehensive conference dashboard, designed specifically for ISBMUN 2025 delegates. 
             Track your committee sessions, manage documents, and stay updated with real-time notifications. 
