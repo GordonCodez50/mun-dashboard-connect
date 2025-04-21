@@ -54,7 +54,7 @@ export default function Home() {
         </div>
       </div>
 
-      <Footer brandName="ISBMUN" />
+      <Footer brandName="ISBMUN 2025" />
     </div>
   );
 }
