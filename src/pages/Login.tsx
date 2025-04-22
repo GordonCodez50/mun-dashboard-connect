@@ -54,6 +54,23 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    const emailSubject = "Password Reset Request - ISBMUN'25 Dashboard";
+    const emailBody = `Hello ISBMUN Admin,
+
+I would like to request a password reset for my ISBMUN'25 Dashboard account.
+
+Account Email: ${email}
+
+Please send the new password to this email address.
+
+Best regards,
+${email}`;
+
+    const mailtoLink = `mailto:isbmunconference@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.location.href = mailtoLink;
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-accent/5 to-primary/5">
@@ -175,10 +192,7 @@ const Login = () => {
             <button 
               type="button"
               className="text-sm text-accent hover:text-accent/80 hover:underline transition-colors duration-200"
-              onClick={() => toast.info("Password reset functionality", {
-                description: "Please contact your MUN organizers to reset your password",
-                duration: 5000
-              })}
+              onClick={handleForgotPassword}
             >
               Forgot your password?
             </button>
