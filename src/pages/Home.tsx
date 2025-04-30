@@ -1,4 +1,3 @@
-
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
@@ -13,9 +12,7 @@ import {
   Users,
   AlertTriangle,
   Clock,
-  FileText
 } from "lucide-react";
-
 
 export default function Home() {
   const isMobile = useIsMobile();
@@ -52,7 +49,7 @@ export default function Home() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             ISBMUN 2025 Dashboard Highlights
           </h2>
-        
+
           <BentoGrid
             items={[
               {
@@ -95,7 +92,7 @@ export default function Home() {
               },
             ]}
           />
-        
+
           <div className="mt-16 text-center">
             <Button asChild className="group px-8 py-3 text-base">
               <Link to="/login" className="flex items-center gap-2">
@@ -105,6 +102,7 @@ export default function Home() {
             </Button>
           </div>
         </section>
+      </div>
 
       <Footer brandName="" />
     </div>
