@@ -1,13 +1,12 @@
+import { useState, useEffect } from "react";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
 import { GradientText } from "@/components/ui/gradient-text";
-import { Button } from "@/components/ui/button";
-import { LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CTA } from "@/components/ui/call-to-action";
 import { BentoGrid } from "@/components/ui/bento-grid";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import {
   Lock,
   Users,
@@ -17,6 +16,15 @@ import {
 
 export default function Home() {
   const isMobile = useIsMobile();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading for 1.5 seconds
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) return <LoadingScreen />;
 
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
@@ -25,16 +33,14 @@ export default function Home() {
       <div className="flex flex-col pb-4 pt-[100px] -mt-20">
         <ContainerScroll
           titleComponent={
-            <>
-              <div className="flex flex-col items-center justify-center text-center">
-                <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white">
-                  Welcome to
-                </h1>
-                <GradientText className="text-3xl sm:text-5xl md:text-[6rem] font-bold mt-2 leading-[1.1] md:leading-[0.9]">
-                  ISBMUN Dashboard 2025
-                </GradientText>
-              </div>
-            </>
+            <div className="flex flex-col items-center justify-center text-center">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white">
+                Welcome to
+              </h1>
+              <GradientText className="text-3xl sm:text-5xl md:text-[6rem] font-bold mt-2 leading-[1.1] md:leading-[0.9]">
+                ISBMUN Dashboard 2025
+              </GradientText>
+            </div>
           }
         >
           <img
