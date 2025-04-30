@@ -48,63 +48,63 @@ export default function Home() {
           />
         </ContainerScroll>
 
-        <BentoGrid
-          items={[
-            {
-              title: "Role-Based Access & Authentication",
-              meta: "Multi-user",
-              description:
-                "Whether you're an Admin managing the entire conference or a Chair running a council, the ISBMUN Dashboard ensures secure access with role-specific functionality.",
-              icon: <Lock className="w-4 h-4 text-indigo-500" />,
-              status: "Live",
-              tags: ["Security", "Custom UI", "Login"],
-              hasPersistentHover: true,
-            },
-            {
-              title: "Smart Council Management",
-              meta: "Live Sync",
-              description:
-                "Admins can create, edit, and monitor multiple councils with real-time updates, seating plans, attendance tracking, and speaker lists.",
-              icon: <Users className="w-4 h-4 text-cyan-500" />,
-              status: "Active",
-              tags: ["Council", "Real-Time", "Admin Tools"],
-            },
-            {
-              title: "Instant Alerts & Assistance Requests",
-              meta: "One-Tap",
-              description:
-                "Chairs can send alerts instantly—tech support, misconduct, or procedural help—directly to the control room.",
-              icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
-              status: "Enabled",
-              tags: ["Support", "Real-Time", "Chair Tools"],
-              colSpan: 2,
-            },
-            {
-              title: "Integrated Timer & Document Sharing",
-              meta: "Built-In Tools",
-              description:
-                "Manage speeches and debates with built-in timers, and upload draft resolutions right from the dashboard.",
-              icon: <Clock className="w-4 h-4 text-yellow-500" />,
-              status: "Ready",
-              tags: ["Timer", "Documents", "Efficiency"],
-            },
-          ]}
-        />
-
-        <div className="max-w-3xl mx-auto px-4 text-center -mt-30 md:-mt-32 mb-12">
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-            Access our comprehensive conference dashboard, designed specifically for ISBMUN 2025 delegates. 
-            Track your committee sessions, manage documents, and stay updated with real-time notifications. 
-            Join us in making this conference a seamless digital experience.
-          </p>
-          <Button asChild className="group px-8 py-3 text-base">
-            <Link to="/login" className="flex items-center gap-2">
-              Login
-              <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
-        </div>
-      </div>
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            ISBMUN 2025 Dashboard Highlights
+          </h2>
+        
+          <BentoGrid
+            items={[
+              {
+                title: "Role-Based Access & Authentication",
+                meta: "Multi-user",
+                description:
+                  "Whether you're an Admin managing the entire conference or a Chair running a council, the ISBMUN Dashboard ensures secure access with role-specific functionality.",
+                icon: <Lock className="w-4 h-4 text-indigo-500" />,
+                status: "Live",
+                tags: ["Security", "Custom UI", "Login"],
+                hasPersistentHover: true,
+              },
+              {
+                title: "Smart Council Management",
+                meta: "Live Sync",
+                description:
+                  "Admins can create, edit, and monitor multiple councils with real-time updates, seating plans, attendance tracking, and speaker lists.",
+                icon: <Users className="w-4 h-4 text-cyan-500" />,
+                status: "Active",
+                tags: ["Council", "Real-Time", "Admin Tools"],
+              },
+              {
+                title: "Integrated Timer & Document Sharing",
+                meta: "Built-In Tools",
+                description:
+                  "Manage speeches and debates with built-in timers, and upload draft resolutions right from the dashboard.",
+                icon: <Clock className="w-4 h-4 text-yellow-500" />,
+                status: "Ready",
+                tags: ["Timer", "Documents", "Efficiency"],
+              },
+              {
+                title: "Instant Alerts & Assistance Requests",
+                meta: "One-Tap",
+                description:
+                  "Chairs can send alerts instantly—tech support, misconduct, or procedural help—directly to the control room.",
+                icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+                status: "Enabled",
+                tags: ["Support", "Real-Time", "Chair Tools"],
+                colSpan: 2,
+              },
+            ]}
+          />
+        
+          <div className="mt-16 text-center">
+            <Button asChild className="group px-8 py-3 text-base">
+              <Link to="/login" className="flex items-center gap-2">
+                Login
+                <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
+          </div>
+        </section>
 
       <Footer brandName="" />
     </div>
