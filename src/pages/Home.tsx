@@ -26,12 +26,14 @@ export default function Home() {
         <ContainerScroll
           titleComponent={
             <>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white text-center sm:text-left">
-                Welcome to <br />
-                <GradientText className="text-3xl sm:text-5xl md:text-[6rem] font-bold mt-1 leading-[1.1] md:leading-[0.9] text-center sm:text-left">
+              <div className="flex flex-col items-center justify-center text-center">
+                <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white">
+                  Welcome to
+                </h1>
+                <GradientText className="text-3xl sm:text-5xl md:text-[6rem] font-bold mt-2 leading-[1.1] md:leading-[0.9]">
                   ISBMUN Dashboard 2025
                 </GradientText>
-              </h1>
+              </div>
             </>
           }
         >
