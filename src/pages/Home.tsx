@@ -46,7 +46,7 @@ export default function Home() {
           />
         </ContainerScroll>
 
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 -mt-8 pb-20">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 -mt-8 pb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             ISBMUN 2025 Dashboard Highlights
           </h2>
