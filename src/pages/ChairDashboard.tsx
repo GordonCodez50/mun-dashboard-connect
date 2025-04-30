@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -304,7 +305,7 @@ const ChairDashboard = () => {
           </div>
           
           <div className="mb-8">
-            <form onSubmit={handleCustomAlert} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+            <form onSubmit={handleCustomAlert} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
               <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Custom Alert</h2>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -312,12 +313,12 @@ const ChairDashboard = () => {
                   value={customAlert}
                   onChange={(e) => setCustomAlert(e.target.value)}
                   placeholder="Type your alert message here..."
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 input-shadow focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 input-shadow focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white"
                 />
                 <button
                   type="submit"
                   disabled={loadingAlert === 'Custom'}
-                  className={`inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
+                  className={`inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
                     loadingAlert === 'Custom' ? 'opacity-70 cursor-not-allowed' : ''
                   }`}
                 >
@@ -354,7 +355,7 @@ const ChairDashboard = () => {
               {recentAlerts.length > 0 ? (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {recentAlerts.map((alert) => (
-                    <div key={alert.id} className="py-3 first:pt-0 last:pb-0 flex items-start gap-3">
+                    <div key={alert.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-3">
                       <span className="mt-0.5 text-accent">
                         <AlertTriangle size={16} />
                       </span>
@@ -368,7 +369,7 @@ const ChairDashboard = () => {
                         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
                         
                         {alert.admin && alert.reply && (
-                          <div className="mt-2 mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-md border border-blue-100 dark:border-blue-800">
+                          <div className="mt-2 mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
                             <p className="font-medium text-sm text-blue-700 dark:text-blue-300">
                               {alert.admin}:
                             </p>
@@ -388,33 +389,33 @@ const ChairDashboard = () => {
                           {alert.status !== 'resolved' && activeAlertId !== alert.id && (
                             <button 
                               onClick={() => setActiveAlertId(alert.id)}
-                              className="flex items-center justify-center gap-1 px-4 py-2 text-sm bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+                              className="flex items-center justify-center gap-1 px-4 py-1.5 text-xs bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
                             >
-                              <MessageSquare size={16} />
-                              Message
+                              <MessageSquare size={14} />
+                              Reply
                             </button>
                           )}
                         </div>
                         
                         {activeAlertId === alert.id && (
-                          <div className="mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                          <div className="mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
                             <div className="flex items-start gap-2">
                               <input
                                 type="text"
                                 value={replyMessage}
                                 onChange={(e) => setReplyMessage(e.target.value)}
                                 placeholder="Type your reply..."
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                               />
                               <button
                                 onClick={() => handleSendReply(alert.id)}
-                                className="px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+                                className="px-3 py-1.5 text-xs bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
                               >
                                 Send
                               </button>
                               <button
                                 onClick={() => setActiveAlertId(null)}
-                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors"
+                                className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors"
                               >
                                 Cancel
                               </button>
@@ -426,7 +427,7 @@ const ChairDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4">
+                <div className="text-center py-8">
                   <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
                 </div>
               )}
