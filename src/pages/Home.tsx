@@ -6,6 +6,7 @@ import { LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { CTA } from "@/components/ui/call-to-action";
 import { BentoGrid } from "@/components/ui/bento-grid";
 import {
   Lock,
@@ -102,14 +103,7 @@ export default function Home() {
             ]}
           />
 
-          <div className="mt-16 text-center">
-            <Button asChild className="group px-8 py-3 text-base">
-              <Link to="/login" className="flex items-center gap-2">
-                Login
-                <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-          </div>
+          <CTA />
         </section>
       </div>
 
