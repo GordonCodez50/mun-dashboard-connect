@@ -15,15 +15,12 @@ function CTA() {
               Try our platform today!
             </h3>
             <p className="text-lg leading-relaxed tracking-tight text-muted-foreground max-w-xl">
-              Managing a MUN conference today is already tough. Avoid further complications by ditching outdated, tedious methods. Our goal is to streamline MUN coordination—making it easier and faster than ever.
+              Experience ISBMUN 2025’s next-generation management platform-purpose-built for Bahrain’s leading MUN conference. From real-time council management to instant alerts and seamless document sharing, every feature is tailored to streamline your MUN experience and keep the focus on diplomacy, debate, and leadership
             </p>
           </div>
           <div className="flex flex-row gap-4">
-            <Button className="gap-4" variant="outline">
-              Jump on a call <PhoneCall className="w-4 h-4" />
-            </Button>
             <Button className="gap-4">
-              Sign up here <MoveRight className="w-4 h-4" />
+              Login Now <MoveRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
