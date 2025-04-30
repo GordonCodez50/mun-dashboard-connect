@@ -13,7 +13,7 @@ function CTA() {
           </div>
           <div className="flex flex-col gap-2">
             <h3 className="text-3xl md:text-5xl tracking-tighter max-w-xl font-regular">
-              Try our platform today!
+              Access Your Dashboard!
             </h3>
             <p className="text-lg leading-relaxed tracking-tight text-muted-foreground max-w-xl">
               Experience ISBMUN 2025’s next-generation management platform—purpose-built for Bahrain’s leading MUN conference. From real-time council management to instant alerts and seamless document sharing, every feature is tailored to streamline your MUN experience and keep the focus on diplomacy, debate, and leadership.
