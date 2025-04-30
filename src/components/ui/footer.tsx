@@ -14,7 +14,7 @@ export function Footer({
         <span className="font-bold text-2xl text-primary">{brandName}</span>
         <div className="flex flex-col items-center space-y-1">
           <span className="text-sm text-muted-foreground">© 2025 ISBMUN</span>
-          <span className="text-sm text-muted-foreground">All rights reserved</span>
+          <span className="text-sm text-muted-foreground">Powered by GGE | JT</span>
         </div>
       </div>
     </footer>
