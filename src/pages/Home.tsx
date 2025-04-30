@@ -7,6 +7,15 @@ import { LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/ui/footer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BentoGrid } from "@/components/ui/bento-grid";
+import {
+  Lock,
+  Users,
+  AlertTriangle,
+  Clock,
+  FileText
+} from "lucide-react";
+
 
 export default function Home() {
   const isMobile = useIsMobile();
@@ -38,6 +47,49 @@ export default function Home() {
             draggable={false}
           />
         </ContainerScroll>
+
+        <BentoGrid
+          items={[
+            {
+              title: "Role-Based Access & Authentication",
+              meta: "Multi-user",
+              description:
+                "Whether you're an Admin managing the entire conference or a Chair running a council, the ISBMUN Dashboard ensures secure access with role-specific functionality.",
+              icon: <Lock className="w-4 h-4 text-indigo-500" />,
+              status: "Live",
+              tags: ["Security", "Custom UI", "Login"],
+              hasPersistentHover: true,
+            },
+            {
+              title: "Smart Council Management",
+              meta: "Live Sync",
+              description:
+                "Admins can create, edit, and monitor multiple councils with real-time updates, seating plans, attendance tracking, and speaker lists.",
+              icon: <Users className="w-4 h-4 text-cyan-500" />,
+              status: "Active",
+              tags: ["Council", "Real-Time", "Admin Tools"],
+            },
+            {
+              title: "Instant Alerts & Assistance Requests",
+              meta: "One-Tap",
+              description:
+                "Chairs can send alerts instantly—tech support, misconduct, or procedural help—directly to the control room.",
+              icon: <AlertTriangle className="w-4 h-4 text-red-500" />,
+              status: "Enabled",
+              tags: ["Support", "Real-Time", "Chair Tools"],
+              colSpan: 2,
+            },
+            {
+              title: "Integrated Timer & Document Sharing",
+              meta: "Built-In Tools",
+              description:
+                "Manage speeches and debates with built-in timers, and upload draft resolutions right from the dashboard.",
+              icon: <Clock className="w-4 h-4 text-yellow-500" />,
+              status: "Ready",
+              tags: ["Timer", "Documents", "Efficiency"],
+            },
+          ]}
+        />
 
         <div className="max-w-3xl mx-auto px-4 text-center -mt-30 md:-mt-32 mb-12">
           <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
