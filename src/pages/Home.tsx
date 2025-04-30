@@ -21,13 +21,14 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
       <Navbar />
+
       <div className="flex flex-col pb-4 pt-[100px] -mt-20">
         <ContainerScroll
           titleComponent={
             <>
-              <h1 className="text-4xl font-semibold text-black dark:text-white">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-black dark:text-white text-center sm:text-left">
                 Welcome to <br />
-                <GradientText className="text-4xl md:text-[6rem] font-bold mt-1 leading-[1] md:leading-[0.9]">
+                <GradientText className="text-3xl sm:text-5xl md:text-[6rem] font-bold mt-1 leading-[1.1] md:leading-[0.9] text-center sm:text-left">
                   ISBMUN Dashboard 2025
                 </GradientText>
               </h1>
@@ -41,13 +42,13 @@ export default function Home() {
                 : "/Screenshot%202025-04-20%20180839.png"
             }
             alt="ISBMUN"
-            className="mx-auto rounded-2xl object-contain h-full"
+            className="mx-auto rounded-2xl object-contain w-full max-h-[400px] sm:max-h-[500px] md:max-h-[600px] lg:max-h-[700px]"
             draggable={false}
           />
         </ContainerScroll>
 
-        <section className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 pt-10 -mt-8 pb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 -mt-8 pb-8">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">
             ISBMUN 2025 Dashboard Highlights
           </h2>
 
@@ -104,6 +105,7 @@ export default function Home() {
           />
 
           <CTA />
+          <div className="mt-8" />
         </section>
       </div>
 
