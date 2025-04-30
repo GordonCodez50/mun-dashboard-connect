@@ -66,7 +66,7 @@ export default function Home() {
                 title: "Smart Council Management",
                 meta: "Live Sync",
                 description:
-                  "Admins can create, edit, and monitor multiple councils with real-time updates, seating plans, attendance tracking, and speaker lists.",
+                  "Admins can create, edit, and monitor multiple councils with real-time updates, seating plans, and speaker lists.",
                 icon: <Users className="w-4 h-4 text-cyan-500" />,
                 status: "Active",
                 tags: ["Council", "Real-Time", "Admin Tools"],
