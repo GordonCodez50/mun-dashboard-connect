@@ -81,6 +81,15 @@ export default function Home() {
                 tags: ["Timer", "Documents", "Efficiency"],
               },
               {
+                title: "Automated Attendance & Participation Tracking",
+                meta: "Smart Records",
+                description:
+                  "Track delegate attendance in real time, auto-mark participation, and generate instant reports for council chairs and admins.",
+                icon: <Users className="w-4 h-4 text-emerald-500" />,
+                status: "Online",
+                tags: ["Attendance", "Analytics", "Transparency"],
+              },
+              {
                 title: "Instant Alerts & Assistance Requests",
                 meta: "One-Tap",
                 description:
