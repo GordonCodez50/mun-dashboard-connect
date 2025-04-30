@@ -1,6 +1,7 @@
-import { MoveRight, PhoneCall } from "lucide-react";
+import { MoveRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 function CTA() {
   return (
@@ -15,12 +16,14 @@ function CTA() {
               Try our platform today!
             </h3>
             <p className="text-lg leading-relaxed tracking-tight text-muted-foreground max-w-xl">
-              Experience ISBMUN 2025’s next-generation management platform-purpose-built for Bahrain’s leading MUN conference. From real-time council management to instant alerts and seamless document sharing, every feature is tailored to streamline your MUN experience and keep the focus on diplomacy, debate, and leadership
+              Experience ISBMUN 2025’s next-generation management platform—purpose-built for Bahrain’s leading MUN conference. From real-time council management to instant alerts and seamless document sharing, every feature is tailored to streamline your MUN experience and keep the focus on diplomacy, debate, and leadership.
             </p>
           </div>
           <div className="flex flex-row gap-4">
-            <Button className="gap-4">
-              Login Now <MoveRight className="w-4 h-4" />
+            <Button asChild className="gap-4">
+              <Link to="/login">
+                Login Now <MoveRight className="w-4 h-4" />
+              </Link>
             </Button>
           </div>
         </div>
