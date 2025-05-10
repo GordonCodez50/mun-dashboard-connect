@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { Navbar } from "@/components/ui/navbar";
@@ -30,7 +31,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background overflow-hidden">
       <Navbar />
 
-      <div className="flex flex-col pb-4 pt-[100px] -mt-20">
+      <div className="flex flex-col pb-0 pt-[100px] -mt-20">
         <ContainerScroll
           titleComponent={
             <div className="flex flex-col items-center justify-center text-center">
@@ -55,8 +56,8 @@ export default function Home() {
           />
         </ContainerScroll>
 
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 -mt-8 pb-8">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 -mt-20 pb-0">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6">
             ISBMUN 2025 Dashboard Highlights
           </h2>
 
@@ -112,8 +113,9 @@ export default function Home() {
             ]}
           />
 
-          <CTA />
-          <div className="mt-8" />
+          <div className="mt-2">
+            <CTA />
+          </div>
         </section>
       </div>
 

@@ -9,7 +9,7 @@ export function Footer({
   brandName,
 }: FooterProps) {
   return (
-    <footer className="w-full flex flex-col items-center justify-center px-4 py-8 bg-white dark:bg-background border-t border-border">
+    <footer className="w-full flex flex-col items-center justify-center px-4 py-4 bg-white dark:bg-background border-t border-border">
       <div className="flex flex-col items-center space-y-2 w-full">
         <span className="font-bold text-2xl text-primary">{brandName}</span>
         <div className="flex flex-col items-center space-y-1">
