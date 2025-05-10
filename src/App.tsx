@@ -45,6 +45,7 @@ const UserManagement = lazy(() => import("./pages/UserManagement"));
 const FileShare = lazy(() => import("./pages/FileShare"));
 const ChairAttendance = lazy(() => import("./pages/ChairAttendance"));
 const AdminAttendance = lazy(() => import("./pages/AdminAttendance"));
+const Debug = lazy(() => import("./pages/Debug"));
 
 // Setup loading fallback
 const LoadingFallback = () => (
@@ -289,6 +290,13 @@ const AppWithAuth = () => {
           path="/admin-attendance"
           element={<ProtectedRoute element={<AdminAttendance />} requiredRole="admin" />}
         />
+
+        {/* Debug Route - Password protected but no auth requirement */}
+        <Route path="/debug" element={
+          <ErrorBoundary fallback={<ErrorFallback />}>
+            <Suspense fallback={<LoadingFallback />}><Debug /></Suspense>
+          </ErrorBoundary>
+        } />
 
         {/* Index route redirect */}
         <Route path="/index" element={<Navigate to="/" replace />} />
