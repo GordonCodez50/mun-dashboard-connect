@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CTA } from "@/components/ui/call-to-action";
 import { BentoGrid } from "@/components/ui/bento-grid";
 import { LoadingScreen } from "@/components/ui/loading-screen";
+import { motion } from "framer-motion";
 import {
   Lock,
   Users,
@@ -57,9 +58,14 @@ export default function Home() {
         </ContainerScroll>
 
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 -mt-20 pb-0">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6">
+          <motion.h2 
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             ISBMUN 2025 Dashboard Highlights
-          </h2>
+          </motion.h2>
 
           <BentoGrid
             items={[
@@ -113,9 +119,18 @@ export default function Home() {
             ]}
           />
 
-          <div className="mt-2">
+          <motion.div 
+            className="mt-2"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.7, 
+              delay: 0.6, 
+              ease: [0.25, 0.1, 0.25, 1] 
+            }}
+          >
             <CTA />
-          </div>
+          </motion.div>
         </section>
       </div>
 
