@@ -5,66 +5,29 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { 
-  UserPlus, 
   UserX, 
   Users, 
   Shield, 
   User as UserIcon, 
-  Mail, 
-  Building, 
-  Key
+  HelpCircle,
+  ExternalLink,
+  Info,
+  Check
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const UserManagement = () => {
-  const { user, users, createUser, deleteUser } = useAuth();
+  const { user, users, deleteUser } = useAuth();
+  const isMobile = useIsMobile();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newUserData, setNewUserData] = useState<UserFormData>({
-    username: '',
-    password: '',
-    name: '',
-    role: 'chair',
-    council: '',
-    email: ''
-  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setNewUserData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newUserData.username || !newUserData.password || !newUserData.name) {
-      toast.error('Please fill out all required fields');
-      return;
-    }
-    
-    if (newUserData.role === 'chair' && !newUserData.council) {
-      toast.error('Chair must be assigned to a council');
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const success = await createUser(newUserData);
-      if (success) {
-        setNewUserData({
-          username: '',
-          password: '',
-          name: '',
-          role: 'chair',
-          council: '',
-          email: ''
-        });
-        setShowCreateForm(false);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (window.confirm(`Are you sure you want to delete ${userName}?`)) {
@@ -75,205 +38,72 @@ const UserManagement = () => {
   // Filter out the current user from the list
   const filteredUsers = users.filter(u => u.id !== user?.id);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const fadeInVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      {!isMobile && <Sidebar />}
       
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 animate-fade-in">
-          <header className="mb-8">
+        <motion.div 
+          className="p-6 md:p-8 animate-fade-in"
+          initial="hidden"
+          animate="visible"
+          variants={fadeInVariants}
+        >
+          <motion.header 
+            className="mb-8"
+            variants={itemVariants}
+          >
             <h1 className="text-3xl font-bold text-primary">User Management</h1>
             <p className="text-gray-600 mt-1">
-              Create and manage user accounts
+              View and manage user accounts
             </p>
-          </header>
+          </motion.header>
           
-          <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <motion.div 
+            className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+            variants={itemVariants}
+          >
             <div className="flex items-center gap-2">
               <Users size={20} className="text-accent" />
               <h2 className="text-lg font-medium text-primary">
                 Users ({filteredUsers.length})
               </h2>
             </div>
-            
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition"
-            >
-              {showCreateForm ? (
-                <>
-                  <UserX size={0} />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <UserPlus size={18} />
-                  Create New User
-                </>
-              )}
-            </button>
-          </div>
+          </motion.div>
           
-          {showCreateForm && (
-            <div className="mb-8 bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-scale-in">
-              <h3 className="text-lg font-medium text-primary mb-4">Create New User</h3>
-              
-              <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                    Username *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <UserIcon size={16} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={newUserData.username}
-                      onChange={handleInputChange}
-                      required
-                      className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                      placeholder="Enter username"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Password *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Key size={16} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={newUserData.password}
-                      onChange={handleInputChange}
-                      required
-                      className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                      placeholder="Enter password"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <UserIcon size={16} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={newUserData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail size={16} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={newUserData.email}
-                      onChange={handleInputChange}
-                      className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                      placeholder="Enter email"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                    Role *
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Shield size={16} className="text-gray-400" />
-                    </div>
-                    <select
-                      id="role"
-                      name="role"
-                      value={newUserData.role}
-                      onChange={handleInputChange}
-                      required
-                      className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                    >
-                      <option value="chair">Chair</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  </div>
-                </div>
-                
-                {newUserData.role === 'chair' && (
-                  <div>
-                    <label htmlFor="council" className="block text-sm font-medium text-gray-700 mb-1">
-                      Council *
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building size={16} className="text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        id="council"
-                        name="council"
-                        value={newUserData.council}
-                        onChange={handleInputChange}
-                        required
-                        className="pl-10 block w-full border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent sm:text-sm"
-                        placeholder="Enter council name"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <div className={newUserData.role === 'chair' ? "md:col-span-2" : "md:col-span-1"}>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus size={18} />
-                        Create User
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <motion.div 
+            className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden mb-8"
+            variants={itemVariants}
+            whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+            transition={{ duration: 0.3 }}
+          >
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -300,8 +130,15 @@ const UserManagement = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                    filteredUsers.map((user, index) => (
+                      <motion.tr 
+                        key={user.id} 
+                        className="hover:bg-gray-50 transition-colors"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.7)" }}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-primary">{user.name}</div>
                         </td>
@@ -331,11 +168,11 @@ const UserManagement = () => {
                             onClick={() => handleDeleteUser(user.id, user.name)}
                             className="text-red-600 hover:text-red-900 inline-flex items-center gap-1"
                           >
-                            <UserX size={0} />
-                            
+                            <UserX size={16} />
+                            Delete
                           </button>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))
                   ) : (
                     <tr>
@@ -347,8 +184,175 @@ const UserManagement = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          </motion.div>
+          
+          {/* Troubleshooting Section */}
+          <motion.div
+            className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <HelpCircle size={24} className="text-accent" />
+              <h2 className="text-lg font-medium text-primary">User Management Troubleshooting</h2>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              Follow these steps to add new users to the ISBMUN Dashboard platform through Firebase Authentication.
+            </p>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="step-1">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/10 text-accent">1</div>
+                    <span>Access Firebase Console</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="mb-2">Login to the MUN Firebase account and open the ISBMUN Dashboard <span className="font-semibold text-accent">prod-red</span> project.</p>
+                    <div className="flex items-center text-sm text-accent gap-1 hover:underline cursor-pointer">
+                      <ExternalLink size={14} />
+                      <span>https://console.firebase.google.com</span>
+                    </div>
+                  </motion.div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="step-2">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/10 text-accent">2</div>
+                    <span>Navigate to Authentication</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="mb-2">In the Firebase console sidebar, select <span className="font-semibold">Authentication</span>, then click the <span className="font-semibold">Users</span> tab.</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                      <Check size={16} className="text-green-500" />
+                      <span>Find "Build" → "Authentication" in the side menu</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Check size={16} className="text-green-500" />
+                      <span>Click on the "Users" tab in the Authentication section</span>
+                    </div>
+                  </motion.div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="step-3">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/10 text-accent">3</div>
+                    <span>Add a New User</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="mb-2">Click the <span className="font-semibold">Add User</span> button and fill in the required information:</p>
+                    <ul className="list-disc pl-6 space-y-2 mb-3 text-sm text-gray-600">
+                      <li><span className="font-medium text-gray-700">Email:</span> Use the username@isbmun.org format or a valid email</li>
+                      <li><span className="font-medium text-gray-700">Password:</span> Enter a secure temporary password (min. 6 characters)</li>
+                    </ul>
+                    <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+                      <div className="flex items-start gap-2">
+                        <Info size={16} className="text-amber-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium">Important:</p> 
+                          <p>After creating the user, you'll need to manually update the Firestore database to add role, council, and other user details.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="step-4">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/10 text-accent">4</div>
+                    <span>Update User Details in Firestore</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="mb-3">Navigate to the <span className="font-semibold">Firestore Database</span> section in Firebase and update the user document:</p>
+                    <ol className="list-decimal pl-6 space-y-2 text-sm text-gray-600">
+                      <li>Go to the <span className="font-medium text-gray-700">users</span> collection</li>
+                      <li>Find the document with the matching user ID (same as Authentication UID)</li>
+                      <li>Add or modify these fields:</li>
+                    </ol>
+                    <div className="bg-gray-50 p-3 mt-2 mb-3 rounded border border-gray-200 font-mono text-sm">
+                      <div><span className="text-pink-600">name</span>: <span className="text-green-600">"User's Full Name"</span>,</div>
+                      <div><span className="text-pink-600">role</span>: <span className="text-green-600">"chair"</span> <span className="text-gray-500">// or "admin"</span>,</div>
+                      <div><span className="text-pink-600">council</span>: <span className="text-green-600">"Council Name"</span> <span className="text-gray-500">// for chair role</span>,</div>
+                      <div><span className="text-pink-600">email</span>: <span className="text-green-600">"user@example.com"</span>,</div>
+                      <div><span className="text-pink-600">createdAt</span>: <span className="text-blue-600">timestamp</span>,</div>
+                      <div><span className="text-pink-600">username</span>: <span className="text-green-600">"username"</span></div>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                      <div className="flex items-start gap-2">
+                        <Info size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium">Tip:</p>
+                          <p>Use meaningful usernames like "chair_unsc" for easier identification. The username field should match what the user will use to log in.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="step-5">
+                <AccordionTrigger className="text-left font-medium hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <div className="flex justify-center items-center w-6 h-6 rounded-full bg-accent/10 text-accent">5</div>
+                    <span>Verify User Access</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pl-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="mb-2">Once created, the user should appear in the platform's user management list and be able to log in with their credentials.</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                      <Check size={16} className="text-green-500" />
+                      <span>Ask the user to test logging in with their new credentials</span>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm">
+                      <p className="font-medium text-gray-700 mb-1">Users created in Firebase will have these capabilities:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-gray-600">
+                        <li><span className="font-medium">Chair users:</span> Access to their council dashboard</li>
+                        <li><span className="font-medium">Admin users:</span> Full access to all platform features</li>
+                      </ul>
+                    </div>
+                  </motion.div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
