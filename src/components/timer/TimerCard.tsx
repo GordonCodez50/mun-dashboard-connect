@@ -59,22 +59,55 @@ export const TimerCard: React.FC<TimerCardProps> = ({
   // Calculate remaining percentage for color determination
   const remainingPercentage = (timer.duration / timer.initialDuration) * 100;
   
-  // Determine timer color based on percentage of time remaining
+  // Helper function to interpolate between colors
+  const interpolateColor = (color1: string, color2: string, ratio: number) => {
+    // Ensure ratio is between 0 and 1
+    ratio = Math.max(0, Math.min(1, ratio));
+    
+    // Parse the colors
+    const r1 = parseInt(color1.substring(0, 2), 16);
+    const g1 = parseInt(color1.substring(2, 4), 16);
+    const b1 = parseInt(color1.substring(4, 6), 16);
+    
+    const r2 = parseInt(color2.substring(0, 2), 16);
+    const g2 = parseInt(color2.substring(2, 4), 16);
+    const b2 = parseInt(color2.substring(4, 6), 16);
+    
+    // Interpolate between the colors
+    const r = Math.round(r1 + (r2 - r1) * ratio);
+    const g = Math.round(g1 + (g2 - g1) * ratio);
+    const b = Math.round(b1 + (b2 - b1) * ratio);
+    
+    // Convert back to hex
+    return ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  };
+  
+  // Determine timer color based on percentage of time remaining with smooth gradient
   const getTimerColor = () => {
-    if (remainingPercentage <= 20) return "text-red-500"; // Red when less than 20% remains
-    if (remainingPercentage <= 40) return "text-amber-500"; // Amber when 20-40% remains
-    if (remainingPercentage <= 60) return "text-yellow-500"; // Yellow when 40-60% remains
-    if (remainingPercentage <= 80) return "text-green-500"; // Green when 60-80% remains
-    return "text-primary dark:text-white"; // Default color when 80-100% remains
+    if (remainingPercentage <= 10) {
+      return "text-red-500"; // Red at 10%
+    } else if (remainingPercentage <= 50) {
+      // Smooth transition between red (10%) and yellow (50%)
+      const ratio = (remainingPercentage - 10) / (50 - 10);
+      return `text-[#${interpolateColor('ea384c', 'eab308', ratio)}]`;
+    } else {
+      // Smooth transition between yellow (50%) and default (100%)
+      const ratio = (remainingPercentage - 50) / (100 - 50);
+      return `text-[#${interpolateColor('eab308', '64748b', ratio)}]`;
+    }
   };
 
-  // Determine progress indicator color based on percentage of time left
+  // Determine progress indicator color based on percentage of time left with smooth gradient
   const getProgressColor = () => {
-    if (remainingPercentage <= 20) return "bg-gradient-to-r from-red-500 to-rose-400";
-    if (remainingPercentage <= 40) return "bg-gradient-to-r from-amber-500 to-yellow-400";
-    if (remainingPercentage <= 60) return "bg-gradient-to-r from-yellow-500 to-yellow-300";
-    if (remainingPercentage <= 80) return "bg-gradient-to-r from-green-500 to-emerald-400";
-    return "bg-gradient-to-r from-accent to-sky-400";
+    if (remainingPercentage <= 10) {
+      return "bg-gradient-to-r from-red-600 to-red-400";
+    } else if (remainingPercentage <= 50) {
+      // Between 10% and 50%, transition from red to yellow
+      return `bg-gradient-to-r from-[#${interpolateColor('dc2626', 'eab308', (remainingPercentage - 10) / 40)}] to-[#${interpolateColor('ef4444', 'facc15', (remainingPercentage - 10) / 40)}]`;
+    } else {
+      // Between 50% and 100%, transition from yellow to accent
+      return `bg-gradient-to-r from-[#${interpolateColor('eab308', '0ea5e9', (remainingPercentage - 50) / 50)}] to-[#${interpolateColor('facc15', '38bdf8', (remainingPercentage - 50) / 50)}]`;
+    }
   };
 
   // Get active preset if any matches current timer duration
