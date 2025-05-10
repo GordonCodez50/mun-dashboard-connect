@@ -7,14 +7,22 @@ import {
   isChrome, 
   isIOS,
   isSafari,
+  isMacOS,
   isPwa,
   isNotificationSupported,
+  isWebPushSupported,
+  isIOS164PlusWithWebPush,
   requestNotificationPermission,
   getNotificationInstructions,
   testNotification,
   getPwaInstructions,
   canShowLockScreenNotifications
 } from '@/utils/crossPlatformNotifications';
+
+import {
+  createSafariNotificationGuide,
+  hasSafariLimitations
+} from '@/utils/safariNotifications';
 
 export const useNotifications = () => {
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false);
@@ -24,11 +32,23 @@ export const useNotifications = () => {
   const [requestInProgress, setRequestInProgress] = useState<boolean>(false);
   const [isPwaInstalled, setIsPwaInstalled] = useState<boolean>(false);
   const [canShowLockScreen, setCanShowLockScreen] = useState<boolean>(false);
+  const [isSafariWithLimitations, setIsSafariWithLimitations] = useState<boolean>(false);
+  const [webPushSupported, setWebPushSupported] = useState<boolean>(false);
+  const [isIOS164PWA, setIsIOS164PWA] = useState<boolean>(false);
 
   // Check notification support on mount
   useEffect(() => {
     const supported = isNotificationSupported();
     setIsSupported(supported);
+    
+    // Check for web push support
+    setWebPushSupported(isWebPushSupported());
+    
+    // Check for iOS 16.4+ PWA
+    setIsIOS164PWA(isIOS164PlusWithWebPush());
+    
+    // Check if we have Safari limitations
+    setIsSafariWithLimitations(hasSafariLimitations());
     
     if (supported) {
       // Check if we already have permission
@@ -71,7 +91,9 @@ export const useNotifications = () => {
         isChrome: isChrome(),
         isIOS: isIOS(),
         isSafari: isSafari(),
-        isPwa: isPwa()
+        isPwa: isPwa(),
+        isMacOS: isMacOS(),
+        isIOS164PWA: isIOS164PlusWithWebPush()
       });
       
       // Show a toast to let the user know what's happening
@@ -124,6 +146,15 @@ export const useNotifications = () => {
           } catch (fcmError) {
             console.error('Error getting FCM token:', fcmError);
           }
+        } else if (hasSafariLimitations()) {
+          // For Safari/iOS with limitations, initialize the fallback mechanisms
+          await notificationService.initializeMessaging();
+          
+          toast.info(
+            isIOS() && !isPwa() 
+              ? "For reliable notifications, please add this app to your home screen." 
+              : "Notification system initialized for your device"
+          );
         }
       } else {
         // Handle different failure cases
@@ -185,6 +216,11 @@ export const useNotifications = () => {
     const hasPermission = notificationService.hasPermission();
     setPermissionGranted(hasPermission);
     
+    // Update capabilities info
+    setIsSafariWithLimitations(hasSafariLimitations());
+    setWebPushSupported(isWebPushSupported());
+    setIsIOS164PWA(isIOS164PlusWithWebPush());
+    
     // Update PWA and lock screen status
     setIsPwaInstalled(isPwa());
     setCanShowLockScreen(canShowLockScreenNotifications());
@@ -199,17 +235,45 @@ export const useNotifications = () => {
       return false;
     }
     
-    toast.info("Testing FCM notifications...");
+    toast.info("Testing notifications...");
     const result = await notificationService.testFcm();
     
     if (result) {
-      toast.success("FCM test successful!");
+      toast.success("Notification test successful!");
     } else {
-      toast.error("FCM test failed. Check console for details.");
+      toast.error("Notification test failed. Check console for details.");
     }
     
     return result;
   }, [permissionGranted, isSupported]);
+
+  // Get installation guide for PWA
+  const getInstallationGuide = useCallback(() => {
+    // Don't show guide if already installed
+    if (isPwaInstalled) return null;
+    
+    // For iOS Safari, always show the guide
+    if (isIOS() && isSafari() && !isPwa()) {
+      return {
+        title: 'Enable Full Notifications',
+        message: 'To get the best notification experience on iOS, please add this app to your home screen.',
+        instructions: getPwaInstructions(),
+        buttonText: 'Got it'
+      };
+    }
+    
+    return null;
+  }, [isPwaInstalled]);
+
+  // Get Safari notification guide
+  const getSafariGuide = useCallback(() => {
+    return createSafariNotificationGuide();
+  }, []);
+
+  // Get detailed capability info
+  const getCapabilityInfo = useCallback(() => {
+    return notificationService.getNotificationCapabilities();
+  }, []);
 
   return {
     isSupported,
@@ -220,14 +284,21 @@ export const useNotifications = () => {
     isChrome: isChrome(),
     isIOS: isIOS(),
     isSafari: isSafari(),
+    isMacOS: isMacOS(),
     isPwa: isPwaInstalled,
     canShowLockScreen,
+    webPushSupported,
+    isSafariWithLimitations,
+    isIOS164PWA,
     requestPermission,
     checkPermission,
     showReplyNotification,
     showNotificationPrompt: permissionChecked && !permissionGranted && isSupported,
     getSettingsInstructions: getNotificationInstructions,
     getPwaInstructions,
+    getInstallationGuide,
+    getSafariGuide,
+    getCapabilityInfo,
     testFcm,
     requestInProgress
   };

@@ -13,10 +13,22 @@ import {
   isChrome, 
   isIOS,
   isSafari,
+  isMacOS,
+  isPwa,
+  isIOS164PlusWithWebPush,
   isServiceWorkerSupported,
   isNotificationSupported as checkNotificationSupport,
-  createNotification
+  isWebPushSupported,
+  createNotification,
+  playNotificationSound,
+  initializeNotificationPolling
 } from '@/utils/crossPlatformNotifications';
+
+import {
+  storeNotificationForLater,
+  initializeSafariNotificationWorkaround,
+  hasSafariLimitations
+} from '@/utils/safariNotifications';
 
 // The public VAPID key for web push
 const VAPID_KEY = 'BLW7VJrM3F8oL2IFysoC7monAgQ_dTWeaZZU3y3Hp0SgGK0C_jPBqknMcMs4v6v6NxJAaa0mqJDoNEn3Ce1Y0F8';
@@ -27,6 +39,10 @@ let currentUserRole: 'admin' | 'chair' | 'press' | null = null;
 // Store last notification to prevent duplicates
 let lastNotificationId: string | null = null;
 let lastNotificationTimestamp = 0;
+
+// Cleanup functions for polling and visibility listeners
+let cleanupPolling: (() => void) | null = null;
+let cleanupSafariWorkaround: (() => void) | null = null;
 
 // Initialize Firebase app if not already initialized
 let firebaseApp;
@@ -39,7 +55,7 @@ try {
 // Initialize Firebase Messaging
 let messaging: any = null;
 try {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator && isWebPushSupported()) {
     messaging = getMessaging(firebaseApp);
     console.log('Firebase messaging initialized successfully');
   }
@@ -82,7 +98,18 @@ const isNotificationSupported = (): boolean => {
 
 // Check if FCM is supported in this browser
 const isFcmSupported = (): boolean => {
-  return isServiceWorkerSupported() && messaging !== null;
+  // Special case for iOS: FCM works in PWA mode on iOS 16.4+
+  if (isIOS()) {
+    return isPwa() && isIOS164PlusWithWebPush() && isServiceWorkerSupported() && messaging !== null;
+  }
+  
+  // For Safari on macOS, FCM may work but with limitations
+  if (isSafari() && isMacOS()) {
+    return isWebPushSupported() && isServiceWorkerSupported() && messaging !== null;
+  }
+  
+  // For all other browsers, check for service worker and messaging
+  return isServiceWorkerSupported() && messaging !== null && isWebPushSupported();
 };
 
 // Request notification permissions and FCM token
@@ -98,9 +125,28 @@ const requestPermission = async (): Promise<boolean> => {
     
     console.log(`Permission request result: ${permission}`);
     
-    if (granted && isFcmSupported()) {
-      console.log('Permission granted, requesting FCM token');
-      await requestFcmToken();
+    if (granted) {
+      console.log('Permission granted, checking if FCM is supported');
+      
+      // For browsers that support FCM, request token
+      if (isFcmSupported()) {
+        console.log('FCM supported, requesting token');
+        await requestFcmToken();
+      } else {
+        console.log('FCM not supported on this browser/platform, using fallback mechanisms');
+        
+        // Initialize fallback mechanisms for browsers without FCM support
+        if (hasSafariLimitations()) {
+          if (cleanupSafariWorkaround) cleanupSafariWorkaround();
+          cleanupSafariWorkaround = initializeSafariNotificationWorkaround();
+          
+          // For iOS Safari (browser), also set up polling
+          if (isIOS() && !isPwa()) {
+            if (cleanupPolling) cleanupPolling();
+            cleanupPolling = initializeNotificationPolling(15000); // Check every 15 seconds
+          }
+        }
+      }
     }
     
     return granted;
@@ -110,10 +156,76 @@ const requestPermission = async (): Promise<boolean> => {
   }
 };
 
+// Register Safari for web push (macOS only)
+const registerSafariPush = async (): Promise<boolean> => {
+  if (!isSafari() || !isMacOS()) {
+    console.log('This function is only for Safari on macOS');
+    return false;
+  }
+  
+  try {
+    // For Safari on macOS, the service worker approach is different
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await navigator.serviceWorker.register('/safari-push-worker.js');
+        console.log('Safari push worker registered:', registration);
+        return true;
+      } catch (error) {
+        console.error('Error registering Safari push worker:', error);
+        return false;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Error registering Safari push:', error);
+    return false;
+  }
+};
+
 // Request Firebase Cloud Messaging token with improved error handling
 const requestFcmToken = async (): Promise<string | null> => {
   if (!isFcmSupported()) {
     console.warn('Firebase Cloud Messaging not supported in this browser');
+    
+    // For iOS PWA on 16.4+, we might have web push but FCM might not be properly detected
+    // So we'll try a special approach for this case
+    if (isIOS() && isPwa() && isIOS164PlusWithWebPush()) {
+      console.log('iOS 16.4+ PWA detected, attempting special FCM registration');
+      try {
+        // Register service worker specifically for iOS PWA
+        if ('serviceWorker' in navigator) {
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+            scope: '/'
+          });
+          console.log('Service worker registered for iOS PWA');
+          
+          // Try initializing messaging again
+          const iosPwaMessaging = getMessaging(firebaseApp);
+          const swRegistration = await navigator.serviceWorker.ready;
+          
+          const token = await getToken(iosPwaMessaging, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: swRegistration
+          });
+          
+          if (token) {
+            console.log('FCM token obtained for iOS PWA');
+            saveFcmToken(token);
+            setupFcmListener();
+            return token;
+          }
+        }
+      } catch (iosError) {
+        console.error('Error in iOS PWA FCM setup:', iosError);
+      }
+    }
+    
+    // For Safari on macOS, try Safari-specific approach
+    if (isSafari() && isMacOS()) {
+      await registerSafariPush();
+    }
+    
     return null;
   }
   
@@ -255,6 +367,38 @@ const showNotification = (title: string, options?: any): boolean => {
   lastNotificationId = notificationId;
   lastNotificationTimestamp = now;
   
+  // For Safari on iOS without PWA or on older iOS versions, use fallback mechanism
+  if (hasSafariLimitations()) {
+    // Store notification data for retrieval when app is opened
+    storeNotificationForLater(
+      title,
+      options.body || '',
+      options.data?.url || getNotificationUrl(options.data?.type || 'alert')
+    );
+    
+    // If the app is in the foreground, show a toast notification
+    if (document.visibilityState === 'visible') {
+      toast(title, {
+        description: options.body,
+        duration: 8000, // Show longer for visibility
+        action: options.data?.url ? {
+          label: "View",
+          onClick: () => {
+            if (options.data?.url) {
+              window.location.href = options.data.url;
+            }
+          }
+        } : undefined
+      });
+      
+      // Try to play a notification sound
+      playNotificationSound();
+    }
+    
+    return true;
+  }
+  
+  // For all other browsers, use the standard notification API
   return createNotification(title, options);
 };
 
@@ -332,16 +476,40 @@ const showReplyNotification = (
 
 // Function to initialize Firebase messaging
 const initializeMessaging = async (): Promise<boolean> => {
-  if (!isServiceWorkerSupported()) {
-    console.warn('Service workers not supported in this browser, FCM will not work');
+  // First check if we need to initialize fallback mechanisms for Safari/iOS
+  if (hasSafariLimitations()) {
+    console.log('Browser has Safari/iOS limitations, initializing fallbacks');
+    
+    // Initialize Safari notification workaround
+    if (cleanupSafariWorkaround) cleanupSafariWorkaround();
+    cleanupSafariWorkaround = initializeSafariNotificationWorkaround();
+    
+    // For iOS Safari (browser), also set up polling
+    if (isIOS() && !isPwa()) {
+      if (cleanupPolling) cleanupPolling();
+      cleanupPolling = initializeNotificationPolling(15000); // Check every 15 seconds
+    }
+    
+    return true;
+  }
+  
+  // For browsers that support FCM, continue with normal initialization
+  if (!isServiceWorkerSupported() || !isWebPushSupported()) {
+    console.warn('Service workers or Web Push not supported in this browser, FCM will not work');
     return false;
   }
   
   try {
     console.log('Initializing Firebase messaging');
     
-    // Register service worker if not registered
+    // Register appropriate service worker based on platform
     if ('serviceWorker' in navigator) {
+      // Use specific approach for Safari on macOS
+      if (isSafari() && isMacOS()) {
+        return await registerSafariPush();
+      }
+      
+      // For all other browsers, use standard approach
       const registrations = await navigator.serviceWorker.getRegistrations();
       if (registrations.length === 0) {
         console.log('Firebase messaging service worker not found, registering...');
@@ -383,6 +551,21 @@ const initializeMessaging = async (): Promise<boolean> => {
 const testFcm = async (): Promise<boolean> => {
   if (!isFcmSupported()) {
     console.warn('FCM not supported in this browser');
+    
+    // For iOS and Safari, test the fallback mechanism
+    if (hasSafariLimitations()) {
+      showNotification('Test Notification (Fallback)', {
+        body: 'This is testing the fallback notification mechanism for iOS/Safari.',
+        timestamp: Date.now(),
+        data: {
+          type: 'test',
+          url: getNotificationUrl('test')
+        }
+      });
+      
+      return true; // We're using the fallback, so it's "working" as expected
+    }
+    
     return false;
   }
   
@@ -406,6 +589,27 @@ const testFcm = async (): Promise<boolean> => {
   return true;
 };
 
+// Get information about browser notification capabilities
+const getNotificationCapabilities = () => {
+  return {
+    browserSupport: {
+      isIOS: isIOS(),
+      isSafari: isSafari(),
+      isChrome: isChrome(),
+      isAndroid: isAndroid(),
+      isMacOS: isMacOS(),
+      isPwa: isPwa()
+    },
+    notificationsSupported: isNotificationSupported(),
+    webPushSupported: isWebPushSupported(),
+    serviceWorkerSupported: isServiceWorkerSupported(),
+    fcmSupported: isFcmSupported(),
+    permission: hasPermission() ? 'granted' : Notification.permission,
+    hasFallbackMechanism: hasSafariLimitations(),
+    ios164WithWebPush: isIOS164PlusWithWebPush()
+  };
+};
+
 // Restore user role from localStorage if available
 const restoreUserRole = () => {
   const savedRole = localStorage.getItem('notificationUserRole') as 'admin' | 'chair' | 'press' | null;
@@ -415,8 +619,31 @@ const restoreUserRole = () => {
   }
 };
 
+// Clean up notification listeners and polling
+const cleanup = () => {
+  if (cleanupPolling) {
+    cleanupPolling();
+    cleanupPolling = null;
+  }
+  
+  if (cleanupSafariWorkaround) {
+    cleanupSafariWorkaround();
+    cleanupSafariWorkaround = null;
+  }
+};
+
 // Call this when the service is first loaded
 restoreUserRole();
+
+// Initialize Safari/iOS fallbacks if needed
+if (typeof document !== 'undefined' && hasSafariLimitations() && hasPermission()) {
+  cleanupSafariWorkaround = initializeSafariNotificationWorkaround();
+  
+  // For iOS Safari browser mode, also set up polling
+  if (isIOS() && !isPwa()) {
+    cleanupPolling = initializeNotificationPolling(15000);
+  }
+}
 
 export const notificationService = {
   isNotificationSupported,
@@ -432,5 +659,8 @@ export const notificationService = {
   getFcmToken,
   testFcm,
   setUserRole,
-  restoreUserRole
+  restoreUserRole,
+  getNotificationCapabilities,
+  cleanup,
+  hasSafariLimitations
 };

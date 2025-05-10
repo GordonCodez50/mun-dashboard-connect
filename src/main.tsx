@@ -10,8 +10,18 @@ import {
   requestNotificationPermission,
   isAndroid,
   isChrome,
-  isEdge 
+  isEdge,
+  isIOS,
+  isSafari,
+  isPwa,
+  isMacOS,
+  isIOS164PlusWithWebPush
 } from '@/utils/crossPlatformNotifications';
+
+import { 
+  hasSafariLimitations, 
+  initializeSafariNotificationWorkaround 
+} from '@/utils/safariNotifications';
 
 // Global error handler for unhandled errors
 window.addEventListener('error', (event) => {
@@ -23,7 +33,7 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Improved service worker registration function with Chrome optimizations
+// Improved service worker registration function with platform-specific optimizations
 const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) {
     console.warn('Service workers are not supported in this browser');
@@ -33,11 +43,44 @@ const registerServiceWorker = async () => {
   try {
     console.log('Registering service worker...');
     
+    // Check platform specifics
+    console.log('Browser info:', { 
+      isAndroid: isAndroid(), 
+      isChrome: isChrome(),
+      isEdge: isEdge(),
+      isIOS: isIOS(),
+      isSafari: isSafari(),
+      isPwa: isPwa(),
+      isMacOS: isMacOS(),
+      isIOS164PWA: isIOS164PlusWithWebPush()
+    });
+    
+    // For Safari on macOS, use a Safari-specific service worker
+    if (isSafari() && isMacOS()) {
+      console.log('Safari on macOS detected, using Safari-specific service worker');
+      
+      try {
+        const registration = await navigator.serviceWorker.register('/safari-push-worker.js', {
+          scope: '/'
+        });
+        console.log('Safari push service worker registered with scope:', registration.scope);
+        return registration;
+      } catch (safariError) {
+        console.error('Safari service worker registration failed:', safariError);
+        // Fall back to standard service worker
+      }
+    }
+    
+    // For iOS PWA on iOS 16.4+, ensure we're using the right service worker
+    if (isIOS() && isPwa() && isIOS164PlusWithWebPush()) {
+      console.log('iOS 16.4+ PWA detected, ensuring push support is enabled');
+    }
+    
     // Check if we already have registrations
     const existingRegistrations = await navigator.serviceWorker.getRegistrations();
     console.log('Existing service worker registrations:', existingRegistrations.length);
     
-    // For Chrome, we may need to unregister old service workers to avoid conflicts
+    // For Chrome/Edge, we may need to unregister old service workers to avoid conflicts
     if ((isChrome() || isEdge()) && existingRegistrations.length > 0) {
       console.log('Chrome/Edge detected with existing service workers, checking for updates');
       
@@ -82,7 +125,10 @@ const registerServiceWorker = async () => {
       registration.active.postMessage({ 
         type: 'PING',
         timestamp: Date.now(),
-        browser: isChrome() ? 'chrome' : isAndroid() ? 'android' : 'other'
+        browser: isChrome() ? 'chrome' : 
+                 isEdge() ? 'edge' :
+                 isSafari() ? 'safari' :
+                 isAndroid() ? 'android' : 'other'
       });
     }
     
@@ -109,8 +155,37 @@ const registerServiceWorker = async () => {
   }
 };
 
+// Initialize temporary service worker for Android Chrome
+const registerTempServiceWorker = async () => {
+  if (isAndroid() && isChrome() && 'serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/temp-notification-sw.js', {
+        scope: '/'
+      });
+      console.log('Temporary notification service worker registered:', registration.scope);
+      return registration;
+    } catch (error) {
+      console.error('Failed to register temporary service worker:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
 // Execute service worker registration
 registerServiceWorker();
+
+// For Android Chrome, also register the temporary notification service worker
+// This helps with notification permission requests
+if (isAndroid() && isChrome()) {
+  registerTempServiceWorker();
+}
+
+// For Safari/iOS with limitations, initialize the fallback mechanism
+if (hasSafariLimitations() && isNotificationSupported() && Notification.permission === 'granted') {
+  console.log('Initializing Safari/iOS notification fallback mechanism');
+  initializeSafariNotificationWorkaround();
+}
 
 // Check for notification support early and log platform information
 const notificationStatus = {
@@ -120,6 +195,12 @@ const notificationStatus = {
     isAndroid: isAndroid(),
     isChrome: isChrome(),
     isEdge: isEdge(),
+    isIOS: isIOS(),
+    isSafari: isSafari(),
+    isMacOS: isMacOS(),
+    isPwa: isPwa(),
+    isIOS164PWA: isIOS164PlusWithWebPush(),
+    hasSafariLimitations: hasSafariLimitations(),
     userAgent: navigator.userAgent
   }
 };
@@ -156,7 +237,7 @@ if (userRole) {
 if (notificationService.isNotificationSupported()) {
   console.log('Browser notifications are supported');
   
-  // For Chrome, we need to be more careful about initialization timing
+  // Platform-specific initialization
   if (isChrome() || isEdge()) {
     console.log('Chrome/Edge detected, ensuring service worker is ready before initializing messaging');
     
@@ -171,10 +252,29 @@ if (notificationService.isNotificationSupported()) {
         });
       });
     }
+  } else if (isSafari() && isMacOS()) {
+    console.log('Safari on macOS detected, initializing with Safari-specific approach');
+    notificationService.initializeMessaging().catch(err => {
+      console.error('Error initializing Safari notifications:', err);
+    });
+  } else if (isIOS() && isPwa() && isIOS164PlusWithWebPush()) {
+    console.log('iOS 16.4+ PWA detected, initializing web push');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        notificationService.initializeMessaging().catch(err => {
+          console.error('Error initializing iOS PWA notifications:', err);
+        });
+      });
+    }
+  } else if (hasSafariLimitations()) {
+    console.log('Safari/iOS with limitations detected, initializing fallback mechanisms');
+    notificationService.initializeMessaging().catch(err => {
+      console.error('Error initializing fallback notification system:', err);
+    });
   } else {
     // For other browsers, initialize directly
     notificationService.initializeMessaging().catch(err => {
-      console.error('Error initializing Firebase messaging:', err);
+      console.error('Error initializing notifications:', err);
     });
   }
   
@@ -188,6 +288,34 @@ const rootElement = document.getElementById('root');
 
 if (!rootElement) {
   throw new Error('Failed to find the root element');
+}
+
+// Add meta tags for iOS PWA support
+if (isIOS()) {
+  // Add meta tags for better iOS PWA experience
+  const metaTags = [
+    { name: 'apple-mobile-web-app-capable', content: 'yes' },
+    { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
+    { name: 'apple-mobile-web-app-title', content: 'MUN Dashboard' }
+  ];
+  
+  metaTags.forEach(tag => {
+    const metaTag = document.querySelector(`meta[name="${tag.name}"]`);
+    if (!metaTag) {
+      const newMeta = document.createElement('meta');
+      newMeta.name = tag.name;
+      newMeta.content = tag.content;
+      document.head.appendChild(newMeta);
+    }
+  });
+  
+  // Add apple touch icon link if it doesn't exist
+  if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+    const linkTag = document.createElement('link');
+    linkTag.rel = 'apple-touch-icon';
+    linkTag.href = '/logo.png';
+    document.head.appendChild(linkTag);
+  }
 }
 
 createRoot(rootElement).render(

@@ -1,11 +1,11 @@
 // Firebase Cloud Messaging Service Worker - Cross-Platform Enhanced Version
-// Optimized for Chrome and Chrome-based browsers
+// Optimized for Chrome, Safari, and iOS
 
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 // Log successful service worker initialization
-console.log('Firebase messaging service worker initialized - Chrome Optimized');
+console.log('Firebase messaging service worker initialized - Cross-Platform Optimized');
 
 // Initialize the Firebase app in the service worker
 firebase.initializeApp({
@@ -34,7 +34,7 @@ self.addEventListener('install', (event) => {
   
   // Cache important files
   event.waitUntil(
-    caches.open('fcm-assets-v2').then((cache) => {
+    caches.open('fcm-assets-v3').then((cache) => {
       return cache.addAll([
         '/logo.png',
         '/notification.mp3',
@@ -61,6 +61,7 @@ self.addEventListener('activate', (event) => {
   }));
 });
 
+// Platform detection utilities
 // Determine if the device is iOS
 const isIOS = () => {
   return /iPad|iPhone|iPod/.test(self.navigator.userAgent);
@@ -77,17 +78,35 @@ const isChrome = () => {
          !/firefox|fxios|safari/i.test(self.navigator.userAgent.toLowerCase());
 };
 
+// Determine if the browser is Safari
+const isSafari = () => {
+  return /safari/i.test(self.navigator.userAgent.toLowerCase()) &&
+         !/chrome|chromium|crios|edg/i.test(self.navigator.userAgent.toLowerCase());
+};
+
+// Determine if running on macOS
+const isMacOS = () => {
+  return /macintosh|mac os x/i.test(self.navigator.userAgent) && !isIOS();
+};
+
 // Play notification sound (if supported)
 const playNotificationSound = async () => {
   try {
     // First try to get from cache
-    const cache = await caches.open('fcm-assets-v2');
+    const cache = await caches.open('fcm-assets-v3');
     const response = await cache.match('/notification.mp3');
     
     if (response) {
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       const audio = new self.Audio(objectURL);
+      
+      // On iOS, need to use special attributes
+      if (isIOS()) {
+        audio.setAttribute('playsinline', 'true');
+        audio.setAttribute('webkit-playsinline', 'true');
+        audio.volume = 0.7; // Lower volume for iOS
+      }
       
       const playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -160,7 +179,7 @@ messaging.onBackgroundMessage((payload) => {
   // Add timestamp for better sorting in notification center
   notificationOptions.timestamp = Date.now();
 
-  // Chrome-specific optimizations
+  // Platform-specific optimizations
   if (isChrome()) {
     // Add actions for Chrome (which supports them well)
     if (payload.data?.actions) {
@@ -170,23 +189,31 @@ messaging.onBackgroundMessage((payload) => {
         console.error('Error parsing notification actions:', e);
       }
     }
+  } else if (isSafari() || isIOS()) {
+    // Safari doesn't support as many options
+    delete notificationOptions.requireInteraction; // Not supported in Safari
     
-    // Ensure icon URLs are absolute for Chrome
-    if (!notificationOptions.icon.startsWith('http')) {
-      notificationOptions.icon = self.location.origin + notificationOptions.icon;
-    }
+    // Safari is more strict with URLs
+    notificationOptions.icon = self.location.origin + notificationOptions.icon;
     
-    if (!notificationOptions.badge.startsWith('http')) {
-      notificationOptions.badge = self.location.origin + notificationOptions.badge;
-    }
-  }
-
-  // Platform-specific optimizations
-  if (isAndroid()) {
-    // Add vibration for Android lock screen notifications
-    notificationOptions.vibrate = [200, 100, 200];
+    // Remove badge for Safari as it's not well supported
+    delete notificationOptions.badge;
   }
   
+  // For Android devices, add vibration pattern
+  if (isAndroid()) {
+    notificationOptions.vibrate = [200, 100, 200];
+  }
+
+  // Ensure icon URLs are absolute for all browsers
+  if (!notificationOptions.icon.startsWith('http')) {
+    notificationOptions.icon = self.location.origin + notificationOptions.icon;
+  }
+  
+  if (notificationOptions.badge && !notificationOptions.badge.startsWith('http')) {
+    notificationOptions.badge = self.location.origin + notificationOptions.badge;
+  }
+
   // Try to play a sound (supported on some browsers)
   playNotificationSound();
   
@@ -323,16 +350,20 @@ self.addEventListener('push', (event) => {
       requireInteraction: data.data?.requireInteraction === 'true'
     };
     
-    // Chrome-specific optimizations
-    if (isChrome()) {
-      // Ensure icon URLs are absolute for Chrome
-      if (!options.icon.startsWith('http')) {
-        options.icon = self.location.origin + options.icon;
-      }
-      
-      if (!options.badge.startsWith('http')) {
-        options.badge = self.location.origin + options.badge;
-      }
+    // Platform-specific optimizations
+    if (isSafari() || isIOS()) {
+      // Safari doesn't support as many options
+      delete options.requireInteraction;
+      delete options.badge;
+    }
+    
+    // Ensure icon URLs are absolute
+    if (!options.icon.startsWith('http')) {
+      options.icon = self.location.origin + options.icon;
+    }
+    
+    if (options.badge && !options.badge.startsWith('http')) {
+      options.badge = self.location.origin + options.badge;
     }
     
     // Add URL to data if not present
@@ -354,8 +385,8 @@ self.addEventListener('push', (event) => {
     event.waitUntil(
       self.registration.showNotification('New Notification', {
         body: text,
-        icon: '/logo.png',
-        badge: '/logo.png',
+        icon: self.location.origin + '/logo.png',
+        badge: self.location.origin + '/logo.png',
         vibrate: [200, 100, 200],
         tag: `plain-text-${Date.now()}`,
         data: {
@@ -377,7 +408,10 @@ self.addEventListener('message', (event) => {
       event.source.postMessage({ 
         type: 'PONG', 
         timestamp: Date.now(),
-        browser: isChrome() ? 'chrome' : isIOS() ? 'ios' : 'other'
+        browser: isChrome() ? 'chrome' : 
+                 isSafari() ? 'safari' : 
+                 isIOS() ? 'ios' : 
+                 isAndroid() ? 'android' : 'other'
       });
     }
   }
@@ -389,7 +423,10 @@ self.addEventListener('message', (event) => {
         type: 'NOTIFICATION_PERMISSION_RESULT',
         permission: 'granted',
         serviceWorkerActive: true,
-        browser: isChrome() ? 'chrome' : isIOS() ? 'ios' : 'other'
+        browser: isChrome() ? 'chrome' : 
+                 isSafari() ? 'safari' : 
+                 isIOS() ? 'ios' : 
+                 isAndroid() ? 'android' : 'other'
       });
     }
   }
@@ -407,7 +444,62 @@ self.addEventListener('message', (event) => {
       });
     }
   }
+  
+  // For iOS 16.4+ PWA specific messages
+  if (event.data && event.data.type === 'IOS_PWA_INIT') {
+    console.log('[firebase-messaging-sw.js] iOS PWA initialization request received');
+    
+    // Respond to confirm the service worker is ready for iOS PWA
+    if (event.source && event.source.postMessage) {
+      event.source.postMessage({ 
+        type: 'IOS_PWA_READY',
+        timestamp: Date.now()
+      });
+    }
+  }
+  
+  // For Safari on macOS specific messages
+  if (event.data && event.data.type === 'SAFARI_INIT') {
+    console.log('[firebase-messaging-sw.js] Safari initialization request received');
+    
+    // Respond to confirm the service worker is ready for Safari
+    if (event.source && event.source.postMessage) {
+      event.source.postMessage({ 
+        type: 'SAFARI_READY',
+        timestamp: Date.now()
+      });
+    }
+  }
 });
+
+// For iOS 16.4+ PWA, there are some differences in how the service worker needs to behave
+// This sets up specific handling for iOS 16.4+ PWA
+if (isIOS()) {
+  console.log('[firebase-messaging-sw.js] iOS detected, setting up iOS-specific handling');
+  
+  // iOS sometimes has issues with initial service worker setup
+  // We'll make sure our service worker is always active
+  self.addEventListener('install', () => {
+    console.log('iOS service worker installed, skipping waiting');
+    self.skipWaiting();
+  });
+  
+  // iOS sometimes needs special message handling
+  self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'IOS_WAKE_UP') {
+      // This can be used to keep the service worker alive on iOS
+      console.log('iOS wake up message received');
+      
+      // Send response to keep the connection alive
+      if (event.source && event.source.postMessage) {
+        event.source.postMessage({ 
+          type: 'IOS_AWAKE',
+          timestamp: Date.now()
+        });
+      }
+    }
+  });
+}
 
 // Keep-alive interval to prevent service worker from being terminated
 // This is especially important for Chrome which might terminate inactive service workers
