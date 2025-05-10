@@ -46,8 +46,6 @@ export const TimerCard: React.FC<TimerCardProps> = ({
   timePresets,
   allowRemove
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  
   // Format time for display
   const formatTime = (timeInSeconds: number): string => {
     const minutes = Math.floor(timeInSeconds / 60);
@@ -79,9 +77,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
 
   return (
     <Card 
-      className="overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 animate-fade-in"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className="overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-300 bg-white dark:bg-gray-800 animate-fade-in"
     >
       <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
@@ -108,10 +104,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                className={cn(
-                  "h-8 w-8 rounded-full hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors duration-300",
-                  isHovered && "animate-scale-in"
-                )}
+                className="h-8 w-8 rounded-full hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors duration-300"
                 onClick={() => onRemove(timer.id)}
               >
                 <Trash2 size={14} className="text-destructive" />
@@ -134,9 +127,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
             </div>
           ) : (
             <div 
-              className="w-full p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              className="w-full p-6 border border-gray-200 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-xl transition-all duration-300 relative overflow-hidden"
             >
               {/* Animated background decorative elements */}
               <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -147,10 +138,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               </div>
               
               <button 
-                className={cn(
-                  "absolute top-3 right-3 text-gray-400 hover:text-accent transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700",
-                  isHovered && "animate-scale-in"
-                )}
+                className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
                 onClick={() => onEditingChange(timer.id, true)}
                 aria-label="Edit timer"
               >
@@ -190,10 +178,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                 <Button
                   onClick={() => onStartPause(timer.id)}
                   variant={timer.isRunning && !timer.isPaused ? "secondary" : "default"}
-                  className={cn(
-                    `${!(timer.isRunning && !timer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-12 w-36 font-medium relative overflow-hidden group`,
-                    isHovered && "animate-scale-in"
-                  )}
+                  className={`${!(timer.isRunning && !timer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-12 w-36 font-medium relative overflow-hidden group`}
                 >
                   <div className="absolute inset-0 w-full h-full transition-all duration-300 ease-out transform translate-y-full bg-white/10 group-hover:translate-y-0"></div>
                   {timer.isRunning && !timer.isPaused ? (
@@ -210,10 +195,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                 <Button
                   onClick={() => onReset(timer.id)}
                   variant="outline"
-                  className={cn(
-                    "px-6 py-2 h-12 w-36 font-medium border-2 relative overflow-hidden group",
-                    isHovered && "animate-scale-in animation-delay-200"
-                  )}
+                  className="px-6 py-2 h-12 w-36 font-medium border-2 relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 w-full h-full transition-all duration-300 ease-out transform translate-y-full bg-gray-100 dark:bg-gray-700 group-hover:translate-y-0 opacity-10"></div>
                   <RefreshCw size={20} className="mr-2 group-hover:rotate-180 transition-transform duration-500" /> Reset
@@ -223,7 +205,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
               {/* Show pulsing indicator when timer is running */}
               {timer.isRunning && !timer.isPaused && (
                 <div className="mt-4 flex items-center justify-center animate-fade-in">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse-subtle mr-2"></div>
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2"></div>
                   <span className="text-xs text-gray-500">Running</span>
                 </div>
               )}
@@ -243,8 +225,7 @@ export const TimerCard: React.FC<TimerCardProps> = ({
                   "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300",
                   getActivePreset(preset.value) 
                     ? "bg-accent text-white shadow-md" 
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600",
-                  getActivePreset(preset.value) && "animate-scale-in"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 )}
               >
                 {preset.label}

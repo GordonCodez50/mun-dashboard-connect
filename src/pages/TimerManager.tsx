@@ -74,7 +74,6 @@ const TimerManager = () => {
                 key={timer.id} 
                 className="transition-all duration-500"
                 style={{ 
-                  animationDelay: `${index * 100}ms`,
                   opacity: 0,
                   animation: 'fade-in 0.5s ease-out forwards',
                   animationDelay: `${(index + 1) * 150}ms`

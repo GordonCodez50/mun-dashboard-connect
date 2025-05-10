@@ -21,7 +21,6 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   const mainTimer = timers.find(t => t.id === 'main-timer') || timers[0];
   
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
   
   // Format time for display
   const formatTime = (timeInSeconds: number): string => {
@@ -84,9 +83,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
         </div>
       ) : (
         <div 
-          className="w-full p-6 md:p-8 border border-gray-100 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 relative overflow-hidden"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          className="w-full p-6 md:p-8 border border-gray-100 dark:border-gray-700 rounded-xl bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 shadow-xl transition-all duration-300 relative overflow-hidden"
         >
           {/* Animated background decorative elements */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -97,10 +94,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           </div>
           
           <button 
-            className={cn(
-              "absolute top-3 right-3 text-gray-400 hover:text-accent transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700",
-              isHovered && "animate-scale-in"
-            )}
+            className="absolute top-3 right-3 text-gray-400 hover:text-accent transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={() => setIsEditing(true)}
             aria-label="Edit timer"
           >
@@ -141,10 +135,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
               onClick={() => handleStartPause(mainTimer.id)}
               variant={mainTimer.isRunning && !mainTimer.isPaused ? "secondary" : "default"}
               size={isMobile ? "default" : "lg"}
-              className={cn(
-                `${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-12 w-36 md:w-40 font-medium timer-button`,
-                isHovered && "animate-scale-in"
-              )}
+              className={`${!(mainTimer.isRunning && !mainTimer.isPaused) ? "bg-accent hover:bg-accent/90" : ""} px-6 py-2 h-12 w-36 md:w-40 font-medium timer-button`}
             >
               {mainTimer.isRunning && !mainTimer.isPaused ? (
                 <>
@@ -161,10 +152,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
               onClick={() => handleReset(mainTimer.id)}
               variant="outline"
               size={isMobile ? "default" : "lg"}
-              className={cn(
-                "px-6 py-2 h-12 w-36 md:w-40 font-medium border-2 timer-button relative overflow-hidden group",
-                isHovered && "animate-scale-in animation-delay-200"
-              )}
+              className="px-6 py-2 h-12 w-36 md:w-40 font-medium border-2 timer-button relative overflow-hidden group"
             >
               <div className="absolute inset-0 w-full h-full transition-all duration-300 ease-out transform translate-y-full bg-gray-100 dark:bg-gray-700 group-hover:translate-y-0 opacity-10"></div>
               <RefreshCw size={20} className="mr-2 group-hover:rotate-180 transition-transform duration-500" /> Reset
@@ -174,7 +162,7 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
           {/* Show pulsing indicator when timer is running */}
           {mainTimer.isRunning && !mainTimer.isPaused && (
             <div className="mt-4 flex items-center justify-center animate-fade-in">
-              <div className="w-2 h-2 rounded-full bg-accent/80 pulse-animation mr-2"></div>
+              <div className="w-2 h-2 rounded-full bg-accent/80 animate-pulse mr-2"></div>
               <span className="text-xs text-gray-500">Running</span>
             </div>
           )}
