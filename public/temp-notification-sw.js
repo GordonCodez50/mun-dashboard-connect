@@ -1,32 +1,19 @@
 
-// This is a minimal temporary service worker used to trigger
-// the notification permission dialog on certain platforms
+// This is a temporary service worker used to help trigger notification permissions
+// Especially useful for Android Chrome which sometimes needs a service worker
+// to properly request notification permissions
 
 self.addEventListener('install', (event) => {
-  console.log('Temporary notification permission service worker installed');
+  console.log('Temporary notification service worker installed');
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Temporary notification permission service worker activated');
-  clients.claim();
+  console.log('Temporary notification service worker activated');
+  event.waitUntil(clients.claim());
 });
 
-// Add basic message handling
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'REQUEST_PERMISSION') {
-    // Service worker can't request permission directly, but its presence
-    // can help trigger the permission dialog on some platforms
-    if (event.source) {
-      event.source.postMessage({ type: 'READY_FOR_PERMISSION_REQUEST' });
-    }
-  }
-});
+// This worker doesn't need to handle any actual push events
+// It just needs to exist for Chrome on Android to properly show
+// the notification permission prompt
 
-// The service worker will automatically unregister itself after 5 minutes
-// to avoid leaving unnecessary service workers around
-setTimeout(() => {
-  self.registration.unregister()
-    .then(() => console.log('Temporary permission service worker unregistered'))
-    .catch(error => console.error('Error unregistering temp service worker:', error));
-}, 5 * 60 * 1000);

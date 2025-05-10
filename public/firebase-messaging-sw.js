@@ -1,10 +1,11 @@
 // Firebase Cloud Messaging Service Worker - Cross-Platform Enhanced Version
+// Optimized for Chrome and Chrome-based browsers
 
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
 
 // Log successful service worker initialization
-console.log('Firebase messaging service worker initialized');
+console.log('Firebase messaging service worker initialized - Chrome Optimized');
 
 // Initialize the Firebase app in the service worker
 firebase.initializeApp({
@@ -33,7 +34,7 @@ self.addEventListener('install', (event) => {
   
   // Cache important files
   event.waitUntil(
-    caches.open('fcm-assets').then((cache) => {
+    caches.open('fcm-assets-v2').then((cache) => {
       return cache.addAll([
         '/logo.png',
         '/notification.mp3',
@@ -43,7 +44,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Log service worker activation
+// Log service worker activation and control all clients
 self.addEventListener('activate', (event) => {
   console.log('Firebase messaging service worker activated');
   // Take control of all clients immediately
@@ -70,18 +71,30 @@ const isAndroid = () => {
   return /android/i.test(self.navigator.userAgent);
 };
 
+// Determine if the browser is Chrome
+const isChrome = () => {
+  return /chrome|chromium|crios|edg/i.test(self.navigator.userAgent.toLowerCase()) &&
+         !/firefox|fxios|safari/i.test(self.navigator.userAgent.toLowerCase());
+};
+
 // Play notification sound (if supported)
 const playNotificationSound = async () => {
   try {
     // First try to get from cache
-    const cache = await caches.open('fcm-assets');
+    const cache = await caches.open('fcm-assets-v2');
     const response = await cache.match('/notification.mp3');
     
     if (response) {
       const blob = await response.blob();
       const objectURL = URL.createObjectURL(blob);
       const audio = new self.Audio(objectURL);
-      audio.play();
+      
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.warn('Error playing notification sound (likely autoplay restriction):', e);
+        });
+      }
     }
   } catch (e) {
     console.error('Error playing notification sound:', e);
@@ -127,26 +140,29 @@ messaging.onBackgroundMessage((payload) => {
   
   const notificationTitle = payload.notification.title || 'New Notification';
   
+  // Generate unique tag to prevent notification grouping in Chrome
+  const uniqueTag = payload.data?.tag || `notification-${Date.now()}`;
+  
   // Base notification options
   const notificationOptions = {
     body: payload.notification.body || '',
     icon: '/logo.png',
     badge: '/logo.png',
     data: payload.data || {},
-    tag: payload.data?.tag || 'general',
+    tag: uniqueTag,
     requireInteraction: payload.data?.requireInteraction === 'true',
     renotify: payload.data?.renotify === 'true'
   };
 
   // Add user role from data or stored value
   notificationOptions.data.userRole = payload.data?.userRole || userRole;
+  
+  // Add timestamp for better sorting in notification center
+  notificationOptions.timestamp = Date.now();
 
-  // Platform-specific optimizations
-  if (isAndroid()) {
-    // Add vibration for Android lock screen notifications
-    notificationOptions.vibrate = [200, 100, 200];
-    
-    // Android can show actions on lock screen
+  // Chrome-specific optimizations
+  if (isChrome()) {
+    // Add actions for Chrome (which supports them well)
     if (payload.data?.actions) {
       try {
         notificationOptions.actions = JSON.parse(payload.data.actions);
@@ -154,6 +170,21 @@ messaging.onBackgroundMessage((payload) => {
         console.error('Error parsing notification actions:', e);
       }
     }
+    
+    // Ensure icon URLs are absolute for Chrome
+    if (!notificationOptions.icon.startsWith('http')) {
+      notificationOptions.icon = self.location.origin + notificationOptions.icon;
+    }
+    
+    if (!notificationOptions.badge.startsWith('http')) {
+      notificationOptions.badge = self.location.origin + notificationOptions.badge;
+    }
+  }
+
+  // Platform-specific optimizations
+  if (isAndroid()) {
+    // Add vibration for Android lock screen notifications
+    notificationOptions.vibrate = [200, 100, 200];
   }
   
   // Try to play a sound (supported on some browsers)
@@ -168,6 +199,8 @@ messaging.onBackgroundMessage((payload) => {
 // Handle notification click with improved navigation
 self.addEventListener('notificationclick', (event) => {
   console.log('[firebase-messaging-sw.js] Notification click', event);
+  
+  // Close the notification to avoid duplicate interactions
   event.notification.close();
   
   // Get notification data
@@ -179,7 +212,7 @@ self.addEventListener('notificationclick', (event) => {
   
   console.log('[firebase-messaging-sw.js] Will open URL:', urlToOpen);
   
-  // Check if specific action was clicked (Android feature)
+  // Check if specific action was clicked (Android/Chrome feature)
   if (event.action) {
     console.log('[firebase-messaging-sw.js] Action clicked:', event.action);
     // Handle specific action clicks
@@ -209,6 +242,7 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // Check if there is already a window/tab open with the target URL or any window
       let anyClient = null;
+      let matchingClient = null;
       
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
@@ -219,18 +253,24 @@ self.addEventListener('notificationclick', (event) => {
           anyClient = client;
         }
         
-        // If the client is from our origin, use it regardless of path
+        // If the client is from our origin, prefer this one
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          console.log('Found client from our origin, focusing and navigating to:', urlToOpen);
-          return client.focus().then(() => {
-            // Give a small delay to allow focus to complete
-            return new Promise(resolve => {
-              setTimeout(() => {
-                client.navigate(urlToOpen).then(resolve);
-              }, 100);
-            });
-          });
+          matchingClient = client;
+          break;  // Use the first matching client
         }
+      }
+      
+      // If we found a matching client from our origin
+      if (matchingClient) {
+        console.log('Found client from our origin, focusing and navigating to:', urlToOpen);
+        return matchingClient.focus().then(() => {
+          // Give a small delay to allow focus to complete
+          return new Promise(resolve => {
+            setTimeout(() => {
+              matchingClient.navigate(urlToOpen).then(resolve);
+            }, 100);
+          });
+        });
       }
       
       // If we found any client, use that
@@ -265,6 +305,9 @@ self.addEventListener('push', (event) => {
     // Try to parse as JSON first (FCM format)
     const data = event.data.json();
     
+    // Generate unique tag to prevent notification grouping in Chrome
+    const uniqueTag = data.data?.tag || `push-${Date.now()}`;
+    
     // Extract notification details
     const title = data.notification?.title || 'New Notification';
     const options = {
@@ -272,12 +315,25 @@ self.addEventListener('push', (event) => {
       icon: '/logo.png',
       badge: '/logo.png',
       vibrate: [200, 100, 200],
+      tag: uniqueTag,
       data: {
         ...data.data,
         userRole: data.data?.userRole || userRole // Use notification data role or fallback to stored
       },
       requireInteraction: data.data?.requireInteraction === 'true'
     };
+    
+    // Chrome-specific optimizations
+    if (isChrome()) {
+      // Ensure icon URLs are absolute for Chrome
+      if (!options.icon.startsWith('http')) {
+        options.icon = self.location.origin + options.icon;
+      }
+      
+      if (!options.badge.startsWith('http')) {
+        options.badge = self.location.origin + options.badge;
+      }
+    }
     
     // Add URL to data if not present
     if (!options.data.url) {
@@ -301,8 +357,10 @@ self.addEventListener('push', (event) => {
         icon: '/logo.png',
         badge: '/logo.png',
         vibrate: [200, 100, 200],
+        tag: `plain-text-${Date.now()}`,
         data: {
-          userRole // Include user role for routing
+          userRole, // Include user role for routing
+          timestamp: Date.now()
         }
       })
     );
@@ -316,7 +374,11 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'PING') {
     // Respond to ping message to verify service worker is running
     if (event.source && event.source.postMessage) {
-      event.source.postMessage({ type: 'PONG', timestamp: Date.now() });
+      event.source.postMessage({ 
+        type: 'PONG', 
+        timestamp: Date.now(),
+        browser: isChrome() ? 'chrome' : isIOS() ? 'ios' : 'other'
+      });
     }
   }
   
@@ -326,7 +388,8 @@ self.addEventListener('message', (event) => {
       event.source.postMessage({ 
         type: 'NOTIFICATION_PERMISSION_RESULT',
         permission: 'granted',
-        serviceWorkerActive: true
+        serviceWorkerActive: true,
+        browser: isChrome() ? 'chrome' : isIOS() ? 'ios' : 'other'
       });
     }
   }
@@ -347,6 +410,7 @@ self.addEventListener('message', (event) => {
 });
 
 // Keep-alive interval to prevent service worker from being terminated
+// This is especially important for Chrome which might terminate inactive service workers
 setInterval(() => {
   console.log('[firebase-messaging-sw.js] Keeping service worker alive');
 }, 1000 * 60 * 15); // Every 15 minutes

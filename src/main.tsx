@@ -9,7 +9,8 @@ import {
   isNotificationSupported,
   requestNotificationPermission,
   isAndroid,
-  isChrome 
+  isChrome,
+  isEdge 
 } from '@/utils/crossPlatformNotifications';
 
 // Global error handler for unhandled errors
@@ -22,15 +23,33 @@ window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
 });
 
-// Improved service worker registration function
+// Improved service worker registration function with Chrome optimizations
 const registerServiceWorker = async () => {
   if (!('serviceWorker' in navigator)) {
     console.warn('Service workers are not supported in this browser');
-    return;
+    return null;
   }
 
   try {
     console.log('Registering service worker...');
+    
+    // Check if we already have registrations
+    const existingRegistrations = await navigator.serviceWorker.getRegistrations();
+    console.log('Existing service worker registrations:', existingRegistrations.length);
+    
+    // For Chrome, we may need to unregister old service workers to avoid conflicts
+    if ((isChrome() || isEdge()) && existingRegistrations.length > 0) {
+      console.log('Chrome/Edge detected with existing service workers, checking for updates');
+      
+      // Try updating each registration rather than unregistering
+      const updatePromises = existingRegistrations.map(reg => {
+        console.log('Updating service worker scope:', reg.scope);
+        return reg.update();
+      });
+      
+      await Promise.all(updatePromises);
+      console.log('Service worker update completed');
+    }
     
     // Register with cache-busting parameter to ensure latest version
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js?v=' + Date.now(), {
@@ -51,20 +70,36 @@ const registerServiceWorker = async () => {
       });
     } else if (registration.waiting) {
       console.log('Service worker waiting...');
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      // For Chrome, we want to activate the waiting worker immediately
+      if (isChrome() || isEdge()) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        console.log('Sent SKIP_WAITING message to waiting worker');
+      }
     } else if (registration.active) {
       console.log('Service worker is active');
       
       // Test communication with service worker
       registration.active.postMessage({ 
         type: 'PING',
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        browser: isChrome() ? 'chrome' : isAndroid() ? 'android' : 'other'
       });
     }
     
     // Set up message listener for service worker messages
     navigator.serviceWorker.addEventListener('message', (event) => {
       console.log('Received message from service worker:', event.data);
+      
+      // For Chrome, check if we need to reload for a new service worker
+      if (event.data && event.data.type === 'RELOAD_PAGE_FOR_UPDATE') {
+        console.log('Reloading page for service worker update');
+        window.location.reload();
+      }
+    });
+    
+    // Set up controller change listener (new service worker activated)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      console.log('Service worker controller changed (new service worker activated)');
     });
     
     return registration;
@@ -80,10 +115,11 @@ registerServiceWorker();
 // Check for notification support early and log platform information
 const notificationStatus = {
   supported: isNotificationSupported(),
-  permission: Notification.permission, // Using native Notification.permission instead
+  permission: Notification.permission, 
   platform: {
     isAndroid: isAndroid(),
     isChrome: isChrome(),
+    isEdge: isEdge(),
     userAgent: navigator.userAgent
   }
 };
@@ -120,10 +156,27 @@ if (userRole) {
 if (notificationService.isNotificationSupported()) {
   console.log('Browser notifications are supported');
   
-  // Initialize Firebase Cloud Messaging with better error handling
-  notificationService.initializeMessaging().catch(err => {
-    console.error('Error initializing Firebase messaging:', err);
-  });
+  // For Chrome, we need to be more careful about initialization timing
+  if (isChrome() || isEdge()) {
+    console.log('Chrome/Edge detected, ensuring service worker is ready before initializing messaging');
+    
+    // Wait for service worker to be ready
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        console.log('Service worker is ready, initializing Firebase messaging');
+        
+        // Initialize Firebase Cloud Messaging with better error handling
+        notificationService.initializeMessaging().catch(err => {
+          console.error('Error initializing Firebase messaging:', err);
+        });
+      });
+    }
+  } else {
+    // For other browsers, initialize directly
+    notificationService.initializeMessaging().catch(err => {
+      console.error('Error initializing Firebase messaging:', err);
+    });
+  }
   
   // Initialize global alert listeners to work across all pages
   realtimeService.initializeAlertListeners();
