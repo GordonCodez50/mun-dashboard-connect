@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Info, Clipboard, Bell, Smartphone, Browser, Vibrate, Database, FileCode, Settings } from "lucide-react";
+import { Check, X, Info, Clipboard, Bell, Smartphone, Globe, Vibrate, Database, FileCode, Settings } from "lucide-react";
 import { notificationService } from "@/services/notificationService";
 import { 
   isAndroid, 
@@ -323,7 +322,7 @@ const Debug = () => {
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-4 mb-6">
           <TabsTrigger value="browser">
-            <Browser className="h-4 w-4 mr-2" />
+            <Globe className="h-4 w-4 mr-2" />
             Browser & OS
           </TabsTrigger>
           <TabsTrigger value="notifications">
