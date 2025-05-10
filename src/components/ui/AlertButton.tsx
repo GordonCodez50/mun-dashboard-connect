@@ -22,8 +22,8 @@ export const AlertButton: React.FC<AlertButtonProps> = ({
   return (
     <button
       className={cn(
-        'alert-button',
-        variant === 'urgent' && 'alert-button-urgent',
+        'flex flex-col items-center justify-center w-full h-[80px] py-4 px-6 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200',
+        variant === 'urgent' && 'border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/10',
         loading && 'opacity-75 cursor-wait',
         className
       )}
@@ -40,7 +40,7 @@ export const AlertButton: React.FC<AlertButtonProps> = ({
           icon
         )}
       </div>
-      <span className={`font-medium text-sm ${variant === 'urgent' ? 'text-red-700' : 'text-primary'}`}>
+      <span className={`font-medium text-sm ${variant === 'urgent' ? 'text-red-700 dark:text-red-400' : 'text-primary dark:text-white'}`}>
         {label}
       </span>
     </button>

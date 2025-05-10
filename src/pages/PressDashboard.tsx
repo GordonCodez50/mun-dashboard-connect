@@ -243,6 +243,7 @@ const PressDashboard = () => {
                 label="Admin Location"
                 onClick={() => handleAlert('Admin Location')}
                 loading={loadingAlert === 'Admin Location'}
+                className="h-full min-w-[200px]" // Add fixed minimum width
               />
               <div className="flex flex-col md:flex-row gap-3 border border-gray-200 dark:border-gray-700 p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm min-h-[80px]">
                 <div className="flex flex-1 items-center gap-3">

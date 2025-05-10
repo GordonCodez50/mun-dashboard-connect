@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -24,6 +23,7 @@ type Alert = {
 };
 
 const ChairDashboard = () => {
+  
   const { 
     user, 
     showNotificationPrompt, 
@@ -107,6 +107,7 @@ const ChairDashboard = () => {
     }
   };
 
+  
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
       const userAlerts = alertsData
@@ -156,6 +157,8 @@ const ChairDashboard = () => {
       return () => clearTimeout(cooldownTimer);
     }
   }, [isOnCooldown]);
+
+  
 
   const getAlertMessage = (type: string): string => {
     switch (type) {
