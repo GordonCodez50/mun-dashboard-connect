@@ -32,23 +32,30 @@ export const QuickTimerWidget: React.FC<QuickTimerWidgetProps> = ({ className = 
   // Calculate progress percentage
   const progress = Math.max(0, (mainTimer.duration / mainTimer.initialDuration) * 100);
   
-  // Determine timer color based on remaining time
+  // Calculate remaining percentage for color determination
+  const remainingPercentage = (mainTimer.duration / mainTimer.initialDuration) * 100;
+  
+  // Determine timer color based on percentage of time remaining
   const getTimerColor = () => {
-    if (mainTimer.duration <= 10) return "text-red-500";
-    if (mainTimer.duration <= 30) return "text-amber-500";
-    return "text-primary dark:text-white";
+    if (remainingPercentage <= 20) return "text-red-500"; // Red when less than 20% remains
+    if (remainingPercentage <= 40) return "text-amber-500"; // Amber when 20-40% remains
+    if (remainingPercentage <= 60) return "text-yellow-500"; // Yellow when 40-60% remains
+    if (remainingPercentage <= 80) return "text-green-500"; // Green when 60-80% remains
+    return "text-primary dark:text-white"; // Default color when 80-100% remains
   };
 
-  // Determine progress indicator color based on time left
+  // Determine progress indicator color based on percentage of time left
   const getProgressColor = () => {
-    if (mainTimer.duration <= 10) return "bg-gradient-to-r from-red-500 to-rose-400";
-    if (mainTimer.duration <= 30) return "bg-gradient-to-r from-amber-500 to-yellow-400";
+    if (remainingPercentage <= 20) return "bg-gradient-to-r from-red-500 to-rose-400";
+    if (remainingPercentage <= 40) return "bg-gradient-to-r from-amber-500 to-yellow-400";
+    if (remainingPercentage <= 60) return "bg-gradient-to-r from-yellow-500 to-yellow-300";
+    if (remainingPercentage <= 80) return "bg-gradient-to-r from-green-500 to-emerald-400";
     return "bg-gradient-to-r from-accent to-sky-400";
   };
 
   // Determine if timer should have warning animation
   const getTimerAnimation = () => {
-    if (mainTimer.duration <= 10 && mainTimer.isRunning && !mainTimer.isPaused) return "time-warning";
+    if (remainingPercentage <= 20 && mainTimer.isRunning && !mainTimer.isPaused) return "time-warning";
     return "";
   };
 
