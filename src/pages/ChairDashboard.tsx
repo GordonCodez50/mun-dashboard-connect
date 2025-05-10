@@ -11,6 +11,7 @@ import useFirebaseRealtime from '@/hooks/useFirebaseRealtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAlertsSound } from '@/hooks/useAlertsSound';
 import { Alert, AlertTitle } from '@/components/ui/alert';
+import { motion } from 'framer-motion';
 
 type Alert = {
   id: string;
@@ -42,6 +43,69 @@ const ChairDashboard = () => {
   const { data: alertStatusData } = useFirebaseRealtime<any>('ALERT_STATUS_UPDATE');
 
   useAlertsSound(recentAlerts, alertsMuted);
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: {
+        when: "beforeChildren",
+        staggerChildren: 0.1,
+        duration: 0.3
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 100
+      }
+    }
+  };
+
+  const buttonHoverVariants = {
+    hover: { 
+      scale: 1.02,
+      boxShadow: "0 4px 12px rgba(69, 129, 182, 0.15)",
+      transition: { type: "spring", stiffness: 400, damping: 10 } 
+    },
+    tap: { scale: 0.98 }
+  };
+
+  const fadeInVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  const notificationBellVariants = {
+    initial: { scale: 1 },
+    animate: {
+      scale: [1, 1.15, 1],
+      rotateZ: [0, 15, -15, 0],
+      transition: { duration: 1, repeat: Infinity, repeatDelay: 4 }
+    }
+  };
+
+  const floatingIconVariants = {
+    animate: {
+      y: [0, -5, 0],
+      transition: {
+        repeat: Infinity,
+        repeatType: "reverse" as const,
+        duration: 1.5
+      }
+    }
+  };
 
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
@@ -229,35 +293,62 @@ const ChairDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden">
       <Sidebar />
       
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 md:p-8 animate-fade-in">
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="p-6 md:p-8 space-y-8"
+        >
           {showNotificationPrompt && (
-            <Alert className="mb-6 flex items-center justify-between bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
-              <div className="flex items-center space-x-4">
-                <BellRing className="h-5 w-5" />
-                <AlertTitle className="m-0">Enable notifications to get alerts about important events</AlertTitle>
-              </div>
-              <button
-                onClick={requestNotificationPermission}
-                className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-800/30 dark:hover:bg-amber-800/50 rounded-md transition-colors"
-              >
-                Enable Notifications
-              </button>
-            </Alert>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Alert className="mb-6 flex items-center justify-between bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="flex items-center space-x-4">
+                  <motion.div 
+                    variants={notificationBellVariants}
+                    initial="initial"
+                    animate="animate"
+                  >
+                    <BellRing className="h-5 w-5" />
+                  </motion.div>
+                  <AlertTitle className="m-0">Enable notifications to get alerts about important events</AlertTitle>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={requestNotificationPermission}
+                  className="px-4 py-2 text-sm font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-800/30 dark:hover:bg-amber-800/50 rounded-md transition-colors"
+                >
+                  Enable Notifications
+                </motion.button>
+              </Alert>
+            </motion.div>
           )}
           
-          <header className="mb-8 flex justify-between items-center">
+          <motion.header 
+            variants={itemVariants}
+            className="mb-8 flex justify-between items-center"
+          >
             <div>
-              <h1 className="text-3xl font-bold text-primary dark:text-white">Chair Dashboard</h1>
+              <h1 className="text-3xl font-bold text-primary dark:text-white relative inline-block">
+                Chair Dashboard
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-accent to-accent/30 rounded-full transform scale-x-0 origin-left transition-transform group-hover:scale-x-100 duration-300" />
+              </h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Welcome back, {user?.name}
+                Welcome back, <span className="font-medium text-primary/90 dark:text-white/90">{user?.name}</span>
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: alertsMuted ? 0 : 5 }}
+                whileTap={{ scale: 0.9 }}
                 onClick={() => setAlertsMuted(!alertsMuted)}
                 className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 title={alertsMuted ? "Unmute Notifications" : "Mute Notifications"}
@@ -276,46 +367,78 @@ const ChairDashboard = () => {
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                   </svg>
                 )}
-              </button>
+              </motion.button>
             </div>
-          </header>
+          </motion.header>
           
-          <div className="mb-8">
-            <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Quick Actions</h2>
+          <motion.div 
+            variants={itemVariants} 
+            className="mb-8"
+          >
+            <h2 className="text-lg font-medium text-primary dark:text-white mb-4 flex items-center gap-2">
+              Quick Actions
+              <motion.span 
+                variants={floatingIconVariants} 
+                animate="animate"
+                className="inline-block text-accent/80"
+              >
+                <AlertTriangle size={16} />
+              </motion.span>
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <AlertButton
-                icon={<Wrench size={24} />}
-                label="IT Support"
-                onClick={() => handleAlert('IT Support')}
-                loading={loadingAlert === 'IT Support'}
-              />
-              <AlertButton
-                icon={<MessagesSquare size={24} />}
-                label="Press & Coverage"
-                onClick={() => handleAlert('Press & Coverage')}
-                loading={loadingAlert === 'Press & Coverage'}
-              />
-              <AlertButton
-                icon={<Truck size={24} />}
-                label="Logistics & Assistance"
-                onClick={() => handleAlert('Logistics & Assistance')}
-                loading={loadingAlert === 'Logistics & Assistance'}
-              />
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonHoverVariants}>
+                <AlertButton
+                  icon={<Wrench size={24} />}
+                  label="IT Support"
+                  onClick={() => handleAlert('IT Support')}
+                  loading={loadingAlert === 'IT Support'}
+                  className="bg-gradient-to-br from-white to-gray-50 hover:from-gray-50 hover:to-white transition-all duration-300"
+                />
+              </motion.div>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonHoverVariants}>
+                <AlertButton
+                  icon={<MessagesSquare size={24} />}
+                  label="Press & Coverage"
+                  onClick={() => handleAlert('Press & Coverage')}
+                  loading={loadingAlert === 'Press & Coverage'}
+                  className="bg-gradient-to-br from-white to-gray-50 hover:from-gray-50 hover:to-white transition-all duration-300"
+                />
+              </motion.div>
+              <motion.div whileHover="hover" whileTap="tap" variants={buttonHoverVariants}>
+                <AlertButton
+                  icon={<Truck size={24} />}
+                  label="Logistics & Assistance"
+                  onClick={() => handleAlert('Logistics & Assistance')}
+                  loading={loadingAlert === 'Logistics & Assistance'}
+                  className="bg-gradient-to-br from-white to-gray-50 hover:from-gray-50 hover:to-white transition-all duration-300"
+                />
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="mb-8">
-            <form onSubmit={handleCustomAlert} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+          <motion.div 
+            variants={itemVariants} 
+            className="mb-8"
+          >
+            <form onSubmit={handleCustomAlert} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm hover:shadow-md transition-all duration-300">
               <h2 className="text-lg font-medium text-primary dark:text-white mb-4">Custom Alert</h2>
               <div className="flex flex-col sm:flex-row gap-3">
-                <input
+                <motion.input
+                  whileFocus={{ 
+                    boxShadow: "0 0 0 2px rgba(69, 129, 182, 0.2)",
+                    scale: 1.01
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
                   type="text"
                   value={customAlert}
                   onChange={(e) => setCustomAlert(e.target.value)}
                   placeholder="Type your alert message here..."
                   className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 input-shadow focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent dark:bg-gray-700 dark:text-white"
                 />
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   type="submit"
                   disabled={loadingAlert === 'Custom'}
                   className={`inline-flex justify-center items-center gap-2 px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent button-transition ${
@@ -329,111 +452,192 @@ const ChairDashboard = () => {
                     </svg>
                   ) : (
                     <>
-                      <Send size={18} />
+                      <motion.div 
+                        animate={{ 
+                          x: [0, 3, 0],
+                          transition: { duration: 1.5, repeat: Infinity, repeatType: "reverse" }
+                        }}
+                      >
+                        <Send size={18} />
+                      </motion.div>
                       Send Alert
                     </>
                   )}
-                </button>
+                </motion.button>
               </div>
             </form>
-          </div>
+          </motion.div>
           
-          <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 mb-8">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <QuickTimerWidget />
-            </CardContent>
-          </Card>
+          <motion.div variants={itemVariants}>
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gray-800 mb-8 overflow-hidden">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg text-primary dark:text-white">Quick Timer</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <QuickTimerWidget />
+              </CardContent>
+            </Card>
+          </motion.div>
           
-          <Card className="border-gray-200 dark:border-gray-700 shadow-sm dark:bg-gray-800 mb-8">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg text-primary dark:text-white">Recent Alerts</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              {recentAlerts.length > 0 ? (
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {recentAlerts.map((alert) => (
-                    <div key={alert.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-3">
-                      <span className="mt-0.5 text-accent">
-                        <AlertTriangle size={16} />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
-                        
-                        {alert.admin && alert.reply && (
-                          <div className="mt-2 mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800">
-                            <p className="font-medium text-sm text-blue-700 dark:text-blue-300">
-                              {alert.admin}:
-                            </p>
-                            <p className="text-sm text-blue-800 dark:text-blue-200">{alert.reply}</p>
-                          </div>
-                        )}
-                        
-                        <div className="mt-2 flex justify-between items-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
-                            alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
-                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-                          }`}>
-                            {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
-                          </span>
-                          
-                          {alert.status !== 'resolved' && activeAlertId !== alert.id && (
-                            <button 
-                              onClick={() => setActiveAlertId(alert.id)}
-                              className="flex items-center justify-center gap-1 px-4 py-1.5 text-xs bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+          <motion.div variants={itemVariants}>
+            <Card className="border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-gray-800 mb-8 overflow-hidden">
+              <CardHeader className="pb-2">
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={fadeInVariants}
+                  className="flex justify-between items-center"
+                >
+                  <CardTitle className="text-lg text-primary dark:text-white flex items-center gap-2">
+                    Recent Alerts
+                    {recentAlerts.length > 0 && (
+                      <motion.span 
+                        animate={{ scale: [1, 1.15, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent"
+                      >
+                        {recentAlerts.length}
+                      </motion.span>
+                    )}
+                  </CardTitle>
+                </motion.div>
+              </CardHeader>
+              <CardContent className="pt-2">
+                {recentAlerts.length > 0 ? (
+                  <motion.div 
+                    initial="hidden"
+                    animate="visible"
+                    variants={containerVariants}
+                    className="divide-y divide-gray-100 dark:divide-gray-700"
+                  >
+                    {recentAlerts.map((alert, index) => (
+                      <motion.div 
+                        key={alert.id} 
+                        variants={itemVariants}
+                        custom={index}
+                        transition={{ delay: index * 0.05 }}
+                        className="py-4 first:pt-0 last:pb-0 flex items-start gap-3 hover:bg-gray-50/50 dark:hover:bg-gray-700/50 rounded-md px-2 transition-colors duration-200"
+                      >
+                        <motion.span 
+                          className="mt-0.5 text-accent"
+                          initial={{ rotate: 0 }}
+                          whileHover={{ rotate: [0, -10, 10, -5, 0], transition: { duration: 0.5 } }}
+                        >
+                          <AlertTriangle size={16} />
+                        </motion.span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-sm font-medium text-primary dark:text-white">{alert.type}</h3>
+                            <motion.span 
+                              whileHover={{ scale: 1.1 }}
+                              className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full"
                             >
-                              <MessageSquare size={14} />
-                              Reply
-                            </button>
+                              {alert.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </motion.span>
+                          </div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-1">{alert.message}</p>
+                          
+                          {alert.admin && alert.reply && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }} 
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1 }}
+                              className="mt-2 mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800"
+                            >
+                              <p className="font-medium text-sm text-blue-700 dark:text-blue-300">
+                                {alert.admin}:
+                              </p>
+                              <p className="text-sm text-blue-800 dark:text-blue-200">{alert.reply}</p>
+                            </motion.div>
+                          )}
+                          
+                          <div className="mt-2 flex justify-between items-center">
+                            <motion.span 
+                              whileHover={{ scale: 1.05 }}
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                alert.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                                alert.status === 'acknowledged' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                              }`}
+                            >
+                              {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                            </motion.span>
+                            
+                            {alert.status !== 'resolved' && activeAlertId !== alert.id && (
+                              <motion.button 
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setActiveAlertId(alert.id)}
+                                className="flex items-center justify-center gap-1 px-4 py-1.5 text-xs bg-accent hover:bg-accent/90 text-white rounded-md transition-colors"
+                              >
+                                <MessageSquare size={14} />
+                                Reply
+                              </motion.button>
+                            )}
+                          </div>
+                          
+                          {activeAlertId === alert.id && (
+                            <motion.div 
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600"
+                            >
+                              <div className="flex items-start gap-2">
+                                <motion.input
+                                  initial={{ scale: 0.98 }}
+                                  whileFocus={{ scale: 1.01 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                  type="text"
+                                  value={replyMessage}
+                                  onChange={(e) => setReplyMessage(e.target.value)}
+                                  placeholder="Type your reply..."
+                                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                                />
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleSendReply(alert.id)}
+                                  className="px-3 py-1.5 text-xs bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
+                                >
+                                  Send
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setActiveAlertId(null)}
+                                  className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors"
+                                >
+                                  Cancel
+                                </motion.button>
+                              </div>
+                            </motion.div>
                           )}
                         </div>
-                        
-                        {activeAlertId === alert.id && (
-                          <div className="mt-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div className="flex items-start gap-2">
-                              <input
-                                type="text"
-                                value={replyMessage}
-                                onChange={(e) => setReplyMessage(e.target.value)}
-                                placeholder="Type your reply..."
-                                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-accent focus:border-accent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                              />
-                              <button
-                                onClick={() => handleSendReply(alert.id)}
-                                className="px-3 py-1.5 text-xs bg-accent text-white rounded-md hover:bg-accent/90 transition-colors"
-                              >
-                                Send
-                              </button>
-                              <button
-                                onClick={() => setActiveAlertId(null)}
-                                className="px-3 py-1.5 text-xs bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 transition-colors"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">No recent alerts</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    variants={fadeInVariants}
+                    className="text-center py-8"
+                  >
+                    <motion.p 
+                      animate={{ 
+                        opacity: [0.8, 0.6, 0.8], 
+                        transition: { duration: 2, repeat: Infinity } 
+                      }}
+                      className="text-gray-500 dark:text-gray-400"
+                    >
+                      No recent alerts
+                    </motion.p>
+                  </motion.div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
