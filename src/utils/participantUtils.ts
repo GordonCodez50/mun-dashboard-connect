@@ -29,5 +29,6 @@ export const getCurrentDateInfo = () => {
 
 // Always allow editing for both days
 export const canEditDate = (date: 'day1' | 'day2'): boolean => {
+  // Always return true to ensure editing is always enabled
   return true;
 };
