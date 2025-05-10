@@ -77,7 +77,7 @@ const TimerManager = () => {
                   animationDelay: `${index * 100}ms`,
                   opacity: 0,
                   animation: 'fade-in 0.5s ease-out forwards',
-                  animationDelay: `${index * 150}ms`
+                  animationDelay: `${(index + 1) * 150}ms`
                 }}
               >
                 <TimerCard
