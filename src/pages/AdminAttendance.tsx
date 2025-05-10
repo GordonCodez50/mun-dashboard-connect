@@ -14,6 +14,7 @@ import { Loader2, Users, UserPlus, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { AttendanceTroubleshoot } from '@/components/attendance/AttendanceTroubleshoot';
 import { getCurrentDateInfo } from '@/utils/participantUtils';
+import { motion } from 'framer-motion';
 
 const AdminAttendance = () => {
   const isMobile = useIsMobile();
@@ -53,29 +54,62 @@ const AdminAttendance = () => {
     }, 500);
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { 
+        duration: 0.5,
+        when: "beforeChildren",
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-x-hidden">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden">
       {!isMobile && <Sidebar />}
       
-      <div className="flex-1 overflow-y-auto w-full">
-        <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
-          <AttendanceAdminHeader 
-            isRefreshing={isRefreshing}
-            handleRefreshData={handleRefreshData}
-          />
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="flex-1 overflow-y-auto w-full"
+      >
+        <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'}`}>
+          <motion.div variants={itemVariants}>
+            <AttendanceAdminHeader 
+              isRefreshing={isRefreshing}
+              handleRefreshData={handleRefreshData}
+            />
+          </motion.div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
-              <span className="ml-3 text-gray-600">Loading attendance data...</span>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-12 space-y-4"
+            >
+              <Loader2 className="h-10 w-10 text-primary animate-spin" />
+              <span className="ml-3 text-gray-600 animate-pulse">Loading attendance data...</span>
+            </motion.div>
           ) : error ? (
-            <div className="bg-red-50 p-4 rounded-md text-red-800">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-red-50 border border-red-100 p-4 rounded-md text-red-800 shadow-sm"
+            >
               {error}
-            </div>
+            </motion.div>
           ) : (
             <>
-              <div className="mb-6">
+              <motion.div variants={itemVariants} className="mb-6">
                 <AttendanceFilters
                   selectedCouncil={selectedCouncil}
                   setSelectedCouncil={setSelectedCouncil}
@@ -85,26 +119,28 @@ const AdminAttendance = () => {
                   isDay1={true} // Always enable both days
                   isDay2={true} // Always enable both days
                 />
-              </div>
+              </motion.div>
               
-              <AttendanceSummary 
-                participants={filteredParticipants} 
-                selectedDate={selectedDate}
-                showCouncilsOverview={false}
-              />
+              <motion.div variants={itemVariants}>
+                <AttendanceSummary 
+                  participants={filteredParticipants} 
+                  selectedDate={selectedDate}
+                  showCouncilsOverview={false}
+                />
+              </motion.div>
               
-              <div className="mt-6">
+              <motion.div variants={itemVariants} className="mt-6">
                 <Tabs defaultValue="view" className="w-full">
-                  <TabsList className="grid grid-cols-3 md:w-[600px] mb-4">
-                    <TabsTrigger value="view" className="flex items-center gap-2">
+                  <TabsList className="grid grid-cols-3 md:w-[600px] mb-4 bg-white/80 backdrop-blur-sm shadow-md">
+                    <TabsTrigger value="view" className="flex items-center gap-2 data-[state=active]:bg-primary/10">
                       <Users size={16} /> 
                       <span>View Attendance</span>
                     </TabsTrigger>
-                    <TabsTrigger value="manage" className="flex items-center gap-2">
+                    <TabsTrigger value="manage" className="flex items-center gap-2 data-[state=active]:bg-primary/10">
                       <UserPlus size={16} /> 
                       <span>Manage Participants</span>
                     </TabsTrigger>
-                    <TabsTrigger value="export" className="flex items-center gap-2">
+                    <TabsTrigger value="export" className="flex items-center gap-2 data-[state=active]:bg-primary/10">
                       <Download size={16} /> 
                       <span>Export Data</span>
                     </TabsTrigger>
@@ -135,15 +171,21 @@ const AdminAttendance = () => {
                     />
                   </TabsContent>
                 </Tabs>
-              </div>
+              </motion.div>
               
-              <div className="mt-10">
+              <motion.div 
+                variants={itemVariants}
+                className="mt-10"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
                 <AttendanceTroubleshoot />
-              </div>
+              </motion.div>
             </>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
