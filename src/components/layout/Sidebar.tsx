@@ -172,6 +172,19 @@ export const Sidebar = () => {
 
         {/* Sidebar footer with subtle separator */}
         <div className="px-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+          {/* Settings button - added for all users */}
+          <Link
+            to="/settings"
+            className={cn(
+              "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-200 mb-1",
+              isActive("/settings")
+                ? "bg-primary/10 text-primary font-medium shadow-sm"
+                : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60"
+            )}
+          >
+            <Settings size={18} strokeWidth={2} className="opacity-90" />
+            Settings
+          </Link>
           <button
             onClick={logout}
             className="flex items-center gap-3 px-4 py-2.5 w-full rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-all duration-200"
