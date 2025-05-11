@@ -8,7 +8,7 @@ import {
   ChevronUp, 
   Clock, 
   FileText, 
-  Settings, 
+  SettingsIcon, // Renamed from Settings to SettingsIcon
   User, 
   Bell 
 } from 'lucide-react';
@@ -86,7 +86,7 @@ const Settings = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="general" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
+              <SettingsIcon className="h-4 w-4" />
               General
             </TabsTrigger>
             <TabsTrigger value="advanced" className="flex items-center gap-2">
@@ -115,7 +115,7 @@ const Settings = () => {
                     <span className="text-sm bg-primary/10 text-primary px-2 py-0.5 rounded">{APP_VERSION}</span>
                   </div>
                   
-                  <Accordion type="single" collapsible className="w-full">
+                  <Accordion type="single" collapsible>
                     <AccordionItem value="changelog">
                       <AccordionTrigger className="text-sm font-medium py-2">
                         Changelog

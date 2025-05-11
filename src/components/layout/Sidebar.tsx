@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import {
   LogOut,
-  Settings,
+  Settings as SettingsIcon,
   Users,
   Timer,
   LayoutDashboard,
@@ -182,7 +182,7 @@ export const Sidebar = () => {
                 : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60"
             )}
           >
-            <Settings size={18} strokeWidth={2} className="opacity-90" />
+            <SettingsIcon size={18} strokeWidth={2} className="opacity-90" />
             Settings
           </Link>
           <button
