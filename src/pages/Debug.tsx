@@ -401,49 +401,51 @@ const Debug = () => {
   // Password protection screen
   if (!authorized) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
-          <CardHeader>
-            <div className="flex items-center">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="mr-2" 
-                onClick={handleGoBack}
-                aria-label="Go back to settings"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <CardTitle className="text-lg font-semibold">Debug Console</CardTitle>
-                <CardDescription>Password protected area</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <form onSubmit={handlePasswordSubmit}>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Password
-                  </label>
-                  <input
-                    ref={passwordRef}
-                    id="password"
-                    type="password"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoFocus
-                  />
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        {/* New standalone Go Back button at top left */}
+        <div className="p-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2" 
+            onClick={handleGoBack}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Go Back
+          </Button>
+        </div>
+        
+        <div className="flex items-center justify-center flex-grow">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Debug Console</CardTitle>
+              <CardDescription>Password protected area</CardDescription>
+            </CardHeader>
+            <form onSubmit={handlePasswordSubmit}>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Password
+                    </label>
+                    <input
+                      ref={passwordRef}
+                      id="password"
+                      type="password"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full">Access Debug Console</Button>
-            </CardFooter>
-          </form>
-        </Card>
+              </CardContent>
+              <CardFooter>
+                <Button type="submit" className="w-full">Access Debug Console</Button>
+              </CardFooter>
+            </form>
+          </Card>
+        </div>
       </div>
     );
   }
