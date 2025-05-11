@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Info, Clipboard, Bell, Smartphone, Globe, Vibrate, Database, FileCode, Settings } from "lucide-react";
+import { Check, X, Info, Clipboard, Bell, Smartphone, Globe, Vibrate, Database, FileCode, Settings, Wifi, WifiOff, Network, Signal } from "lucide-react";
 import { notificationService } from "@/services/notificationService";
 import { 
   isAndroid, 
@@ -118,6 +118,13 @@ const Debug = () => {
   const [localStorageStatus, setLocalStorageStatus] = useState<'success' | 'error' | 'info' | 'pending'>('info');
   const [testResults, setTestResults] = useState<Record<string, string>>({});
   
+  // Network status states
+  const [pingStatus, setPingStatus] = useState<'success' | 'error' | 'info' | 'pending'>('info');
+  const [pingTime, setPingTime] = useState<number | null>(null);
+  const [connectionType, setConnectionType] = useState<string>("unknown");
+  const [connectionQuality, setConnectionQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  
   const passwordRef = useRef<HTMLInputElement>(null);
 
   // Initialize with browser and OS detection
@@ -159,6 +166,28 @@ const Debug = () => {
         'Permission Status': Notification.permission,
         'FCM Supported': notificationService.isFcmSupported() ? 'Yes' : 'No',
       });
+
+      // Check connection type
+      if ('connection' in navigator) {
+        // @ts-ignore - TypeScript doesn't know about navigator.connection
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+        if (conn) {
+          setConnectionType(conn.effectiveType || "unknown");
+          // Update connection type when it changes
+          conn.addEventListener('change', () => {
+            setConnectionType(conn.effectiveType || "unknown");
+            determineConnectionQuality(conn.effectiveType);
+          });
+          determineConnectionQuality(conn.effectiveType);
+        }
+      }
+
+      // Online/offline detection
+      window.addEventListener('online', () => setIsOnline(true));
+      window.addEventListener('offline', () => setIsOnline(false));
+      
+      // Run initial ping test
+      testNetworkLatency();
     }
   }, [authorized]);
 
@@ -274,6 +303,94 @@ const Debug = () => {
     }
   };
 
+  // Determine connection quality based on network type
+  const determineConnectionQuality = (type: string) => {
+    switch (type) {
+      case '4g':
+        setConnectionQuality('excellent');
+        break;
+      case '3g':
+        setConnectionQuality('good');
+        break;
+      case '2g':
+        setConnectionQuality('fair');
+        break;
+      case 'slow-2g':
+        setConnectionQuality('poor');
+        break;
+      default:
+        setConnectionQuality('good');
+    }
+  };
+
+  // Test network latency by pinging multiple endpoints
+  const testNetworkLatency = async () => {
+    setPingStatus('pending');
+    setPingTime(null);
+
+    try {
+      const startTime = performance.now();
+      
+      // Use a combination of techniques to test connection
+      // 1. Fetch a small resource with cache busting parameter
+      const fetchPromise = fetch(`https://www.google.com/favicon.ico?_=${Date.now()}`, { 
+        method: 'HEAD',
+        cache: 'no-store',
+        mode: 'no-cors'
+      });
+      
+      // Add a timeout to the fetch
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      );
+      
+      // Race between fetch and timeout
+      await Promise.race([fetchPromise, timeoutPromise]);
+      
+      const endTime = performance.now();
+      const latency = Math.round(endTime - startTime);
+      
+      setPingTime(latency);
+      setPingStatus('success');
+      
+      // Set connection quality based on latency
+      if (latency < 100) {
+        setConnectionQuality('excellent');
+      } else if (latency < 300) {
+        setConnectionQuality('good');
+      } else if (latency < 600) {
+        setConnectionQuality('fair');
+      } else {
+        setConnectionQuality('poor');
+      }
+      
+      toast.success(`Network latency: ${latency}ms`);
+    } catch (error) {
+      console.error('Ping test failed:', error);
+      setPingStatus('error');
+      setConnectionQuality('poor');
+      toast.error('Network test failed');
+    }
+  };
+
+  // Get icon for connection quality
+  const getConnectionIcon = () => {
+    if (!isOnline) return <WifiOff className="h-5 w-5 text-red-500" />;
+    
+    switch (connectionQuality) {
+      case 'excellent':
+        return <Wifi className="h-5 w-5 text-green-500" />;
+      case 'good':
+        return <Signal className="h-5 w-5 text-green-400" />;
+      case 'fair':
+        return <Signal className="h-5 w-5 text-yellow-500" />;
+      case 'poor':
+        return <Signal className="h-5 w-5 text-red-500" />;
+      default:
+        return <Network className="h-5 w-5 text-blue-500" />;
+    }
+  };
+
   // Password protection screen
   if (!authorized) {
     return (
@@ -320,7 +437,7 @@ const Debug = () => {
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 mb-6">
+        <TabsList className="grid grid-cols-5 mb-6">
           <TabsTrigger value="browser">
             <Globe className="h-4 w-4 mr-2" />
             Browser & OS
@@ -336,6 +453,10 @@ const Debug = () => {
           <TabsTrigger value="storage">
             <Database className="h-4 w-4 mr-2" />
             Storage & Workers
+          </TabsTrigger>
+          <TabsTrigger value="network">
+            <Network className="h-4 w-4 mr-2" />
+            Network
           </TabsTrigger>
         </TabsList>
 
@@ -691,6 +812,103 @@ const Debug = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Network Tab */}
+        <TabsContent value="network" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Network Status</CardTitle>
+              <CardDescription>Connection type and latency information</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="text-sm font-medium text-gray-500">Connection Status</p>
+                  <div className="flex items-center mt-2">
+                    {isOnline ? 
+                      <span className="flex items-center text-green-600">
+                        <Check className="h-5 w-5 mr-2" /> Online
+                      </span> : 
+                      <span className="flex items-center text-red-600">
+                        <X className="h-5 w-5 mr-2" /> Offline
+                      </span>
+                    }
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="text-sm font-medium text-gray-500">Connection Type</p>
+                  <div className="flex items-center mt-2">
+                    {getConnectionIcon()}
+                    <span className="ml-2 capitalize">{connectionType}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="text-sm font-medium text-gray-500">Connection Quality</p>
+                  <div className="flex items-center mt-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className={`h-2.5 rounded-full ${
+                          connectionQuality === 'excellent' ? 'bg-green-500 w-full' : 
+                          connectionQuality === 'good' ? 'bg-green-400 w-3/4' : 
+                          connectionQuality === 'fair' ? 'bg-yellow-500 w-2/4' : 
+                          'bg-red-500 w-1/4'
+                        }`}
+                      ></div>
+                    </div>
+                    <span className="ml-2 capitalize">{connectionQuality}</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-md">
+                  <p className="text-sm font-medium text-gray-500">Last Ping Latency</p>
+                  <div className="flex items-center mt-2">
+                    <StatusIcon status={pingStatus} />
+                    <span className="ml-2">
+                      {pingStatus === 'pending' ? 'Testing...' : 
+                       pingStatus === 'error' ? 'Failed' : 
+                       pingTime !== null ? `${pingTime}ms` : 'Not tested'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <Button onClick={testNetworkLatency} disabled={pingStatus === 'pending'}>
+                {pingStatus === 'pending' ? 'Testing...' : 'Test Network Speed'}
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Network Information</CardTitle>
+              <CardDescription>Additional network capabilities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center">
+                  <StatusIcon status={'connection' in navigator ? 'success' : 'info'} />
+                  <span className="ml-2">Network Information API</span>
+                </div>
+                <div className="flex items-center">
+                  <StatusIcon status={'onLine' in navigator ? 'success' : 'info'} />
+                  <span className="ml-2">Online Status Detection</span>
+                </div>
+                <div className="flex items-center">
+                  <StatusIcon status={isOnline ? 'success' : 'error'} />
+                  <span className="ml-2">Current Status: {isOnline ? 'Online' : 'Offline'}</span>
+                </div>
+                <div className="flex items-center">
+                  <StatusIcon status={'sendBeacon' in navigator ? 'success' : 'error'} />
+                  <span className="ml-2">Beacon API Support</span>
+                </div>
               </div>
             </CardContent>
           </Card>
