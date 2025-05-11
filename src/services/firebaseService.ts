@@ -36,11 +36,12 @@ import {
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
 import { FirebaseError } from 'firebase/app';
-import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
+import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS } from '@/config/firebaseConfig';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 import { getMessaging, getToken } from 'firebase/messaging';
 import { notificationService } from './notificationService';
+import { getUserInfoFromEmail } from '@/utils/user-format';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -58,36 +59,6 @@ try {
 } catch (error) {
   console.error('Error initializing Firebase messaging:', error);
 }
-
-// Demo data for simulation mode
-const DEMO_USERS = [
-  {
-    id: 'chair1',
-    username: 'ECOSOC',
-    name: 'ECOSOC Chair',
-    role: 'chair' as UserRole,
-    council: 'ECOSOC',
-    email: 'chair-ecosoc@isbmun.com',
-    createdAt: new Date(2023, 0, 1)
-  },
-  {
-    id: 'admin1',
-    username: 'Admin',
-    name: 'Admin User',
-    role: 'admin' as UserRole,
-    email: 'admin@isbmun.com',
-    createdAt: new Date(2023, 0, 1)
-  },
-  {
-    id: 'press1',
-    username: 'Press',
-    name: 'Press Team',
-    role: 'chair' as UserRole,
-    council: 'PRESS',
-    email: 'press@isbmun.com',
-    createdAt: new Date(2023, 0, 1)
-  }
-];
 
 // Authentication service
 export const authService = {
@@ -119,7 +90,7 @@ export const authService = {
           } else {
             // User doesn't exist in Firestore yet, create their profile based on email
             if (firebaseUser.email) {
-              const { role, council, username } = extractUserInfo(firebaseUser.email);
+              const { role, council, username } = getUserInfoFromEmail(firebaseUser.email);
               
               // Create user document in Firestore
               const newUserData: any = {
@@ -161,16 +132,7 @@ export const authService = {
   // Sign in with email and password
   signIn: async (email: string, password: string): Promise<User> => {
     if (FIREBASE_CONFIG.demoMode) {
-      // For demo mode, simulate sign in with predefined users
-      const demoUser = DEMO_USERS.find(u => u.email === email && password === 'password');
-      if (!demoUser) {
-        throw new Error('Invalid email or password');
-      }
-      
-      return {
-        ...demoUser,
-        lastLogin: new Date()
-      };
+      throw new Error('Demo mode not supported. Please use production mode.');
     }
     
     try {
@@ -193,7 +155,7 @@ export const authService = {
       } else {
         // Create new user document based on email
         if (firebaseUser.email) {
-          const { role, council, username } = extractUserInfo(firebaseUser.email);
+          const { role, council, username } = getUserInfoFromEmail(firebaseUser.email);
           
           userData = {
             username: username,
@@ -318,7 +280,7 @@ export const authService = {
   getUsers: async (): Promise<User[]> => {
     if (FIREBASE_CONFIG.demoMode) {
       // For demo mode, return predefined users
-      return DEMO_USERS;
+      return [];
     }
     
     try {
@@ -813,8 +775,8 @@ export default {
   analytics,
   messaging,
   authService,
-  realtimeService,
-  firestoreService,
-  fcmService,
+  realtimeService: {} as any, // This will be populated from the appropriate module
+  firestoreService: {} as any, // This will be populated from the appropriate module
+  fcmService: {} as any,       // This will be populated from the appropriate module
   initializeFirebase
 };

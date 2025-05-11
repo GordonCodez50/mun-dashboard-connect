@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { authService } from '@/services/firebaseService';
-import { extractUserInfo } from '@/config/firebaseConfig';
 import { notificationService } from '@/services/notificationService';
 import { realtimeService } from '@/services/realtimeService';
+import { getUserInfoFromEmail } from '@/utils/user-format';
 
 type AuthContextType = {
   user: User | null;

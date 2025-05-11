@@ -11,7 +11,15 @@ const Index = () => {
     // Only navigate programmatically if we're not still loading auth state
     if (!loading) {
       if (isAuthenticated) {
-        const destination = user?.role === 'admin' ? '/admin-panel' : '/chair-dashboard';
+        // Determine where to navigate based on user role
+        let destination = '/';
+        
+        if (user?.role === 'admin') {
+          destination = '/admin-panel';
+        } else if (user?.role === 'chair') {
+          destination = user.council === 'PRESS' ? '/press-dashboard' : '/chair-dashboard';
+        }
+        
         navigate(destination, { replace: true });
       } else {
         navigate('/', { replace: true });

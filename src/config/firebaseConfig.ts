@@ -39,6 +39,7 @@ export const RTDB_PATHS = {
 export const EMAIL_PATTERNS = {
   CHAIR_PREFIX: 'chair-',
   ADMIN_PREFIX: 'admin-',
+  ADMIN_DIRECT: 'admin@isbmun.com',
   PRESS_PREFIX: 'press-',
   DOMAIN: '@isbmun.com'
 };
@@ -47,7 +48,24 @@ export const EMAIL_PATTERNS = {
 export const extractUserInfo = (email: string) => {
   email = email.toLowerCase();
   
-  if (email.startsWith(EMAIL_PATTERNS.CHAIR_PREFIX)) {
+  // Check if it's the direct admin email
+  if (email === EMAIL_PATTERNS.ADMIN_DIRECT) {
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: 'Admin'
+    };
+  }
+  // Check if it's a name-admin email format
+  else if (email.includes('-admin@isbmun.com')) {
+    const namePart = email.split('-admin@')[0];
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: namePart.charAt(0).toUpperCase() + namePart.slice(1) // Capitalize name
+    };
+  }
+  else if (email.startsWith(EMAIL_PATTERNS.CHAIR_PREFIX)) {
     // Extract council name from chair-COUNCILNAME@isbmun.com
     const councilPart = email.substring(EMAIL_PATTERNS.CHAIR_PREFIX.length);
     const council = councilPart.split('@')[0].toUpperCase();
@@ -75,14 +93,14 @@ export const extractUserInfo = (email: string) => {
       username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Press' // Capitalize name or use default
     };
   } else if (email.startsWith('admin')) {
-    // Fallback for old admin format
+    // For backward compatibility with older admin format
     return {
       role: 'admin' as const,
       council: undefined,
       username: 'Admin'
     };
   } else if (email.startsWith('press')) {
-    // Fallback for old press format
+    // For backward compatibility with older press format
     return {
       role: 'chair' as const,
       council: 'PRESS',
