@@ -45,16 +45,7 @@ export default function Home() {
             </div>
           }
         >
-          <img
-            src={
-              isMobile
-                ? "/mun-dashboard-connect.png"
-                : "/Screenshot%202025-04-20%20180839.png"
-            }
-            alt="ISBMUN"
-            className="mx-auto rounded-2xl object-contain w-full max-h-[400px] sm:max-h-[500px] md:max-h-[600px] lg:max-h-[700px]"
-            draggable={false}
-          />
+          <ResponsiveImage />
         </ContainerScroll>
 
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 -mt-20 pb-0">
@@ -135,6 +126,46 @@ export default function Home() {
       </div>
 
       <Footer brandName="" />
+    </div>
+  );
+}
+
+function ResponsiveImage() {
+  // Get window size for responsive image selection
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Select the appropriate image based on screen width
+  const getImageSource = () => {
+    if (windowWidth >= 1280) { // xl and above
+      return "/public/Large.png";
+    } else if (windowWidth >= 1024) { // lg
+      return "/public/Medium-1.png";
+    } else if (windowWidth >= 768) { // md
+      return "/public/Medium-2.png";
+    } else if (windowWidth >= 480) { // sm
+      return "/public/Small-2.png";
+    } else { // xs
+      return "/public/Small-1.png";
+    }
+  };
+
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <img
+        src={getImageSource()}
+        alt="ISBMUN Dashboard"
+        className="mx-auto rounded-2xl object-contain w-full h-full"
+        draggable={false}
+      />
     </div>
   );
 }
