@@ -85,6 +85,8 @@ const Settings = () => {
     }
   };
 
+  const isAdmin = user?.role === 'admin';
+
   return (
     <div className="container max-w-6xl py-6 px-4 md:px-6">
       <div className="flex flex-col gap-6">
@@ -180,15 +182,18 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className={`grid ${isAdmin ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
                   <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
                     <span className="text-sm text-gray-500 dark:text-gray-400">Alerts Sent</span>
                     <span className="text-2xl font-bold">{USAGE_DATA.alertsSent}</span>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Councils Monitored</span>
-                    <span className="text-2xl font-bold">{USAGE_DATA.councilsMonitored}</span>
-                  </div>
+                  
+                  {isAdmin && (
+                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Councils Monitored</span>
+                      <span className="text-2xl font-bold">{USAGE_DATA.councilsMonitored}</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
