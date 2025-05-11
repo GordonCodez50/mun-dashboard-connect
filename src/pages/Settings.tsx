@@ -59,8 +59,7 @@ const CHANGELOG = [
 
 // Mock data for usage statistics - in a real app, this would come from the backend
 const USAGE_DATA = {
-  alertsSent: 124,
-  councilsMonitored: 8
+  alertsSent: 124
 };
 
 const Settings = () => {
@@ -84,8 +83,6 @@ const Settings = () => {
       navigate('/chair-dashboard');
     }
   };
-
-  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="container max-w-6xl py-6 px-4 md:px-6">
@@ -182,18 +179,9 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className={`grid ${isAdmin ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'} gap-4`}>
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Alerts Sent</span>
-                    <span className="text-2xl font-bold">{USAGE_DATA.alertsSent}</span>
-                  </div>
-                  
-                  {isAdmin && (
-                    <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Councils Monitored</span>
-                      <span className="text-2xl font-bold">{USAGE_DATA.councilsMonitored}</span>
-                    </div>
-                  )}
+                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 flex flex-col">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Alerts Sent</span>
+                  <span className="text-2xl font-bold">{USAGE_DATA.alertsSent}</span>
                 </div>
               </CardContent>
             </Card>
