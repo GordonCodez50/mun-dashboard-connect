@@ -163,7 +163,7 @@ function ResponsiveImage() {
       <img
         src={getImageSource()}
         alt="ISBMUN Dashboard"
-        className="mx-auto rounded-2xl object-contain w-full h-full"
+        className="w-full object-cover rounded-2xl"
         draggable={false}
       />
     </div>
