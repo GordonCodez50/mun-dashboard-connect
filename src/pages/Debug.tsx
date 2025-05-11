@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, X, Info, Clipboard, Bell, Smartphone, Globe, Vibrate, Database, FileCode, Settings, Wifi, WifiOff, Network, Signal } from "lucide-react";
+import { Check, X, Info, Clipboard, Bell, Smartphone, Globe, Vibrate, Database, FileCode, Settings, Wifi, WifiOff, Network, Signal, ArrowLeft } from "lucide-react";
 import { notificationService } from "@/services/notificationService";
 import { 
   isAndroid, 
@@ -20,6 +20,7 @@ import {
 } from "@/utils/crossPlatformNotifications";
 import { toast } from "sonner";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 
 // Status icons with colors
 const StatusIcon = ({ status }: { status: 'success' | 'error' | 'info' | 'pending' }) => {
@@ -110,6 +111,7 @@ const Debug = () => {
   const [browserInfo, setBrowserInfo] = useState({ browserName: "", browserVersion: "" });
   const [osInfo, setOsInfo] = useState({ osName: "", osVersion: "" });
   const { isSupported, permissionGranted, requestPermission } = useNotifications();
+  const navigate = useNavigate();
 
   // Test result states
   const [vibrationSupported, setVibrationSupported] = useState<boolean | null>(null);
@@ -126,6 +128,11 @@ const Debug = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   
   const passwordRef = useRef<HTMLInputElement>(null);
+
+  // Handle going back to the settings page
+  const handleGoBack = () => {
+    navigate('/settings');
+  };
 
   // Initialize with browser and OS detection
   useEffect(() => {
@@ -397,8 +404,21 @@ const Debug = () => {
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Card className="w-full max-w-md mx-4">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Debug Console</CardTitle>
-            <CardDescription>Password protected area</CardDescription>
+            <div className="flex items-center">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="mr-2" 
+                onClick={handleGoBack}
+                aria-label="Go back to settings"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <CardTitle className="text-lg font-semibold">Debug Console</CardTitle>
+                <CardDescription>Password protected area</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <form onSubmit={handlePasswordSubmit}>
             <CardContent>
@@ -432,7 +452,18 @@ const Debug = () => {
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Debug Console</h1>
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2" 
+            onClick={handleGoBack}
+            aria-label="Go back to settings"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Debug Console</h1>
+        </div>
         <Button variant="outline" onClick={() => setAuthorized(false)}>Lock Console</Button>
       </div>
 

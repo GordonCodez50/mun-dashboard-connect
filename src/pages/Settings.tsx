@@ -10,7 +10,8 @@ import {
   FileText, 
   SettingsIcon, // Renamed from Settings to SettingsIcon
   User, 
-  Bell 
+  Bell,
+  ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,7 +59,6 @@ const CHANGELOG = [
 
 // Mock data for usage statistics - in a real app, this would come from the backend
 const USAGE_DATA = {
-  filesUploaded: 47,
   alertsSent: 124,
   councilsMonitored: 8
 };
@@ -72,15 +72,40 @@ const Settings = () => {
   const handleOpenDebug = () => {
     navigate('/debug');
   };
+  
+  // Handle going back to the previous page
+  const handleGoBack = () => {
+    // Determine appropriate page to navigate to based on user role
+    if (user?.role === 'admin') {
+      navigate('/admin-panel');
+    } else if (user?.role === 'chair' && user?.council === 'PRESS') {
+      navigate('/press-dashboard');
+    } else {
+      navigate('/chair-dashboard');
+    }
+  };
 
   return (
     <div className="container max-w-6xl py-6 px-4 md:px-6">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and preferences
-          </p>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="mr-1" 
+                onClick={handleGoBack}
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Manage your account settings and preferences
+            </p>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -155,11 +180,7 @@ const Settings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">Files/Documents Uploaded</span>
-                    <span className="text-2xl font-bold">{USAGE_DATA.filesUploaded}</span>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg flex flex-col">
                     <span className="text-sm text-gray-500 dark:text-gray-400">Alerts Sent</span>
                     <span className="text-2xl font-bold">{USAGE_DATA.alertsSent}</span>
