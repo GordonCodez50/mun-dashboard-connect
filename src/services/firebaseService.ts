@@ -1,3 +1,4 @@
+
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -36,7 +37,8 @@ import {
 } from 'firebase/database';
 import { getAnalytics } from 'firebase/analytics';
 import { FirebaseError } from 'firebase/app';
-import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo, getUserInfoFromEmail } from '@/config/firebaseConfig';
+import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
+import { getUserInfoFromEmail } from '@/utils/user-format';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 import { getMessaging, getToken } from 'firebase/messaging';

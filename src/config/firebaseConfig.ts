@@ -51,4 +51,10 @@ export const extractUserInfo = (email: string) => {
 };
 
 // Recommended Firebase security rules
-// ... keep existing code (RECOMMENDED_SECURITY_RULES)
+/*
+  These rules enforce the following:
+  - Only authenticated users can read/write data
+  - Data is structured with specific fields and types
+  - Users can only update their own profiles
+  - Admins can manage all users and data
+*/
