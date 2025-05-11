@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -38,7 +37,6 @@ import {
 import { getAnalytics } from 'firebase/analytics';
 import { FirebaseError } from 'firebase/app';
 import { firebaseConfig, FIREBASE_CONFIG, FIRESTORE_COLLECTIONS, extractUserInfo } from '@/config/firebaseConfig';
-import { getUserInfoFromEmail } from '@/utils/user-format';
 import { User, UserRole, UserFormData } from '@/types/auth';
 import { toast } from 'sonner';
 import { getMessaging, getToken } from 'firebase/messaging';
@@ -78,14 +76,6 @@ const DEMO_USERS = [
     name: 'Admin User',
     role: 'admin' as UserRole,
     email: 'admin@isbmun.com',
-    createdAt: new Date(2023, 0, 1)
-  },
-  {
-    id: 'admin2',
-    username: 'Michael',
-    name: 'Michael Admin',
-    role: 'admin' as UserRole,
-    email: 'michael-admin@isbmun.com',
     createdAt: new Date(2023, 0, 1)
   },
   {
@@ -129,8 +119,7 @@ export const authService = {
           } else {
             // User doesn't exist in Firestore yet, create their profile based on email
             if (firebaseUser.email) {
-              // Use our new utility function to get user info
-              const { role, council, username } = getUserInfoFromEmail(firebaseUser.email);
+              const { role, council, username } = extractUserInfo(firebaseUser.email);
               
               // Create user document in Firestore
               const newUserData: any = {
@@ -204,8 +193,7 @@ export const authService = {
       } else {
         // Create new user document based on email
         if (firebaseUser.email) {
-          // Use our new utility function to get user info
-          const { role, council, username } = getUserInfoFromEmail(firebaseUser.email);
+          const { role, council, username } = extractUserInfo(firebaseUser.email);
           
           userData = {
             username: username,

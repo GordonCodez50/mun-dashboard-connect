@@ -1,5 +1,5 @@
+
 // Firebase configuration for the MUN Conference Dashboard
-import { getUserInfoFromEmail, EMAIL_DOMAIN } from '@/utils/user-format';
 
 // Firebase configuration object
 // These are the actual Firebase project configuration values
@@ -36,25 +36,158 @@ export const RTDB_PATHS = {
 };
 
 // Email formats for role determination
-// Now exported from user-format.ts
 export const EMAIL_PATTERNS = {
   CHAIR_PREFIX: 'chair-',
   ADMIN_PREFIX: 'admin-',
   PRESS_PREFIX: 'press-',
-  DOMAIN: `@${EMAIL_DOMAIN}`
+  DOMAIN: '@isbmun.com'
 };
 
 // Function to extract role and council from email
-// Now using the function from user-format.ts
 export const extractUserInfo = (email: string) => {
-  return getUserInfoFromEmail(email);
+  email = email.toLowerCase();
+  
+  if (email.startsWith(EMAIL_PATTERNS.CHAIR_PREFIX)) {
+    // Extract council name from chair-COUNCILNAME@isbmun.com
+    const councilPart = email.substring(EMAIL_PATTERNS.CHAIR_PREFIX.length);
+    const council = councilPart.split('@')[0].toUpperCase();
+    return { 
+      role: 'chair' as const,
+      council,
+      username: council // Use council name as username
+    };
+  } else if (email.startsWith(EMAIL_PATTERNS.ADMIN_PREFIX)) {
+    // Extract name from admin-NAME@isbmun.com (if provided)
+    const namePart = email.substring(EMAIL_PATTERNS.ADMIN_PREFIX.length);
+    const name = namePart.split('@')[0];
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Admin' // Capitalize name or use default
+    };
+  } else if (email.startsWith(EMAIL_PATTERNS.PRESS_PREFIX)) {
+    // Extract name from press-NAME@isbmun.com (if provided)
+    const namePart = email.substring(EMAIL_PATTERNS.PRESS_PREFIX.length);
+    const name = namePart.split('@')[0];
+    return {
+      role: 'chair' as const, // Press users have same access as chair
+      council: 'PRESS',
+      username: name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Press' // Capitalize name or use default
+    };
+  } else if (email.startsWith('admin')) {
+    // Fallback for old admin format
+    return {
+      role: 'admin' as const,
+      council: undefined,
+      username: 'Admin'
+    };
+  } else if (email.startsWith('press')) {
+    // Fallback for old press format
+    return {
+      role: 'chair' as const,
+      council: 'PRESS',
+      username: 'Press'
+    };
+  }
+  
+  // Default fallback
+  return {
+    role: 'chair' as const,
+    council: undefined,
+    username: email.split('@')[0]
+  };
 };
 
 // Recommended Firebase security rules
-/*
-  These rules enforce the following:
-  - Only authenticated users can read/write data
-  - Data is structured with specific fields and types
-  - Users can only update their own profiles
-  - Admins can manage all users and data
-*/
+export const RECOMMENDED_SECURITY_RULES = {
+  // Firestore security rules
+  firestore: `
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        // Allow admins to read and write all documents
+        match /{document=**} {
+          allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        }
+        
+        // Allow chair users to read all documents
+        match /{document=**} {
+          allow read: if request.auth != null;
+        }
+        
+        // Allow all authenticated users to read and write their own user document
+        match /users/{userId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+        
+        // Allow chair users to update their own council's information
+        match /councils/{councilId} {
+          allow update: if request.auth != null && 
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
+        }
+        
+        // Participants collection rules
+        match /participants/{participantId} {
+          // All authenticated users can read participants
+          allow read: if request.auth != null;
+          
+          // Chair users can only create and update participants for their own council
+          allow create, update: if request.auth != null &&
+                                  (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                                  (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chair' &&
+                                  get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == request.resource.data.council));
+          
+          // Only admins can delete participants
+          allow delete: if request.auth != null && 
+                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        }
+        
+        // Allow chair users to create alerts
+        match /alerts/{alertId} {
+          allow create: if request.auth != null && 
+                         request.resource.data.council == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council;
+        }
+        
+        // Allow users to read documents
+        match /documents/{documentId} {
+          allow read: if request.auth != null;
+        }
+      }
+    }
+  `,
+  
+  // Realtime Database security rules
+  realtimeDb: `
+    {
+      "rules": {
+        // Allow all authenticated users to read data
+        ".read": "auth != null",
+        
+        "alerts": {
+          // Allow authenticated users to read and create alerts
+          ".read": "auth != null",
+          ".write": "auth != null",
+          
+          "$alertId": {
+            // Anyone can read alerts
+            ".read": true,
+            
+            // Authenticated users can update alerts
+            ".write": "auth != null"
+          }
+        },
+        
+        "timers": {
+          // Allow access to timers for authenticated users
+          ".read": "auth != null",
+          ".write": "auth != null",
+          
+          "$timerId": {
+            ".read": "auth != null",
+            ".write": "auth != null"
+          }
+        }
+      }
+    }
+  `
+};
