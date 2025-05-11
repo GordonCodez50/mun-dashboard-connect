@@ -159,11 +159,11 @@ function ResponsiveImage() {
   };
 
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div className="w-full h-full flex items-start justify-center">
       <img
         src={getImageSource()}
         alt="ISBMUN Dashboard"
-        className="w-full object-cover rounded-2xl"
+        className="w-full object-cover object-top rounded-2xl"
         draggable={false}
       />
     </div>
