@@ -10,6 +10,7 @@ const realtimeDb = getDatabase(app);
 // Track if we've already set up listeners
 let listenersInitialized = false;
 let alertListenersActive = false;
+let recentAlerts = new Set(); // To track recently processed alerts and prevent duplicates
 
 // Initialize global realtime alert listeners
 const initializeAlertListeners = () => {
@@ -28,6 +29,15 @@ const initializeAlertListeners = () => {
       const alert = snapshot.val();
       if (!alert) return;
       
+      // Get alert ID from snapshot
+      const alertId = snapshot.key;
+      
+      // Check if we've already processed this alert in this session
+      if (recentAlerts.has(alertId)) {
+        console.log('Already processed this alert, skipping notification:', alertId);
+        return;
+      }
+      
       // Only show notification for new alerts (within last 30 seconds to account for page loads)
       const now = Date.now();
       const alertTime = alert.timestamp || now;
@@ -35,6 +45,15 @@ const initializeAlertListeners = () => {
       
       if (isRecent) {
         console.log('New alert detected in realtime:', alert);
+        
+        // Add to our processed alerts set
+        recentAlerts.add(alertId);
+        
+        // Keep set size manageable
+        if (recentAlerts.size > 100) {
+          // Remove oldest entries (convert to array, slice, convert back to set)
+          recentAlerts = new Set([...recentAlerts].slice(-50));
+        }
         
         // Show notification regardless of current page
         const isUrgent = alert.priority === 'urgent';

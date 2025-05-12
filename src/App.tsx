@@ -17,6 +17,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
+import NotificationInitializer from "./components/NotificationInitializer";
 
 // Error boundary fallback component
 const ErrorFallback = () => (
@@ -107,7 +108,7 @@ const AlertHandler = () => {
       // This depends on your specific implementation
     }
     
-    // Force initialize alert listeners on every page navigation
+    // Always ensure alert listeners are initialized on every page navigation
     realtimeService.initializeAlertListeners();
     
     // Ensure user role is set for notifications on each page
@@ -118,7 +119,7 @@ const AlertHandler = () => {
       notificationService.setUserRole(role);
       
       // Also inform service worker about user role
-      if (navigator.serviceWorker.controller) {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
           type: 'SET_USER_ROLE',
           role
@@ -130,7 +131,7 @@ const AlertHandler = () => {
   return null;
 };
 
-// Protected route component with alert handling
+// Protected route component with alert handling and notification initializer
 const ProtectedRoute = ({ 
   element, 
   requiredRole,
@@ -158,6 +159,7 @@ const ProtectedRoute = ({
   return (
     <ErrorBoundary fallback={<ErrorFallback />}>
       <AlertHandler />
+      <NotificationInitializer />
       <Suspense fallback={<LoadingFallback />}>{element}</Suspense>
     </ErrorBoundary>
   );
