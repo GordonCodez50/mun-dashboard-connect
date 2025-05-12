@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -17,13 +16,22 @@ import {
 } from 'lucide-react';
 import { externalNavButton } from '@/config/navigationConfig';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  activeItem?: string;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
   const isPress = user?.role === 'chair' && user?.council === 'PRESS';
 
   const isActive = (path: string) => {
+    // If activeItem is provided, use it to determine active state
+    if (activeItem) {
+      return path === activeItem;
+    }
+    // Otherwise fall back to location-based check
     return location.pathname === path;
   };
 
