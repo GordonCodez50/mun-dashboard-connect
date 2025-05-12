@@ -1,6 +1,6 @@
 
 import React, { PropsWithChildren } from 'react';
-import Sidebar from './Sidebar';
+import { Sidebar } from './Sidebar';
 import NotificationInitializer from '../NotificationInitializer';
 
 interface ChairLayoutProps {
