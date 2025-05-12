@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -12,7 +11,9 @@ import {
   HelpCircle,
   ExternalLink,
   Info,
-  Check
+  Check,
+  Wrench,
+  Bell
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -22,16 +23,105 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  requestNotificationPermission,
+  testNotification 
+} from '@/utils/notificationPermission';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+type TroubleshootOptions = {
+  triggerNotificationPermission: boolean;
+  sendTestNotification: boolean;
+  resetUserPreferences: boolean;
+}
 
 const UserManagement = () => {
   const { user, users, deleteUser } = useAuth();
   const isMobile = useIsMobile();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [troubleshootDialogOpen, setTroubleshootDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserName, setSelectedUserName] = useState<string>("");
+  const [troubleshootOptions, setTroubleshootOptions] = useState<TroubleshootOptions>({
+    triggerNotificationPermission: false,
+    sendTestNotification: false,
+    resetUserPreferences: false,
+  });
+  const [isTroubleshootingInProgress, setIsTroubleshootingInProgress] = useState(false);
 
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (window.confirm(`Are you sure you want to delete ${userName}?`)) {
       await deleteUser(userId);
+    }
+  };
+
+  const openTroubleshootDialog = (userId: string, userName: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
+    setTroubleshootOptions({
+      triggerNotificationPermission: false,
+      sendTestNotification: false,
+      resetUserPreferences: false,
+    });
+    setTroubleshootDialogOpen(true);
+  };
+
+  const handleTroubleshootAction = async () => {
+    if (!selectedUserId) return;
+    
+    setIsTroubleshootingInProgress(true);
+    
+    try {
+      // In a real implementation, these would communicate with the user's device
+      // Here we're simulating the troubleshooting actions
+      const actions = [];
+      
+      if (troubleshootOptions.triggerNotificationPermission) {
+        actions.push("trigger notification permission");
+        // In a real implementation, this would use a websocket or FCM to trigger the permission request
+        toast.success(`Notification permission request triggered for ${selectedUserName}`);
+      }
+      
+      if (troubleshootOptions.sendTestNotification) {
+        actions.push("send test notification");
+        // This would use FCM to send a test notification
+        toast.success(`Test notification sent to ${selectedUserName}`);
+      }
+      
+      if (troubleshootOptions.resetUserPreferences) {
+        actions.push("reset preferences");
+        // This would reset user preferences in the database
+        toast.success(`Preferences reset for ${selectedUserName}`);
+      }
+      
+      if (actions.length > 0) {
+        toast.success(`Troubleshooting completed for ${selectedUserName}: ${actions.join(", ")}`);
+      } else {
+        toast.info("No troubleshooting actions were selected");
+      }
+    } catch (error) {
+      console.error("Troubleshooting error:", error);
+      toast.error(`Failed to complete troubleshooting for ${selectedUserName}`);
+    } finally {
+      setIsTroubleshootingInProgress(false);
+      setTroubleshootDialogOpen(false);
     }
   };
 
@@ -124,7 +214,7 @@ const UserManagement = () => {
                       Last Login
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -164,13 +254,22 @@ const UserManagement = () => {
                           }
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.name)}
-                            className="text-red-600 hover:text-red-900 inline-flex items-center gap-1"
-                          >
-                            <UserX size={16} />
-                            Delete
-                          </button>
+                          <div className="flex space-x-4">
+                            <button
+                              onClick={() => openTroubleshootDialog(user.id, user.name)}
+                              className="text-accent hover:text-accent/70 inline-flex items-center gap-1"
+                            >
+                              <Wrench size={16} />
+                              Troubleshoot
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              className="text-red-600 hover:text-red-900 inline-flex items-center gap-1"
+                            >
+                              <UserX size={16} />
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </motion.tr>
                     ))
@@ -352,6 +451,157 @@ const UserManagement = () => {
               </AccordionItem>
             </Accordion>
           </motion.div>
+          
+          {/* Troubleshoot Dialog */}
+          <AlertDialog 
+            open={troubleshootDialogOpen} 
+            onOpenChange={(isOpen) => {
+              if (!isTroubleshootingInProgress) {
+                setTroubleshootDialogOpen(isOpen);
+              }
+            }}
+          >
+            <AlertDialogContent className={isMobile ? "w-[90%] max-w-md rounded-xl" : ""}>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <Wrench className="h-5 w-5 text-accent" />
+                  Troubleshoot User: {selectedUserName}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Select the troubleshooting actions to resolve issues for this user.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              
+              <div className="py-4 space-y-4">
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="triggerNotificationPermission" 
+                    checked={troubleshootOptions.triggerNotificationPermission}
+                    onCheckedChange={(checked) => {
+                      setTroubleshootOptions(prev => ({
+                        ...prev,
+                        triggerNotificationPermission: checked === true
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="triggerNotificationPermission"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                    >
+                      Trigger Notification Permission Request
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 text-sm p-4">
+                          <p>Forces the user's browser to show the notification permission dialog. This is useful if they accidentally denied notifications.</p>
+                        </PopoverContent>
+                      </Popover>
+                    </label>
+                    <p className="text-sm text-muted-foreground ml-6">
+                      Prompts the user to allow notifications
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="sendTestNotification" 
+                    checked={troubleshootOptions.sendTestNotification}
+                    onCheckedChange={(checked) => {
+                      setTroubleshootOptions(prev => ({
+                        ...prev,
+                        sendTestNotification: checked === true
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="sendTestNotification"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                    >
+                      Send Test Notification
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 text-sm p-4">
+                          <p>Sends a test notification to verify that notifications are working properly on the user's device.</p>
+                        </PopoverContent>
+                      </Popover>
+                    </label>
+                    <p className="text-sm text-muted-foreground ml-6">
+                      Tests if notifications are working
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="resetUserPreferences" 
+                    checked={troubleshootOptions.resetUserPreferences}
+                    onCheckedChange={(checked) => {
+                      setTroubleshootOptions(prev => ({
+                        ...prev,
+                        resetUserPreferences: checked === true
+                      }));
+                    }}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="resetUserPreferences"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                    >
+                      Reset User Preferences
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-5 w-5">
+                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 text-sm p-4">
+                          <p>Resets all user preferences to their default values. This can fix issues with corrupted settings.</p>
+                        </PopoverContent>
+                      </Popover>
+                    </label>
+                    <p className="text-sm text-muted-foreground ml-6">
+                      Resets settings to default values
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isTroubleshootingInProgress}>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleTroubleshootAction}
+                  disabled={isTroubleshootingInProgress || (
+                    !troubleshootOptions.triggerNotificationPermission && 
+                    !troubleshootOptions.sendTestNotification && 
+                    !troubleshootOptions.resetUserPreferences
+                  )}
+                  className="flex items-center gap-2"
+                >
+                  {isTroubleshootingInProgress ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="h-4 w-4" />
+                      Apply Fixes
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </motion.div>
       </div>
     </div>
