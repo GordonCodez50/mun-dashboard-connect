@@ -66,6 +66,13 @@ export const PressMembersList: React.FC<PressMembersListProps> = ({ users, user,
 
       await realtimeService.createAlert(alertData);
       
+      console.log('Sending message:', {
+        type: alertData.type,
+        targetUser: alertData.targetUser,
+        message: alertData.message,
+        targetName: targetUser?.name
+      });
+      
       toast.success(
         targetUser 
           ? `Message sent to ${targetUser.name}`

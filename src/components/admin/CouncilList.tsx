@@ -199,6 +199,39 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
     }
   };
 
+  const handleSendPersonalMessage = async (targetUserId: string, targetUserName: string, team: string) => {
+    if (!directMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    
+    try {
+      // Create a personal message alert with proper targeting
+      const messageData = {
+        type: team === 'PRESS' ? 'Press Direct Message' : 'Logistics Direct Message',
+        message: directMessage,
+        council: team,
+        chairName: targetUserName,
+        councilId: targetUserId,
+        admin: user?.name || 'Admin',
+        adminId: user?.id,
+        targetUser: targetUserId, // Important: Set the target user for personal messages
+        timestamp: Date.now(),
+        priority: 'normal',
+        status: 'pending'
+      };
+      
+      await realtimeService.createDirectMessage(messageData);
+      
+      toast.success(`Message sent to ${targetUserName}`);
+      setDirectMessage('');
+      setActiveChairId(null);
+    } catch (error) {
+      console.error('Error sending personal message:', error);
+      toast.error('Failed to send message');
+    }
+  };
+
   const handleSendBroadcastMessage = async () => {
     if (!broadcastMessage.trim()) {
       toast.error('Please enter a message');
@@ -227,7 +260,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'pending' // Use pending to trigger notifications
+          status: 'pending',
+          broadcastTarget: broadcastTarget // Add broadcast target for filtering
         };
         
         return realtimeService.createDirectMessage(messageData);
@@ -245,7 +279,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'pending' // Use pending to trigger notifications
+          status: 'pending',
+          broadcastTarget: broadcastTarget // Add broadcast target for filtering
         };
         
         broadcastPromises.push(realtimeService.createDirectMessage(pressMessageData));
@@ -263,7 +298,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
           adminId: user?.id,
           timestamp: Date.now(),
           priority: 'normal',
-          status: 'pending' // Use pending to trigger notifications
+          status: 'pending',
+          broadcastTarget: broadcastTarget // Add broadcast target for filtering
         };
         
         broadcastPromises.push(realtimeService.createDirectMessage(logisticsMessageData));
@@ -827,17 +863,19 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     <div className="text-sm font-medium text-gray-900">{logisticsUser.name}</div>
                     <div className="text-sm text-gray-500">{logisticsUser.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowLogisticsMessages(true)}
-                      className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
-                    >
-                      <MessageSquare size={16} />
-                      Message
-                    </Button>
-                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={() => {
+                         setActiveChairId(logisticsUser.id);
+                       }}
+                       className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
+                     >
+                       <MessageSquare size={16} />
+                       Message
+                     </Button>
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -891,45 +929,49 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
             </tbody>
           </table>
           
-          {/* Message form for individual press member */}
-          {activeChairId && pressUsers.find(u => u.id === activeChairId) && (
-            <div className="p-4 border-t bg-gray-50">
-              <div className="text-sm font-medium mb-2">
-                Message {pressUsers.find(u => u.id === activeChairId)?.name}
-              </div>
-              <div className="flex flex-col gap-3">
-                <textarea
-                  value={directMessage}
-                  onChange={(e) => setDirectMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
-                />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setActiveChairId(null);
-                      setDirectMessage('');
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const user = pressUsers.find(u => u.id === activeChairId);
-                      if (user) {
-                        handleSendDirectMessage(user.id, 'PRESS', user.name);
-                      }
-                    }}
-                  >
-                    Send Message
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+           {/* Message form for individual team member */}
+           {activeChairId && (pressUsers.find(u => u.id === activeChairId) || logisticsUsers.find(u => u.id === activeChairId)) && (
+             <div className="p-4 border-t bg-gray-50">
+               <div className="text-sm font-medium mb-2">
+                 Message {pressUsers.find(u => u.id === activeChairId)?.name || logisticsUsers.find(u => u.id === activeChairId)?.name}
+               </div>
+               <div className="flex flex-col gap-3">
+                 <textarea
+                   value={directMessage}
+                   onChange={(e) => setDirectMessage(e.target.value)}
+                   placeholder="Type your message..."
+                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
+                 />
+                 <div className="flex justify-end gap-2">
+                   <Button
+                     variant="outline"
+                     size="sm"
+                     onClick={() => {
+                       setActiveChairId(null);
+                       setDirectMessage('');
+                     }}
+                   >
+                     Cancel
+                   </Button>
+                   <Button
+                     size="sm"
+                     onClick={() => {
+                       const pressUser = pressUsers.find(u => u.id === activeChairId);
+                       const logisticsUser = logisticsUsers.find(u => u.id === activeChairId);
+                       
+                       if (pressUser) {
+                         handleSendPersonalMessage(pressUser.id, pressUser.name, 'PRESS');
+                       } else if (logisticsUser) {
+                         handleSendPersonalMessage(logisticsUser.id, logisticsUser.name, 'LOGISTICS');
+                       }
+                     }}
+                   >
+                     Send Message
+                   </Button>
+                 </div>
+               </div>
+             </div>
+           )}
         </div>
       )}
 

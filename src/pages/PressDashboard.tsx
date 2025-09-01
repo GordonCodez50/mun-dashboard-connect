@@ -43,12 +43,26 @@ const PressDashboard = () => {
   useEffect(() => {
     if (alertsData && Array.isArray(alertsData)) {
       const userAlerts = alertsData
-        .filter(alert => 
-          alert.council === user?.council || 
-          (alert.type === 'DirectMessage' && alert.toCouncil === user?.council) ||
-          (alert.type === 'Press Direct Message' && alert.targetUser === user?.id) ||
-          (alert.type === 'Press Broadcast Message' && alert.council === 'PRESS' && alert.fromUser !== user?.id)
-        )
+        .filter(alert => {
+          // Show alerts relevant to press:
+          const isForCurrentCouncil = alert.council === user?.council;
+          const isDirectMessage = alert.type === 'DirectMessage' && alert.toCouncil === user?.council;
+          
+          // Handle press team messaging - personal vs broadcast
+          const isPersonalPressMessage = alert.type === 'Press Direct Message' && alert.targetUser === user?.id;
+          const isBroadcastPressMessage = alert.type === 'Press Broadcast Message' && 
+                                         alert.council === 'PRESS' && 
+                                         alert.fromUser !== user?.id;
+          
+          // Handle admin broadcast messages
+          const isBroadcastToEveryone = alert.type === 'BROADCAST_MESSAGE' && 
+                                       (alert.broadcastTarget === 'everyone' || !alert.broadcastTarget);
+          const isBroadcastToPress = alert.type === 'BROADCAST_MESSAGE' && 
+                                    alert.broadcastTarget === 'press';
+          
+          return isForCurrentCouncil || isDirectMessage || isPersonalPressMessage || 
+                 isBroadcastPressMessage || isBroadcastToEveryone || isBroadcastToPress;
+        })
         .map(alert => ({
           id: alert.id,
           type: alert.type === 'DirectMessage' ? 'Message from Admin' : 

@@ -121,19 +121,25 @@ const LogisticsDashboard = () => {
         .filter(alert => {
           if (!alert || !alert.id) return false;
           
-          // Only show alerts that are logistics-relevant:
-          // 1. Alerts sent by admins (can send to anyone)
-          // 2. Alerts sent by chairs/councils that are marked for logistics
-          // 3. Broadcast messages specifically for logistics
-          const isFromAdmin = alert.senderRole === 'admin';
-          const isLogisticsAlert = alert.type?.toLowerCase().includes('logistics') || 
-                                 alert.message?.toLowerCase().includes('logistics') ||
-                                 alert.targetRole === 'logistics' ||
-                                 alert.isLogistics === true;
-          const isLogisticsBroadcast = alert.type === 'BROADCAST_MESSAGE' && 
-                                      (alert.targetRole === 'logistics' || alert.senderRole === 'logistics');
+          // Show alerts relevant to logistics:
+          const isFromAdmin = alert.senderRole === 'admin' || alert.admin;
+          const isLogisticsSpecific = alert.type?.toLowerCase().includes('logistics') || 
+                                     alert.message?.toLowerCase().includes('logistics') ||
+                                     alert.targetRole === 'logistics' ||
+                                     alert.council === 'LOGISTICS' ||
+                                     alert.isLogistics === true;
           
-          return isFromAdmin || isLogisticsAlert || isLogisticsBroadcast;
+          // Handle broadcast messages - check if it's targeted to everyone or logistics
+          const isBroadcastToEveryone = alert.type === 'BROADCAST_MESSAGE' && 
+                                       (alert.broadcastTarget === 'everyone' || !alert.broadcastTarget);
+          const isBroadcastToLogistics = alert.type === 'BROADCAST_MESSAGE' && 
+                                        alert.broadcastTarget === 'logistics';
+          
+          // Handle personal messages targeted to specific logistics user
+          const isPersonalMessage = alert.targetUser === user?.id;
+          
+          return isFromAdmin || isLogisticsSpecific || isBroadcastToEveryone || 
+                 isBroadcastToLogistics || isPersonalMessage;
         })
         .map(alert => ({
           id: alert.id,
