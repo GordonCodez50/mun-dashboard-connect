@@ -287,6 +287,7 @@ const AdminFileSharing = () => {
                         {council === 'all' ? 'All Councils' : council}
                       </SelectItem>
                     ))}
+                    <SelectItem value="admin-rt">Admin R&T</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
