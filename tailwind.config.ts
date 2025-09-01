@@ -61,6 +61,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				dashboard: {
+					bg: 'hsl(var(--dashboard-bg))',
+					card: 'hsl(var(--dashboard-card))',
+					header: 'hsl(var(--dashboard-header))',
+					sidebar: 'hsl(var(--dashboard-sidebar))',
+					'sidebar-hover': 'hsl(var(--dashboard-sidebar-hover))',
+					accent: 'hsl(var(--dashboard-accent))',
+					'text-muted': 'hsl(var(--dashboard-text-muted))'
 				}
 			},
 			borderRadius: {
