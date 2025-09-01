@@ -60,6 +60,17 @@ const PressDashboard = () => {
           const isBroadcastToPress = alert.type === 'BROADCAST_MESSAGE' && 
                                     alert.broadcastTarget === 'press';
           
+          console.log('Press dashboard filtering:', {
+            alertId: alert.id,
+            alertType: alert.type,
+            targetUser: alert.targetUser,
+            currentUserId: user?.id,
+            isPersonalPressMessage,
+            isBroadcastPressMessage,
+            shouldShow: isForCurrentCouncil || isDirectMessage || isPersonalPressMessage || 
+                       isBroadcastPressMessage || isBroadcastToEveryone || isBroadcastToPress
+          });
+          
           return isForCurrentCouncil || isDirectMessage || isPersonalPressMessage || 
                  isBroadcastPressMessage || isBroadcastToEveryone || isBroadcastToPress;
         })

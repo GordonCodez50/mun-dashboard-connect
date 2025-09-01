@@ -78,19 +78,28 @@ export const LogisticsMessaging = ({ user }: LogisticsMessagingProps) => {
     setIsLoading(true);
     try {
       const messageData = {
-        type: 'DIRECT_MESSAGE',
+        type: recipientType === 'admin' ? 'Logistics to Admin Message' : 'Logistics Direct Message',
         message: directMessage,
         council: recipientType === 'admin' ? 'ADMIN' : 'LOGISTICS',
         chairName: recipientName,
         councilId: recipientId,
         admin: user?.name || 'Logistics Team',
         adminId: user?.id,
+        targetUser: recipientId, // Important: Set target user for personal messages
         timestamp: Date.now(),
         priority: 'normal' as const,
         status: 'pending' as const,
         senderRole: 'logistics',
-        targetRole: recipientType
+        targetRole: recipientType,
+        fromUser: user?.id // Add sender tracking
       };
+
+      console.log('Logistics sending personal message:', {
+        type: messageData.type,
+        targetUser: messageData.targetUser,
+        targetName: recipientName,
+        recipientType
+      });
 
       await realtimeService.createDirectMessage(messageData);
       
