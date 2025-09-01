@@ -10,14 +10,16 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { rtAlertService, RTAlert } from '@/services/rtAlertService';
 import { realtimeService } from '@/services/firebaseService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Clock, MessageSquare, CheckCircle, XCircle, Users, Send } from 'lucide-react';
+import { Clock, MessageSquare, CheckCircle, XCircle, Users, Send, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 const RTAdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<RTAlert[]>([]);
   const [showResolved, setShowResolved] = useState(false);
+  const [councilFilter, setCouncilFilter] = useState<'all' | 'HCC' | 'FCC'>('all');
   const [replyMessages, setReplyMessages] = useState<{ [alertId: string]: string }>({});
   const [chairMessages, setChairMessages] = useState<{ [chairCouncil: string]: string }>({});
   const [loading, setLoading] = useState(true);
@@ -33,9 +35,12 @@ const RTAdminDashboard: React.FC = () => {
     return unsubscribe;
   }, [user]);
 
-  const filteredAlerts = showResolved 
-    ? alerts 
-    : alerts.filter(alert => alert.status === 'pending');
+  const filteredAlerts = alerts
+    .filter(alert => showResolved || alert.status === 'pending')
+    .filter(alert => {
+      if (councilFilter === 'all') return true;
+      return alert.from.council === councilFilter;
+    });
 
   const handleStatusUpdate = async (alertId: string, status: 'accepted' | 'rejected') => {
     if (!user) return;
@@ -134,28 +139,54 @@ const RTAdminDashboard: React.FC = () => {
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">R&T Admin Dashboard</h1>
             <p className="text-muted-foreground text-sm sm:text-base">Manage alerts from HCC and FCC members</p>
           </div>
-          <div className="flex items-center space-x-2 text-sm sm:text-base">
-            <Switch
-              id="show-resolved"
-              checked={showResolved}
-              onCheckedChange={setShowResolved}
-            />
-            <Label htmlFor="show-resolved" className="whitespace-nowrap">Show resolved alerts</Label>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            {/* Council Filter */}
+            <div className="flex items-center space-x-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={councilFilter} onValueChange={(value: 'all' | 'HCC' | 'FCC') => setCouncilFilter(value)}>
+                <SelectTrigger className="w-32 h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Councils</SelectItem>
+                  <SelectItem value="HCC">HCC Only</SelectItem>
+                  <SelectItem value="FCC">FCC Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Show Resolved Toggle */}
+            <div className="flex items-center space-x-2 text-sm sm:text-base">
+              <Switch
+                id="show-resolved"
+                checked={showResolved}
+                onCheckedChange={setShowResolved}
+              />
+              <Label htmlFor="show-resolved" className="whitespace-nowrap">Show resolved</Label>
+            </div>
           </div>
         </div>
 
         {/* Live Alerts Section */}
         <Card className="shadow-sm">
           <CardHeader className="pb-3 sm:pb-6">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-              <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
-              Live Alerts ({filteredAlerts.length})
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-base sm:text-lg">
+                <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                Live Alerts ({filteredAlerts.length})
+              </div>
+              {councilFilter !== 'all' && (
+                <Badge variant="outline" className="text-xs">
+                  Showing {councilFilter} only
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4">
             {filteredAlerts.length === 0 ? (
               <div className="text-center py-6 sm:py-8 text-muted-foreground text-sm sm:text-base">
-                {showResolved ? 'No alerts found' : 'No pending alerts'}
+                {councilFilter !== 'all' 
+                  ? `No ${showResolved ? '' : 'pending '}alerts from ${councilFilter}`
+                  : showResolved ? 'No alerts found' : 'No pending alerts'}
               </div>
             ) : (
               filteredAlerts.map((alert) => (
