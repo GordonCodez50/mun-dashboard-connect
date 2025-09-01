@@ -49,7 +49,8 @@ const PressDashboard = () => {
           const isDirectMessage = alert.type === 'DirectMessage' && alert.toCouncil === user?.council;
           
           // Handle press team messaging - personal vs broadcast
-          const isPersonalPressMessage = alert.type === 'Press Direct Message' && alert.targetUser === user?.id;
+          const isPersonalPressMessage = (alert.type === 'Press Direct Message' && alert.targetUser === user?.id) ||
+                                        (alert.type === 'DirectMessage' && alert.recipientId === user?.id && alert.senderRole === 'press');
           const isBroadcastPressMessage = alert.type === 'Press Broadcast Message' && 
                                          alert.council === 'PRESS' && 
                                          alert.fromUser !== user?.id;
@@ -64,6 +65,8 @@ const PressDashboard = () => {
             alertId: alert.id,
             alertType: alert.type,
             targetUser: alert.targetUser,
+            recipientId: alert.recipientId,
+            senderRole: alert.senderRole,
             currentUserId: user?.id,
             isPersonalPressMessage,
             isBroadcastPressMessage,
@@ -76,7 +79,8 @@ const PressDashboard = () => {
         })
         .map(alert => ({
           id: alert.id,
-          type: alert.type === 'DirectMessage' ? 'Message from Admin' : 
+          type: alert.type === 'DirectMessage' && alert.senderRole === 'admin' ? 'Message from Admin' :
+                alert.type === 'DirectMessage' && alert.senderRole === 'press' ? 'Message from Press Member' :
                 alert.type === 'Press Direct Message' ? 'Message from Press Member' :
                 alert.type === 'Press Broadcast Message' ? 'Press Team Message' : alert.type,
           message: alert.message,

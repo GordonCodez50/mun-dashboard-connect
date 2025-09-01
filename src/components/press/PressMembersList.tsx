@@ -52,26 +52,49 @@ export const PressMembersList: React.FC<PressMembersListProps> = ({ users, user,
 
     setIsLoading(true);
     try {
-      const alertData = {
-        type: targetUser ? 'Press Direct Message' : 'Press Broadcast Message',
-        message: message.trim(),
-        council: 'PRESS',
-        chairName: user?.name || 'Press Member',
-        priority: 'normal',
-        targetUser: targetUser?.id,
-        targetRole: 'press',
-        from: 'press',
-        fromUser: user?.id
-      };
+      if (targetUser) {
+        // Use createDirectMessage for individual messages to ensure privacy
+        const directMessageData = {
+          senderId: user?.id || '',
+          senderName: user?.name || 'Press Member',
+          senderRole: 'press',
+          recipientId: targetUser.id,
+          recipientName: targetUser.name,
+          recipientRole: 'press',
+          message: message.trim(),
+          priority: 'normal',
+          council: 'PRESS'
+        };
 
-      await realtimeService.createAlert(alertData);
-      
-      console.log('Sending message:', {
-        type: alertData.type,
-        targetUser: alertData.targetUser,
-        message: alertData.message,
-        targetName: targetUser?.name
-      });
+        await realtimeService.createDirectMessage(directMessageData);
+        
+        console.log('Press individual message sent:', {
+          type: 'Direct Message',
+          senderId: directMessageData.senderId,
+          recipientId: directMessageData.recipientId,
+          message: directMessageData.message
+        });
+      } else {
+        // Use createAlert for broadcast messages
+        const alertData = {
+          type: 'Press Broadcast Message',
+          message: message.trim(),
+          council: 'PRESS',
+          chairName: user?.name || 'Press Member',
+          priority: 'normal',
+          targetRole: 'press',
+          from: 'press',
+          fromUser: user?.id
+        };
+
+        await realtimeService.createAlert(alertData);
+        
+        console.log('Press broadcast message sent:', {
+          type: alertData.type,
+          message: alertData.message,
+          fromUser: alertData.fromUser
+        });
+      }
       
       toast.success(
         targetUser 

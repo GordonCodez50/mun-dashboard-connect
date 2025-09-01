@@ -138,14 +138,19 @@ const LogisticsDashboard = () => {
           // Handle personal messages targeted to specific logistics user
           const isPersonalMessage = alert.targetUser === user?.id;
           
-          // Handle logistics team internal messages
-          const isLogisticsInternalMessage = alert.type === 'Logistics Direct Message' && 
-                                           (alert.targetUser === user?.id || alert.fromUser === user?.id);
+          // Handle logistics team internal messages (both old alert-based and new direct message-based)
+          const isLogisticsInternalMessage = (alert.type === 'Logistics Direct Message' && alert.targetUser === user?.id) ||
+                                           (alert.type === 'DirectMessage' && alert.recipientId === user?.id && alert.senderRole === 'logistics') ||
+                                           (alert.type === 'DirectMessage' && alert.senderId === user?.id && alert.recipientRole === 'logistics');
           
           console.log('Logistics dashboard filtering:', {
             alertId: alert.id,
             alertType: alert.type,
             targetUser: alert.targetUser,
+            recipientId: alert.recipientId,
+            senderId: alert.senderId,
+            senderRole: alert.senderRole,
+            recipientRole: alert.recipientRole,
             currentUserId: user?.id,
             isPersonalMessage,
             isLogisticsInternalMessage,
