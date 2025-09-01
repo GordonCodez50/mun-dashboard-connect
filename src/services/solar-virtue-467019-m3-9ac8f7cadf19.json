@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "solar-virtue-467019-m3",
+  "private_key_id": "9ac8f7cadf19aeae2f24e820ff80d52a0af310ee",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDrEubJxBWOzXWk\nSl6SvxJIlKIMQkoFTKkLIYqjG2hkDZVMqPbygnGgoFBtBXXkPAd4Y0cXbGI9yNi5\nN/QiyX/3x/baONQUoh1sX7zwZ55pX4PcfdnAnCwGQ7mrV2sk1QHWfzvBxtRl0nTa\nCHBwZD1VOr6DC2fWDe4o8B1iheogtAx6gC2mktnfDTO75p/1aiSdbrKmKt7Yl7ts\nX1rErYvr6LXAP2qi5gtalWnaEzp86QmclTN1upsSZt7pCoZjU0RHE6nUIPUGd0DT\nq5lJoz+QIol/RRt7hp84Q2yJ4ldrEESmXAG12ajNFqVUbUYQRDX0kI8P9BUir/27\neDccL2uPAgMBAAECggEAAonXNsMomm/eJXKG8YQhSrbA+Z621VAET7Io7ZiS3xwe\n1xxh++Q46hht4rRMfbTz10x3Jl0aW64+DOEtgGyqaZh3fwuRdFGV1yd0TyitsL41\nZ2pvStTef6JrY436AoSCuxHvqSi5y9Z8dYt7lb/qjtX0dbTOhiS4KpABOTpwX0vQ\nV3ZagI96WOaqy24DcidqbRd70gd3o+DTCCZl3R5N+HYDKV7tvDxWpXYfiop3x0Fz\nisI92Bs52AGbdBk5EVRg/a9G5lTnmsFiyp+DdLXUXsTx5+wpOEXCB6vVwtTzaLUw\n1DU55Updv7h/rzujnkOUKxxrgUOOqUbjKIMsG0ylBQKBgQD4Wc2SCPMxRruf6pFy\nYfdNY6urNLpQ426R2fsAHVQnK7BRiYtGlT0DZlm/iKKHb3G0w/Ck5nfPOPOfeD20\nYlz2M40l7UM3mVOWwx5es46Y8VxJqpoWn4kSEM1qvv8P+02ws7EfgvrkRlHBYytx\nzf+HWFYWkNanmt0nPipipddchQKBgQDyUGmM2hOqDK8D4mdYj9hZzzDrefHizeOi\nHH3jPTD94sWtU5Lb5mvngaV4zz+a4VLejiGbkJLwTPhO/j8/1/8yPGCApKF/ebst\nn96N9SZiCR58SdiVEi+5IW7Ct8itPmti7uv1XVoIZIgd9AixUGnIzbfOYNn0hIzm\n1wobMRbeAwKBgFibAaL2mn2cNNirQdVDao4r31Wn7Elru0lCMjEqRZnsFm4g2pYG\nLMyHucGCKCqV8kWCGttadqhyM0lUBv/SkEQuxE8hxXeStqX1W2KCQYADrN+DhJJJ\nvQe7Au7w0eOLz34Zvjn16zmCdSzACwIBcweA1sYaSttlfz2/CjRD4wBZAoGBAMH1\nwfdgHHtyuakHUigexFRnN8ZVj1w36C08VzxNH+kp24e5LQXedKMUMMr6QfSMxlOl\nO5uVZzj4s44vj5tgH0Mr9yciIK+0VjLYFEJXaEjy+bcNOVNiAldTPqCYkgayvyyr\nCK8X8VhkeFxZmZetQW/d03JcLjq+2zZwDQPlEGPXAoGBAO3H4bbM+cWNmBkl95bs\nB7UiyFp6X7AOl18SOMUm4E9Jzd/skWfSuGkxWrN+3ywwj/TlSSKgANHqGh6eww7z\n42lwy+fYuKLhwHlTT0XGNocg/PS2ygI+d62LI8talfSPcNKbpCUgBQabCpBPafgD\nDd63GUKe80lPK8TpM8lF3HgE\n-----END PRIVATE KEY-----\n",
+  "client_email": "bmunisfilestorage@solar-virtue-467019-m3.iam.gserviceaccount.com",
+  "client_id": "102042730575034996985",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bmunisfilestorage%40solar-virtue-467019-m3.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

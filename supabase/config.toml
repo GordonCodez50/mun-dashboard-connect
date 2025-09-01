@@ -1,1 +1,16 @@
 project_id = "iunqhcqcxtbgduayjhhv"
+
+[functions.google-drive-upload]
+verify_jwt = false
+
+[functions.google-drive-download]
+verify_jwt = false
+
+[functions.google-drive-share]
+verify_jwt = false
+
+[functions.google-drive-delete]
+verify_jwt = false
+
+[functions.send-ios-push]
+verify_jwt = false

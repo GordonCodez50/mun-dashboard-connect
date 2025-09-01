@@ -1,0 +1,206 @@
+
+import { useState, useEffect, useRef } from 'react';
+import { notificationService } from '@/services/notificationService';
+import { playManagedNotificationSound } from '@/utils/mediaSessionManager';
+
+// Define the Alert type to match what's used in AlertItem and ChairDashboard
+export type AlertWithSound = {
+  id: string;
+  type?: string;
+  message?: string;
+  timestamp: Date;
+  status?: 'pending' | 'acknowledged' | 'resolved';
+  reply?: string;
+  admin?: string;
+  council?: string;
+  chairName?: string;
+  priority?: 'normal' | 'urgent';
+  chairReply?: string;
+  replyTimestamp?: string | number;
+  replyFrom?: 'admin' | 'chair' | 'press' | 'logistics';
+};
+
+// Extended notification options for TypeScript compatibility
+interface ExtendedNotificationOptions extends NotificationOptions {
+  timestamp?: number;
+}
+
+// Store processed alerts in sessionStorage to prevent duplicates across page navigations
+const getProcessedAlertIds = (): Set<string> => {
+  const storedIds = sessionStorage.getItem('processedAlertIds');
+  return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+};
+
+const getProcessedReplyIds = (): Set<string> => {
+  const storedIds = sessionStorage.getItem('processedReplyIds');
+  return storedIds ? new Set(JSON.parse(storedIds)) : new Set();
+};
+
+export const useAlertsSound = (alerts: AlertWithSound[], alertsMuted: boolean) => {
+  const [previousAlerts, setPreviousAlerts] = useState<AlertWithSound[]>([]);
+  const notificationSound = useRef<HTMLAudioElement | null>(null);
+  const processedAlertIds = useRef<Set<string>>(getProcessedAlertIds());
+  const processedReplyIds = useRef<Set<string>>(getProcessedReplyIds());
+  
+  // Initialize notification sound with the ringtone
+  useEffect(() => {
+    // No need to create Audio element here since we're using managed playback
+    return () => {
+      if (notificationSound.current) {
+        notificationSound.current = null;
+      }
+    };
+  }, []);
+
+  // Play sound for new alerts and replies if not muted and show notifications
+  useEffect(() => {
+    if (!alerts || !previousAlerts) return;
+    
+    // Ensure all alerts have valid data and are not undefined/null values
+    const validAlerts = alerts.filter(alert => 
+      alert && 
+      alert.id && 
+      alert.type && 
+      alert.council && 
+      alert.message &&
+      alert.type !== 'undefined' &&
+      alert.council !== 'undefined' &&
+      alert.message !== 'undefined'
+    );
+    const validPreviousAlerts = previousAlerts.filter(alert => 
+      alert && 
+      alert.id && 
+      alert.type && 
+      alert.council && 
+      alert.message &&
+      alert.type !== 'undefined' &&
+      alert.council !== 'undefined' &&
+      alert.message !== 'undefined'
+    );
+    
+    // Check for new alerts (by ID) that we haven't processed yet
+    // Don't process resolved alerts
+    const newAlerts = validAlerts.filter(
+      alert => !processedAlertIds.current.has(alert.id) && alert.status !== 'resolved'
+    );
+    
+    // Check for new replies on existing alerts that we haven't processed yet
+    // Don't process replies for resolved alerts
+    const alertsWithNewReplies = validAlerts.filter(alert => {
+      // Skip resolved alerts entirely
+      if (alert.status === 'resolved') return false;
+      
+      const prevAlert = validPreviousAlerts.find(a => a.id === alert.id);
+      
+      // Check for admin replies
+      const hasNewAdminReply = prevAlert && alert.reply && alert.reply !== prevAlert.reply;
+      
+      // Check for chair replies
+      const hasNewChairReply = prevAlert && alert.chairReply && alert.chairReply !== prevAlert.chairReply;
+      
+      // Check for reply timestamp changes (for differentiating new replies)
+      const hasNewReplyTimestamp = prevAlert && 
+                                  alert.replyTimestamp && 
+                                  (!prevAlert.replyTimestamp || alert.replyTimestamp > prevAlert.replyTimestamp);
+      
+      // Create a unique ID for replies to track them
+      const replyId = hasNewAdminReply ? `${alert.id}-admin-${alert.reply}` : 
+                     hasNewChairReply ? `${alert.id}-chair-${alert.chairReply}` :
+                     hasNewReplyTimestamp ? `${alert.id}-timestamp-${alert.replyTimestamp}` : null;
+      
+      // Check if we've already processed this reply
+      if (replyId && !processedReplyIds.current.has(replyId)) {
+        return true;
+      }
+      
+      return false;
+    });
+    
+    if ((newAlerts.length > 0 || alertsWithNewReplies.length > 0) && !alertsMuted) {
+      // Play the notification sound using managed media session
+      playManagedNotificationSound('/ringtonenotification.mp3').catch(err => 
+        console.error("Error playing managed notification sound:", err)
+      );
+      
+      // Show browser notifications for each new alert using cross-platform system
+      newAlerts.forEach(async alert => {
+        const isUrgent = alert.priority === 'urgent';
+        
+        // Import and use the cross-platform notification system
+        const { sendAlert } = await import('@/services/crossPlatformNotificationManager');
+        
+        await sendAlert(
+          alert.type || 'New Alert',
+          alert.council || 'Unknown Council',
+          alert.message || 'No message provided',
+          [], // No specific target users for this alert hook
+          isUrgent
+        );
+        
+        // Mark this alert as processed
+        processedAlertIds.current.add(alert.id);
+      });
+      
+      // Show notifications for new replies
+      alertsWithNewReplies.forEach(alert => {
+        if (alert.reply && !alert.replyFrom) {
+          // Admin reply (default if replyFrom not specified)
+          notificationService.showReplyNotification(
+            alert.admin || 'Admin',
+            alert.reply,
+            alert.id,
+            'admin'
+          );
+          
+          // Mark this reply as processed
+          processedReplyIds.current.add(`${alert.id}-admin-${alert.reply}`);
+        } else if (alert.reply && alert.replyFrom) {
+          // Reply from a specific user type
+          notificationService.showReplyNotification(
+            alert.replyFrom === 'admin' ? (alert.admin || 'Admin') : 
+            alert.replyFrom === 'press' ? 'Press' : 
+            (alert.chairName || 'Chair'),
+            alert.reply,
+            alert.id,
+            alert.replyFrom
+          );
+          
+          // Mark this reply as processed
+          processedReplyIds.current.add(`${alert.id}-${alert.replyFrom}-${alert.reply}`);
+        }
+        
+        // Show notifications for chair replies
+        if (alert.chairReply && alert.chairName) {
+          notificationService.showReplyNotification(
+            alert.chairName,
+            alert.chairReply,
+            alert.id,
+            'chair'
+          );
+          
+          // Mark this chair reply as processed
+          processedReplyIds.current.add(`${alert.id}-chair-${alert.chairReply}`);
+        }
+      });
+      
+      // Save the processed IDs to sessionStorage
+      sessionStorage.setItem('processedAlertIds', JSON.stringify([...processedAlertIds.current]));
+      sessionStorage.setItem('processedReplyIds', JSON.stringify([...processedReplyIds.current]));
+    }
+    
+    setPreviousAlerts(validAlerts);
+  }, [alerts, alertsMuted]); // Removed previousAlerts from dependency array to prevent infinite loop
+  
+  // Method to clear processed alerts (useful when testing)
+  const clearProcessedAlerts = () => {
+    sessionStorage.removeItem('processedAlertIds');
+    sessionStorage.removeItem('processedReplyIds');
+    processedAlertIds.current = new Set();
+    processedReplyIds.current = new Set();
+  };
+  
+  return {
+    notificationSound,
+    clearProcessedAlerts
+  };
+};

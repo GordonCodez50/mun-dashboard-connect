@@ -1,0 +1,52 @@
+
+{
+  "name": "MUN Conference Dashboard",
+  "short_name": "MUN Dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "description": "Dashboard for Model United Nations conferences",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "gcm_sender_id": "103953800507",
+  "prefer_related_applications": false,
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["productivity", "education"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/",
+      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "lang": "en",
+  "dir": "ltr",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "protocol_handlers": [],
+  "screenshots": []
+}

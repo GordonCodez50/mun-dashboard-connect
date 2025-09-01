@@ -1,73 +1,134 @@
-# Welcome to your Lovable project
 
-## Project info
+# MUN Conference Dashboard
 
-**URL**: https://lovable.dev/projects/7fa8057e-2bed-46e9-b8fd-764e2f14e711
+A completex dashboard solution for Model United Nations (MUN) conferences.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- User authentication with different roles (Admin, Chair)
+- Council management
+- Attendance tracking
+- Document sharing
+- Alert system for chairs to request assistance
+- Timer management for debates and speeches
 
-**Use Lovable**
+## Firebase Configuration
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7fa8057e-2bed-46e9-b8fd-764e2f14e711) and start prompting.
+### Firestore Security Rules
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow admins to read and write all documents
+    match /{document=**} {
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Allow chair users to read all documents
+    match /{document=**} {
+      allow read: if request.auth != null;
+    }
+    
+    // Allow all authenticated users to read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Allow chair users to update their own council's information
+    match /councils/{councilId} {
+      allow update: if request.auth != null && 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == resource.data.name;
+    }
+    
+    // Participants collection rules
+    match /participants/{participantId} {
+      // All authenticated users can read participants
+      allow read: if request.auth != null;
+      
+      // Chair users can only create and update participants for their own council
+      allow create, update: if request.auth != null &&
+                              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+                              (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'chair' &&
+                              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council == request.resource.data.council));
+      
+      // Only admins can delete participants
+      allow delete: if request.auth != null && 
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Allow chair users to create alerts
+    match /alerts/{alertId} {
+      allow create: if request.auth != null && 
+                     request.resource.data.council == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.council;
+    }
+    
+    // Allow users to read documents
+    match /documents/{documentId} {
+      allow read: if request.auth != null;
+    }
+  }
+}
 ```
 
-**Edit a file directly in GitHub**
+### Realtime Database Security Rules
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+{
+  "rules": {
+    // Allow all authenticated users to read data
+    ".read": "auth != null",
+    
+    "alerts": {
+      // Allow authenticated users to read and create alerts
+      ".read": "auth != null",
+      ".write": "auth != null",
+      
+      "$alertId": {
+        // Anyone can read alerts
+        ".read": true,
+        
+        // Authenticated users can update alerts
+        ".write": "auth != null"
+      }
+    },
+    
+    "timers": {
+      // Allow access to timers for authenticated users
+      ".read": "auth != null",
+      ".write": "auth != null",
+      
+      "$timerId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
+```
 
-**Use GitHub Codespaces**
+## Database Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Firestore Collections
 
-## What technologies are used for this project?
+- **users**: User accounts with roles and council assignments
+- **councils**: Information about each council/committee
+- **participants**: Delegates and chairs with attendance records
+- **documents**: Shared documents and resources
+- **alerts**: Records of alerts and their status
 
-This project is built with:
+### Realtime Database
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **alerts**: Real-time alerts from chairs
+- **timers**: Speech and debate timers with real-time synchronization
 
-## How can I deploy this project?
+## Getting Started
 
-Simply open [Lovable](https://lovable.dev/projects/7fa8057e-2bed-46e9-b8fd-764e2f14e711) and click on Share -> Publish.
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Configure your Firebase project and add credentials
+4. Run the development server with `npm run dev`
 
-## Can I connect a custom domain to my Lovable project?
+## License
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License - see the LICENSE file for details.

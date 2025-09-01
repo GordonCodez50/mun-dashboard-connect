@@ -1,3 +1,4 @@
+
 import * as React from "react"
 
 import type {
@@ -142,6 +143,13 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
+  // Ensure title and description are never undefined
+  const safeProps = {
+    ...props,
+    title: props.title || 'Notification',
+    description: props.description || ''
+  }
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
@@ -152,7 +160,7 @@ function toast({ ...props }: Toast) {
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...safeProps,
       id,
       open: true,
       onOpenChange: (open) => {
