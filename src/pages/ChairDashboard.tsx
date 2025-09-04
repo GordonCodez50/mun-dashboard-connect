@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
-import ChairTutorialPopup from '@/components/tutorial/ChairTutorialPopup';
+
 import { AlertButton } from '@/components/ui/AlertButton';
 import { QuickTimerWidget } from '@/components/ui/QuickTimerWidget';
 import { toast } from "sonner";
@@ -427,8 +427,6 @@ const ChairDashboard = () => {
         </div>
       )}
       
-      {/* Tutorial popup for first-time Chair users */}
-      <ChairTutorialPopup />
       
       <div className="flex-1 overflow-y-auto transition-all duration-300"
            style={{ marginLeft: !isMobile ? 'var(--sidebar-width, 256px)' : '0' }}>

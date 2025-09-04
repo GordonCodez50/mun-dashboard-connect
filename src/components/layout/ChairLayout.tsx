@@ -2,7 +2,7 @@
 import React, { PropsWithChildren } from 'react';
 import { Sidebar } from './Sidebar';
 import NotificationInitializer from '../NotificationInitializer';
-import ChairTutorialPopup from '../tutorial/ChairTutorialPopup';
+
 
 interface ChairLayoutProps {
   activeItem?: string;
@@ -23,8 +23,6 @@ const ChairLayout: React.FC<ChairLayoutProps> = ({
         {/* Initialize notifications on all chair pages */}
         <NotificationInitializer />
         
-        {/* Tutorial popup for first-time Chair users */}
-        <ChairTutorialPopup />
         
         {/* Sidebar navigation - hidden on mobile */}
         <Sidebar activeItem={activeItem} data-tour="resources-link" />

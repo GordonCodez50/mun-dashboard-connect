@@ -16,7 +16,7 @@ import { realtimeService } from '@/services/firebaseService';
 import { notificationService } from '@/services/notificationService';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import ChairTutorialPopup from '@/components/tutorial/ChairTutorialPopup';
+
 import { ChairMobileNav } from '@/components/layout/ChairMobileNav';
 
 const ChairAttendance = () => {
@@ -121,8 +121,6 @@ const ChairAttendance = () => {
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100/80 overflow-hidden">
       {!isMobile && <Sidebar />}
       
-      {/* Tutorial popup for first-time Chair users */}
-      <ChairTutorialPopup />
       
       <div className={`flex-1 overflow-hidden w-full transition-all duration-300`}
            style={{ marginLeft: !isMobile ? 'var(--sidebar-width, 256px)' : '0' }}>
