@@ -209,7 +209,7 @@ const AdminPanel = () => {
         description="Comprehensive admin control panel for BMUNIS conference management. Monitor councils, manage alerts, and oversee conference operations in real-time."
         canonicalUrl="/admin-panel"
       />
-      <div className="flex h-full bg-background overflow-x-hidden">
+      <div className="flex h-full bg-gray-50 overflow-x-hidden">
         {!isMobile && <Sidebar />}
         <AdminMobileNav />
         
@@ -217,25 +217,25 @@ const AdminPanel = () => {
              style={{ marginLeft: !isMobile ? 'var(--sidebar-width, 256px)' : '0' }}>
           <div className={`p-4 ${isMobile ? 'pb-24' : 'p-8'} animate-fade-in`}>
             {showPermissionPrompt && (
-              <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg shadow-sm">
+              <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center">
                     <BellRing className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <p className="text-sm text-amber-800">
                       Enable notifications to receive alerts
                     </p>
                   </div>
                   <Button 
                     size="sm" 
                     variant="outline"
-                    className="border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                    className="border-amber-300 text-amber-800 hover:bg-amber-100"
                     onClick={handleRequestPermission}
                   >
                     Enable Notifications
                   </Button>
                 </div>
                 {permissionError && (
-                  <div className="mt-2 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                  <div className="mt-2 flex items-start gap-2 text-xs text-amber-700">
                     <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                     <p>{permissionError}</p>
                   </div>
@@ -260,7 +260,7 @@ const AdminPanel = () => {
             />
             
             <div>
-              <h2 className="text-lg font-medium text-foreground mb-4">Council Overview</h2>
+              <h2 className="text-lg font-medium text-primary mb-4">Council Overview</h2>
               <CouncilList councils={councils} user={user} isMobile={isMobile} />
             </div>
           </div>
@@ -285,14 +285,14 @@ const AdminPanel = () => {
                 </div>
               </div>
               
-              <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 p-4">
+              <div className="rounded-md bg-amber-50 p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <AlertTriangle className="h-5 w-5 text-amber-400" />
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">Important Note</h3>
-                    <div className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                    <h3 className="text-sm font-medium text-amber-800">Important Note</h3>
+                    <div className="mt-2 text-sm text-amber-700">
                       <p>After enabling notifications in settings, return to this app and reload the page.</p>
                     </div>
                   </div>

@@ -33,46 +33,6 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
-
-    /* Blue accent color for admin theme */
-    --admin-blue: 207 60% 56%; /* #4581B6 */
-    --admin-blue-hover: 207 55% 60%; /* #5a94c7 */
-    --admin-blue-active: 207 65% 52%; /* #3670a5 */
-  }
-
-  .dark {
-    --background: 0 0% 10%; /* #1a1a1a */
-    --foreground: 0 0% 90%; /* #e5e5e5 */
-
-    --card: 0 0% 18%; /* #2d2d2d */
-    --card-foreground: 0 0% 90%; /* #e5e5e5 */
-
-    --popover: 0 0% 18%; /* #2d2d2d */
-    --popover-foreground: 0 0% 90%; /* #e5e5e5 */
-
-    --primary: 207 60% 56%; /* #4581B6 - Blue accent as primary in dark mode */
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 0 0% 20%; /* #333333 */
-    --secondary-foreground: 0 0% 90%; /* #e5e5e5 */
-
-    --muted: 0 0% 20%; /* #333333 */
-    --muted-foreground: 0 0% 70%; /* #b3b3b3 */
-
-    --accent: 207 60% 56%; /* #4581B6 - Blue accent */
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 0 0% 25%; /* #404040 */
-    --input: 0 0% 25%; /* #404040 */
-    --ring: 207 60% 56%; /* #4581B6 */
-
-    /* Dark mode specific admin colors */
-    --admin-blue: 207 60% 56%; /* #4581B6 */
-    --admin-blue-hover: 207 55% 60%; /* #5a94c7 */
-    --admin-blue-active: 207 65% 52%; /* #3670a5 */
   }
 
   * {
@@ -101,7 +61,7 @@
   }
 
   .glass-card {
-    @apply bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm shadow-md border border-gray-100 dark:border-gray-700;
+    @apply bg-white/95 backdrop-blur-sm shadow-md border border-gray-100;
   }
 
   .focus-ring {
@@ -136,7 +96,7 @@
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 p-3 rounded-md text-white/90 hover:text-white hover:bg-white/10 dark:hover:bg-white/20 smooth-transition;
+    @apply flex items-center gap-3 p-3 rounded-md text-white/90 hover:text-white hover:bg-white/10 smooth-transition;
   }
 
   .sidebar-link.active {
@@ -144,11 +104,11 @@
   }
 
   .alert-button {
-    @apply flex flex-col items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow hover:border-accent/30 dark:hover:border-accent/50 button-transition;
+    @apply flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow hover:border-accent/30 button-transition;
   }
   
   .alert-button-urgent {
-    @apply border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600 bg-red-50 dark:bg-red-900/20;
+    @apply border-red-200 hover:border-red-300 bg-red-50;
   }
 
   .slide-up {
@@ -160,15 +120,15 @@
   }
 
   .status-badge-in-session {
-    @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+    @apply bg-green-100 text-green-800;
   }
 
   .status-badge-on-break {
-    @apply bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300;
+    @apply bg-yellow-100 text-yellow-800;
   }
 
   .status-badge-technical-issue {
-    @apply bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300;
+    @apply bg-red-100 text-red-800;
   }
   
   /* Timer Component Styles */

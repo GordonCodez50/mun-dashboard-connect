@@ -334,8 +334,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
     return (
       <div className="space-y-4 mb-16 animate-fade-in">
         {/* Broadcast Card */}
-        <Card className="border-border shadow-sm overflow-hidden bg-card">
-          <CardHeader className="bg-primary/5 dark:bg-primary/10 py-3">
+        <Card className="border-gray-200 shadow-sm overflow-hidden bg-white">
+          <CardHeader className="bg-primary/5 py-3">
             <CardTitle className="text-base flex items-center justify-between">
               <span className="flex items-center gap-1">
                 <Users size={18} className="text-primary" />
@@ -352,7 +352,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     setShowBroadcastForm(true);
                     setBroadcastTarget('everyone');
                   }}
-                  className="w-full shadow-sm border bg-background text-primary hover:bg-primary/5 hover:text-primary"
+                  className="w-full shadow-sm border bg-white text-primary hover:bg-primary/5 hover:text-primary"
                   variant="outline"
                 >
                   <Globe size={16} className="mr-2" />
@@ -364,7 +364,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     setShowBroadcastForm(true);
                     setBroadcastTarget('chairs');
                   }}
-                  className="w-full shadow-sm border bg-background text-primary hover:bg-primary/5 hover:text-primary"
+                  className="w-full shadow-sm border bg-white text-primary hover:bg-primary/5 hover:text-primary"
                   variant="outline"
                 >
                   <Users size={16} className="mr-2" />
@@ -376,7 +376,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     setShowBroadcastForm(true);
                     setBroadcastTarget('press');
                   }}
-                  className="w-full shadow-sm border bg-background text-primary hover:bg-primary/5 hover:text-primary"
+                  className="w-full shadow-sm border bg-white text-primary hover:bg-primary/5 hover:text-primary"
                   variant="outline"
                 >
                   <MessageSquare size={16} className="mr-2" />
@@ -388,7 +388,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     setShowBroadcastForm(true);
                     setBroadcastTarget('logistics');
                   }}
-                  className="w-full shadow-sm border bg-background text-primary hover:bg-primary/5 hover:text-primary"
+                  className="w-full shadow-sm border bg-white text-primary hover:bg-primary/5 hover:text-primary"
                   variant="outline"
                 >
                   <Truck size={16} className="mr-2" />
@@ -397,7 +397,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
               </div>
             ) : (
               <div className="flex flex-col gap-3 animate-fade-in">
-                <div className="text-xs text-muted-foreground mb-1">
+                <div className="text-xs text-gray-600 mb-1">
                   {broadcastTarget === 'everyone' 
                     ? 'This message will be sent to all chairs, press team, and logistics team' 
                     : broadcastTarget === 'chairs'
@@ -410,7 +410,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   value={broadcastMessage}
                   onChange={(e) => setBroadcastMessage(e.target.value)}
                   placeholder={`Type your broadcast message...`}
-                  className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
                   disabled={isLoading}
                 />
                 <div className="flex justify-end gap-2">
@@ -441,8 +441,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
         </Card>
 
         {/* Logistics Team Card (above Press Team) */}
-        <Card className="border-border shadow-sm overflow-hidden bg-card">
-          <CardHeader className="bg-primary/5 dark:bg-primary/10 py-3">
+        <Card className="border-gray-200 shadow-sm overflow-hidden bg-white">
+          <CardHeader className="bg-primary/5 py-3">
             <CardTitle className="text-base flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Truck size={18} className="text-primary" />
@@ -469,7 +469,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   value={logisticsMessage}
                   onChange={(e) => setLogisticsMessage(e.target.value)}
                   placeholder="Type your message to the Logistics Team..."
-                  className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
                 />
                 <div className="flex justify-end gap-2">
                   <Button
@@ -492,8 +492,8 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
         </Card>
 
         {/* Press Team Card */}
-        <Card className="border-border shadow-sm overflow-hidden bg-card">
-          <CardHeader className="bg-primary/5 dark:bg-primary/10 py-3">
+        <Card className="border-gray-200 shadow-sm overflow-hidden bg-white">
+          <CardHeader className="bg-primary/5 py-3">
             <CardTitle className="text-base flex items-center gap-2">
               <MessageSquare size={18} className="text-primary" />
               Press Team ({pressUsers.length})
@@ -512,7 +512,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                 <TableBody>
                   {pressUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="text-xs text-muted-foreground">Press</TableCell>
+                      <TableCell className="text-xs text-gray-600">Press</TableCell>
                       <TableCell className="text-sm font-medium">{user.name}</TableCell>
                       <TableCell>
                         <Button
@@ -545,14 +545,14 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                 </TableBody>
               </Table>
             ) : (
-              <div className="p-4 text-center text-muted-foreground text-sm">
+              <div className="p-4 text-center text-gray-500 text-sm">
                 No press members found
               </div>
             )}
             
             {/* Message form for individual press member */}
             {activeChairId && pressUsers.find(u => u.id === activeChairId) && (
-              <div className="p-4 border-t bg-muted/50 animate-fade-in">
+              <div className="p-4 border-t bg-gray-50 animate-fade-in">
                 <div className="text-sm font-medium mb-2">
                   Message {pressUsers.find(u => u.id === activeChairId)?.name}
                 </div>
@@ -561,7 +561,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                     value={directMessage}
                     onChange={(e) => setDirectMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
                   />
                   <div className="flex justify-end gap-2">
                     <Button
@@ -593,9 +593,9 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
         </Card>
 
         {/* Council List Card */}
-        <Card className="border-border shadow-sm overflow-hidden bg-card">
+        <Card className="border-gray-200 shadow-sm overflow-hidden bg-white">
           <CardHeader 
-            className="bg-primary/5 dark:bg-primary/10 py-3 cursor-pointer" 
+            className="bg-primary/5 py-3 cursor-pointer" 
             onClick={() => setShowCouncilsList(!showCouncilsList)}
           >
             <CardTitle className="text-base flex items-center justify-between">
@@ -611,7 +611,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
             <CardContent className="p-0 animate-fade-in">
               <div className="max-h-[40vh] overflow-y-auto">
                 {councils.map((council) => (
-                  <div key={council.id} className="border-b border-border last:border-0">
+                  <div key={council.id} className="border-b border-gray-100 last:border-0">
                     <div className="p-3">
                       <div className="flex justify-between items-center mb-1">
                         <div className="font-medium text-primary">{council.name}</div>
@@ -625,7 +625,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                           Message
                         </Button>
                       </div>
-                      <div className="text-xs text-muted-foreground">{council.chairName}</div>
+                      <div className="text-xs text-gray-600">{council.chairName}</div>
                       
                       {activeChairId === council.id && (
                         <div className="mt-3 animate-fade-in">
@@ -634,7 +634,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                               value={directMessage}
                               onChange={(e) => setDirectMessage(e.target.value)}
                               placeholder="Type your message..."
-                              className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
                             />
                             <div className="flex justify-end gap-2">
                               <Button
@@ -668,9 +668,9 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
   return (
     <div className="space-y-4">
       {/* Broadcast Controls */}
-      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-        <div className="p-4 flex justify-between items-center border-b border-border">
-          <h3 className="text-md font-medium text-foreground">Broadcast Messages</h3>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-4 flex justify-between items-center border-b border-gray-100">
+          <h3 className="text-md font-medium text-primary">Broadcast Messages</h3>
           {!showBroadcastForm ? (
             <div className="flex space-x-2">
               <Button
@@ -680,7 +680,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   setShowBroadcastForm(true);
                   setBroadcastTarget('chairs');
                 }}
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
               >
                 <Users size={16} />
                 To Chairs
@@ -692,7 +692,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   setShowBroadcastForm(true);
                   setBroadcastTarget('everyone');
                 }}
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
               >
                 <Globe size={16} />
                 To Everyone
@@ -704,7 +704,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   setShowBroadcastForm(true);
                   setBroadcastTarget('press');
                 }}
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
               >
                 <MessageSquare size={16} />
                 To Press
@@ -716,7 +716,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   setShowBroadcastForm(true);
                   setBroadcastTarget('logistics');
                 }}
-                className="text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
               >
                 <Truck size={16} />
                 To Logistics
@@ -728,7 +728,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
         {showBroadcastForm && (
           <div className="p-4">
             <div className="flex flex-col gap-3">
-              <div className="text-sm text-muted-foreground mb-2">
+              <div className="text-sm text-gray-600 mb-2">
                 {broadcastTarget === 'everyone' 
                   ? 'This message will be sent to everyone'
                   : broadcastTarget === 'chairs'
@@ -741,7 +741,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                 value={broadcastMessage}
                 onChange={(e) => setBroadcastMessage(e.target.value)}
                 placeholder={`Type your broadcast message...`}
-                className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px]"
                 disabled={isLoading}
               />
               <div className="flex justify-end gap-2">
@@ -770,29 +770,29 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
       </div>
 
       {/* Council List */}
-      <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted/50">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Council
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Chair
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-card divide-y divide-border">
+          <tbody className="bg-white divide-y divide-gray-200">
             {councils.map((council) => (
-              <tr key={council.id} className="hover:bg-muted/50 transition-colors">
+              <tr key={council.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-foreground">{council.name}</div>
+                  <div className="text-sm font-medium text-primary">{council.name}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-muted-foreground">{council.chairName}</div>
+                  <div className="text-sm text-gray-700">{council.chairName}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {activeChairId === council.id ? (
@@ -802,17 +802,17 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                         value={directMessage}
                         onChange={(e) => setDirectMessage(e.target.value)}
                         placeholder="Type your message..."
-                        className="flex-1 px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent"
                       />
                       <button
                         onClick={() => handleSendDirectMessage(council.id, council.name, council.chairName)}
-                        className="px-3 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 button-transition"
+                        className="px-3 py-2 bg-accent text-white text-sm rounded-md hover:bg-accent/90 button-transition"
                       >
                         Send
                       </button>
                       <button
                         onClick={() => setActiveChairId(null)}
-                        className="px-3 py-2 bg-secondary text-secondary-foreground text-sm rounded-md hover:bg-secondary/80 button-transition"
+                        className="px-3 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 button-transition"
                       >
                         Cancel
                       </button>
@@ -820,7 +820,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                   ) : (
                     <button
                       onClick={() => setActiveChairId(council.id)}
-                      className="text-primary hover:text-primary/80 inline-flex items-center gap-1"
+                      className="text-accent hover:text-accent/80 inline-flex items-center gap-1"
                     >
                       <MessageSquare size={16} />
                       Message
@@ -835,9 +835,9 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
       
       {/* Logistics Team Table - Separate section below councils */}
       {logisticsUsers.length > 0 && (
-        <div className="mt-6 bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-muted/50">
+        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-2">
@@ -853,7 +853,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-border">
+            <tbody className="bg-white divide-y divide-gray-200">
               {logisticsUsers.map((logisticsUser) => (
                 <tr key={logisticsUser.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -885,9 +885,9 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
 
       {/* Press Team Table */}
       {pressUsers.length > 0 && (
-        <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-muted/50">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center gap-2">
@@ -903,7 +903,7 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-border">
+            <tbody className="bg-white divide-y divide-gray-200">
               {pressUsers.map((pressUser) => (
                 <tr key={pressUser.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -931,16 +931,16 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
           
            {/* Message form for individual team member */}
            {activeChairId && (pressUsers.find(u => u.id === activeChairId) || logisticsUsers.find(u => u.id === activeChairId)) && (
-              <div className="p-4 border-t bg-muted/50">
-                <div className="text-sm font-medium mb-2 text-foreground">
-                  Message {pressUsers.find(u => u.id === activeChairId)?.name || logisticsUsers.find(u => u.id === activeChairId)?.name}
-                </div>
-                <div className="flex flex-col gap-3">
-                  <textarea
-                    value={directMessage}
-                    onChange={(e) => setDirectMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
+             <div className="p-4 border-t bg-gray-50">
+               <div className="text-sm font-medium mb-2">
+                 Message {pressUsers.find(u => u.id === activeChairId)?.name || logisticsUsers.find(u => u.id === activeChairId)?.name}
+               </div>
+               <div className="flex flex-col gap-3">
+                 <textarea
+                   value={directMessage}
+                   onChange={(e) => setDirectMessage(e.target.value)}
+                   placeholder="Type your message..."
+                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[80px]"
                  />
                  <div className="flex justify-end gap-2">
                    <Button
@@ -978,24 +978,24 @@ export const CouncilList = ({ councils, user, isMobile = false }: CouncilListPro
       {/* Logistics Message Dialog */}
       {showLogisticsMessages && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-medium mb-4 text-foreground">Send Message to Logistics Team</h3>
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-medium mb-4">Send Message to Logistics Team</h3>
             <textarea
               value={logisticsMessage}
               onChange={(e) => setLogisticsMessage(e.target.value)}
               placeholder="Type your message to the Logistics Team..."
-              className="w-full px-3 py-2 text-sm border border-border bg-background text-foreground rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px] mb-4"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm input-shadow focus:outline-none focus:ring-accent focus:border-accent min-h-[100px] mb-4"
             />
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowLogisticsMessages(false)}
-                className="px-3 py-2 bg-secondary text-secondary-foreground text-sm rounded-md hover:bg-secondary/80 button-transition"
+                className="px-3 py-2 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300 button-transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendLogisticsMessage}
-                className="px-3 py-2 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 button-transition"
+                className="px-3 py-2 bg-accent text-white text-sm rounded-md hover:bg-accent/90 button-transition"
               >
                 Send to Logistics
               </button>

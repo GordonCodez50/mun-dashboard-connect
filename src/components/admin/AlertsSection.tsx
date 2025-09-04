@@ -46,8 +46,8 @@ export const AlertsSection = ({ alerts, hideResolved, user, isMobile = false }: 
       ))}
     </div>
   ) : (
-    <div className={`text-center p-6 bg-card rounded-lg shadow-sm border border-border ${isMobile ? 'animate-fade-in' : ''}`}>
-      <p className="text-muted-foreground">
+    <div className={`text-center p-6 bg-white rounded-lg shadow-sm border border-gray-100 ${isMobile ? 'animate-fade-in' : ''}`}>
+      <p className="text-gray-500">
         {hideResolved ? 'No active alerts (resolved alerts are hidden)' : 'No active alerts'}
       </p>
     </div>
@@ -55,7 +55,7 @@ export const AlertsSection = ({ alerts, hideResolved, user, isMobile = false }: 
 
   return (
     <div className="mb-6">
-      <h2 className="text-lg font-medium text-foreground mb-3 flex items-center">
+      <h2 className="text-lg font-medium text-primary mb-3 flex items-center">
         Live Alerts
         <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
       </h2>
