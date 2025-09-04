@@ -27,6 +27,7 @@ interface AttendanceTableProps {
   selectedDate: 'day1' | 'day2';
   isDateLocked: boolean;
   showCouncil?: boolean;
+  showDelegations?: boolean;
   onMarkAttendance: (participantId: string, date: 'day1' | 'day2', status: AttendanceStatus) => void;
   onBatchMarkAttendance: (participantIds: string[], date: 'day1' | 'day2', status: AttendanceStatus) => void;
   readOnly?: boolean;
@@ -37,6 +38,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
   selectedDate,
   isDateLocked,
   showCouncil = false,
+  showDelegations = true,
   onMarkAttendance,
   onBatchMarkAttendance,
   readOnly = false
@@ -203,6 +205,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
               <TableHead className={isMobile ? 'text-xs' : ''}>Name</TableHead>
               {showCouncil && <TableHead className={isMobile ? 'text-xs' : ''}>Council</TableHead>}
               <TableHead className={isMobile ? 'text-xs' : ''}>Role</TableHead>
+              {showDelegations && <TableHead className={isMobile ? 'text-xs' : ''}>Delegations</TableHead>}
               <TableHead className={isMobile ? 'text-xs' : ''}>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -210,7 +213,11 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
             {filteredParticipants.length === 0 ? (
               <TableRow>
                 <TableCell 
-                  colSpan={showCouncil ? (readOnly ? 4 : 5) : (readOnly ? 3 : 4)} 
+                  colSpan={
+                    (showCouncil ? 1 : 0) + 
+                    (showDelegations ? 1 : 0) + 
+                    (readOnly ? 3 : 4)
+                  } 
                   className="text-center py-8 text-muted-foreground"
                 >
                   No participants found
@@ -236,6 +243,7 @@ export const AttendanceTable: React.FC<AttendanceTableProps> = ({
                     <TableCell className={`font-medium ${isMobile ? 'text-xs' : ''}`}>{participant.name}</TableCell>
                     {showCouncil && <TableCell className={isMobile ? 'text-xs' : ''}>{participant.council}</TableCell>}
                     <TableCell className={`capitalize ${isMobile ? 'text-xs' : ''}`}>{participant.role}</TableCell>
+                    {showDelegations && <TableCell className={isMobile ? 'text-xs' : ''}>{participant.delegations || '-'}</TableCell>}
                     <TableCell>
                       {isDateLocked || readOnly ? (
                         <div className={`inline-flex items-center ${isMobile ? 'px-1.5 py-0.5' : 'px-2.5 py-0.5'} rounded-full text-${isMobile ? '2xs' : 'xs'} font-medium ${statusDisplay.color}`}>

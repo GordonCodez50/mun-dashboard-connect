@@ -236,6 +236,7 @@ export type Database = {
           day2_marked_at: string | null
           day2_marked_by: string | null
           day2_marked_by_user: string | null
+          delegations: string | null
           id: string
           is_tour_data: boolean | null
           name: string
@@ -252,6 +253,7 @@ export type Database = {
           day2_marked_at?: string | null
           day2_marked_by?: string | null
           day2_marked_by_user?: string | null
+          delegations?: string | null
           id?: string
           is_tour_data?: boolean | null
           name: string
@@ -268,6 +270,7 @@ export type Database = {
           day2_marked_at?: string | null
           day2_marked_by?: string | null
           day2_marked_by_user?: string | null
+          delegations?: string | null
           id?: string
           is_tour_data?: boolean | null
           name?: string

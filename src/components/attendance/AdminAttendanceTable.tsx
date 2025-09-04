@@ -230,6 +230,7 @@ export const AdminAttendanceTable: React.FC<AdminAttendanceTableProps> = ({
               <TableHead className={isMobile ? 'text-xs' : ''}>Name</TableHead>
               {showCouncil && <TableHead className={isMobile ? 'text-xs' : ''}>Council</TableHead>}
               <TableHead className={isMobile ? 'text-xs' : ''}>Role</TableHead>
+              <TableHead className={isMobile ? 'text-xs' : ''}>Delegations</TableHead>
               <TableHead className={isMobile ? 'text-xs' : ''}>Status</TableHead>
               <TableHead className={isMobile ? 'text-xs' : ''}>Source</TableHead>
             </TableRow>
@@ -238,7 +239,7 @@ export const AdminAttendanceTable: React.FC<AdminAttendanceTableProps> = ({
             {filteredParticipants.length === 0 ? (
               <TableRow>
                 <TableCell 
-                  colSpan={showCouncil ? (readOnly ? 5 : 6) : (readOnly ? 4 : 5)} 
+                  colSpan={showCouncil ? (readOnly ? 6 : 7) : (readOnly ? 5 : 6)} 
                   className="text-center py-8 text-muted-foreground"
                 >
                   No participants found
@@ -264,6 +265,7 @@ export const AdminAttendanceTable: React.FC<AdminAttendanceTableProps> = ({
                     <TableCell className={`font-medium ${isMobile ? 'text-xs' : ''}`}>{participant.name}</TableCell>
                     {showCouncil && <TableCell className={isMobile ? 'text-xs' : ''}>{participant.council}</TableCell>}
                     <TableCell className={`capitalize ${isMobile ? 'text-xs' : ''}`}>{participant.role}</TableCell>
+                    <TableCell className={isMobile ? 'text-xs' : ''}>{participant.delegations || '-'}</TableCell>
                     <TableCell>
                       {isDateLocked || readOnly ? (
                         <div className={`inline-flex items-center ${isMobile ? 'px-1.5 py-0.5' : 'px-2.5 py-0.5'} rounded-full text-${isMobile ? '2xs' : 'xs'} font-medium ${statusDisplay.color}`}>

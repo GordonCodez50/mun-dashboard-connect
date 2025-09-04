@@ -36,6 +36,7 @@ export const AttendanceExport: React.FC<AttendanceExportProps> = ({
         'Name',
         'Council',
         'Role',
+        'Delegations',
         'Day 1 Attendance',
         'Day 2 Attendance'
       ];
@@ -45,6 +46,7 @@ export const AttendanceExport: React.FC<AttendanceExportProps> = ({
         p.name,
         p.council,
         p.role,
+        p.delegations || '',
         p.attendance.day1,
         p.attendance.day2
       ]);

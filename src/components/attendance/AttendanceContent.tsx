@@ -187,6 +187,7 @@ export const AttendanceContent: React.FC<AttendanceContentProps> = ({
                 participants={participants}
                 selectedDate={selectedDate}
                 isDateLocked={false}
+                showDelegations={userCouncil !== 'PRESS'}
                 onMarkAttendance={markAttendance}
                 onBatchMarkAttendance={batchMarkAttendance}
               />

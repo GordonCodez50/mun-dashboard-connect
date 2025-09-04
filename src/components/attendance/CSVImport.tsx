@@ -70,10 +70,13 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         
         // Validate that this is our template with exactly the required headers
         const requiredHeaders = ['name', 'council', 'role'];
+        const optionalHeaders = ['delegations'];
+        const allValidHeaders = [...requiredHeaders, ...optionalHeaders];
         
-        // Check if the headers exactly match our template (no extra headers allowed)
-        const allHeadersValid = requiredHeaders.length === headers.length && 
-                               requiredHeaders.every(h => headers.includes(h));
+        // Check if the headers contain all required headers and only valid headers
+        const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
+        const hasOnlyValidHeaders = headers.every(h => allValidHeaders.includes(h));
+        const allHeadersValid = hasRequiredHeaders && hasOnlyValidHeaders;
                                
         if (!allHeadersValid) {
           setParseError('CSV format does not match the template. Please use the template provided.');
@@ -116,6 +119,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
         const nameIndex = headers.indexOf('name');
         const roleIndex = headers.indexOf('role');
         const councilIndex = headers.indexOf('council');
+        const delegationsIndex = headers.indexOf('delegations');
         
         // Parse rows into participants
         const participants: Omit<ParticipantWithAttendance, 'id'>[] = [];
@@ -143,6 +147,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
             name: values[nameIndex],
             role: role as any,
             council: council,
+            delegations: user?.council === 'PRESS' ? null : (delegationsIndex >= 0 ? values[delegationsIndex] : undefined),
             attendance: {
               day1: 'not-marked',
               day2: 'not-marked'
@@ -181,7 +186,9 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
   // Function to download CSV template
   const downloadTemplate = () => {
     // Create CSV content with headers
-    const headers = ['name', 'council', 'role'];
+    const headers = user?.council === 'PRESS' 
+      ? ['name', 'council', 'role'] 
+      : ['name', 'council', 'role', 'delegations'];
     const csvContent = headers.join(',') + '\n';
     
     // Create a blob and download
@@ -270,7 +277,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, councilRestricti
                 Browse Files
               </Button>
               <p className="text-xs text-muted-foreground mt-3">
-                The CSV must match the template format with name, council, and role columns
+                The CSV must match the template format with name, council, role{user?.council !== 'PRESS' ? ', and delegations' : ''} columns
               </p>
             </>
           )}

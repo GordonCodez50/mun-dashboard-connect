@@ -21,6 +21,7 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
     name: '',
     role: user?.council === 'PRESS' ? 'member' : 'delegate',
     council: user?.council || '',
+    delegations: '',
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +62,7 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
         name: '',
         role: user?.council === 'PRESS' ? 'member' : 'delegate',
         council: user?.council || '',
+        delegations: '',
       });
       
       toast.success('Participant added successfully');
@@ -150,6 +152,19 @@ export const ParticipantForm: React.FC<ParticipantFormProps> = ({ onSubmit, coun
                 </SelectContent>
               </Select>
             </div>
+            
+            {user?.council !== 'PRESS' && (
+              <div className="space-y-2">
+                <Label htmlFor="delegations">Delegations</Label>
+                <Input
+                  id="delegations"
+                  name="delegations"
+                  value={formData.delegations || ''}
+                  onChange={handleChange}
+                  placeholder="Enter delegations (optional)"
+                />
+              </div>
+            )}
           </div>
         </CardContent>
         

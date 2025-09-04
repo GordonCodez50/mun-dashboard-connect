@@ -89,6 +89,7 @@ export const AttendanceViewTab: React.FC<AttendanceViewTabProps> = ({
             selectedDate={selectedDate}
             isDateLocked={!canEdit}
             showCouncil={selectedCouncil === 'all'}
+            showDelegations={true}
             onMarkAttendance={markAttendance}
             onBatchMarkAttendance={batchMarkAttendance}
             readOnly={false}
