@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import { initializeFirebase } from "./services/firebaseService";
 import NotificationInitializer from "./components/NotificationInitializer";
 import { HelmetProvider } from 'react-helmet-async';
+import { ThemeProvider } from "next-themes";
 
 // Enhanced error boundary fallback component with iOS-specific debugging
 const ErrorFallback = () => {
@@ -546,18 +547,25 @@ const App = () => {
     <ErrorBoundary fallback={<ErrorFallback />}>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <BrowserRouter>
-              <AuthProvider>
-                <TimerProvider>
-                  <OfflineIndicator />
-                  <AppWithAuth />
-                </TimerProvider>
-              </AuthProvider>
-            </BrowserRouter>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TooltipProvider>
+              <BrowserRouter>
+                <AuthProvider>
+                  <TimerProvider>
+                    <OfflineIndicator />
+                    <AppWithAuth />
+                  </TimerProvider>
+                </AuthProvider>
+              </BrowserRouter>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </ThemeProvider>
         </QueryClientProvider>
       </HelmetProvider>
     </ErrorBoundary>
