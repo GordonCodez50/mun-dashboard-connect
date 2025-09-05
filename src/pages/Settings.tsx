@@ -16,7 +16,9 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  Copy
+  Copy,
+  Users,
+  Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +32,8 @@ import {
 } from '@/components/ui/accordion';
 import { useNavigate } from 'react-router-dom';
 import AuditLogsViewer from '@/components/admin/AuditLogsViewer';
+import { PasswordProtectedDialog } from '@/components/admin/PasswordProtectedDialog';
+import { UserManagement } from '@/components/admin/UserManagement';
 
 // App version information
 const APP_VERSION = "v2.2.0";
@@ -77,6 +81,81 @@ const CHANGELOG = [
 // Mock data for usage statistics - in a real app, this would come from the backend
 const USAGE_DATA = {
   alertsSent: 124
+};
+
+// Admin User Management Component
+const AdminUserManagementSection = () => {
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(false);
+
+  const handlePasswordSuccess = () => {
+    setShowPasswordDialog(false);
+    setShowUserManagement(true);
+  };
+
+  if (showUserManagement) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Password / User Management
+              </CardTitle>
+              <CardDescription>
+                Manage user credentials and generate secure passwords
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={() => setShowUserManagement(false)}>
+              Close
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <UserManagement />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Password / User Management
+          </CardTitle>
+          <CardDescription>
+            Secure admin tool for managing user credentials and generating passwords
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">User Credential Management</h3>
+              <p className="text-sm text-gray-500">
+                Password-protected access to user management tools
+              </p>
+            </div>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(true)}>
+              Access Management
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <PasswordProtectedDialog
+        isOpen={showPasswordDialog}
+        onClose={() => setShowPasswordDialog(false)}
+        onSuccess={handlePasswordSuccess}
+        title="Access User Management"
+        description="Enter the admin password to access user credential management tools."
+        correctPassword="Kl7t@5077"
+      />
+    </>
+  );
 };
 
 const Settings = () => {
@@ -419,51 +498,58 @@ const Settings = () => {
                       Open Debug Console
                     </Button>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Audit Logs</h3>
-                      <p className="text-sm text-gray-500">
-                        View system activity and security events
-                      </p>
-                    </div>
-                    <Button variant="outline" onClick={handleOpenAuditLogs}>
-                      View Audit Logs
-                    </Button>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between opacity-60">
-                    <div>
-                      <h3 className="font-medium">Experimental Features</h3>
-                      <p className="text-sm text-gray-500">
-                        Coming soon: Access beta and experimental features
-                      </p>
-                    </div>
-                    <Button variant="outline" disabled>
-                      Coming Soon
-                    </Button>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between opacity-60">
-                    <div>
-                      <h3 className="font-medium">Advanced Configuration</h3>
-                      <p className="text-sm text-gray-500">
-                        Coming soon: Configure advanced system parameters
-                      </p>
-                    </div>
-                    <Button variant="outline" disabled>
-                      Coming Soon
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-        </div>
-      </div>
-    </div>
-  );
-};
+                   <Separator />
+                   <div className="flex items-center justify-between">
+                     <div>
+                       <h3 className="font-medium">Audit Logs</h3>
+                       <p className="text-sm text-gray-500">
+                         View system activity and security events
+                       </p>
+                     </div>
+                     <Button variant="outline" onClick={handleOpenAuditLogs}>
+                       View Audit Logs
+                     </Button>
+                   </div>
+                 </div>
+               </CardContent>
+             </Card>
 
-export default Settings;
+             {/* Password / User Management - Admin Only */}
+             {user?.role === 'admin' && <AdminUserManagementSection />}
+
+             <Card>
+               <CardHeader>
+                 <CardTitle>Experimental Features</CardTitle>
+                 <CardDescription>
+                   Beta features and experimental functionality (Coming Soon)
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <div className="text-center py-8">
+                   <p className="text-gray-500">No experimental features available at this time.</p>
+                 </div>
+               </CardContent>
+             </Card>
+
+             <Card>
+               <CardHeader>
+                 <CardTitle>Advanced Configuration</CardTitle>
+                 <CardDescription>
+                   System-level settings and configuration options (Coming Soon)
+                 </CardDescription>
+               </CardHeader>
+               <CardContent>
+                 <div className="text-center py-8">
+                   <p className="text-gray-500">Advanced configuration options will be available in future updates.</p>
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
+         </Tabs>
+         </div>
+       </div>
+     </div>
+   );
+ };
+
+ export default Settings;
