@@ -517,16 +517,28 @@ const Settings = () => {
              {/* Password / User Management - Admin Only */}
              {user?.role === 'admin' && <AdminUserManagementSection />}
 
+             {/* Admin Page Link */}
              <Card>
                <CardHeader>
-                 <CardTitle>Experimental Features</CardTitle>
+                 <CardTitle>Admin Portal Access</CardTitle>
                  <CardDescription>
-                   Beta features and experimental functionality (Coming Soon)
+                   Direct access to the main admin portal
                  </CardDescription>
                </CardHeader>
                <CardContent>
-                 <div className="text-center py-8">
-                   <p className="text-gray-500">No experimental features available at this time.</p>
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h3 className="font-medium">Main Admin Portal</h3>
+                     <p className="text-sm text-gray-500">
+                       Access the external admin portal for system management
+                     </p>
+                   </div>
+                   <Button 
+                     variant="outline" 
+                     onClick={() => window.open('https://participant.bmunis.com/admin', '_blank')}
+                   >
+                     Open Admin Portal
+                   </Button>
                  </div>
                </CardContent>
              </Card>
