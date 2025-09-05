@@ -1209,10 +1209,6 @@ Environment Details:
                 <BookOpen className="h-4 w-4 mr-2" />
                 Tour
               </TabsTrigger>
-              <TabsTrigger value="advanced" className="whitespace-nowrap flex-shrink-0 h-10">
-                <Settings className="h-4 w-4 mr-2" />
-                Advanced
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1912,35 +1908,6 @@ Environment Details:
                   >
                     <UserPlus className={`h-4 w-4 ${syncLoading ? 'animate-spin' : ''}`} />
                     {syncLoading ? 'Syncing...' : 'Sync Firebase Users to Profiles'}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Advanced Tab */}
-        <TabsContent value="advanced" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Advanced Links</CardTitle>
-              <CardDescription>External system access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Admin Portal</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Access the external admin portal for participant management.
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open('https://participant.bmunis.com/admin', '_blank')}
-                    className="gap-2"
-                  >
-                    <Globe className="h-4 w-4" />
-                    Open Admin Portal
                   </Button>
                 </div>
               </div>
