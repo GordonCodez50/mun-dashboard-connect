@@ -944,8 +944,8 @@ export default {
   analytics,
   messaging,
   authService,
-  realtimeService: {} as any, // This will be populated from the appropriate module
-  firestoreService: {} as any, // This will be populated from the appropriate module
-  fcmService: {} as any,       // This will be populated from the appropriate module
+  realtimeService,
+  firestoreService,
+  fcmService,
   initializeFirebase
 };
