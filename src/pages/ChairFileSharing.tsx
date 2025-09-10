@@ -190,8 +190,9 @@ const ChairFileSharing = () => {
           
           console.log('Save result:', saveResult);
           
-          if (!saveResult) {
-            throw new Error('Failed to save file metadata to Firebase');
+          if (!saveResult || !saveResult.success) {
+            const errorMsg = saveResult?.error || 'Failed to save file metadata to Firebase';
+            throw new Error(errorMsg);
           }
           
           // Trigger alert
@@ -212,7 +213,7 @@ const ChairFileSharing = () => {
           console.error('Upload error:', error);
           toast({
             title: "Error", 
-            description: "Failed to save file metadata",
+            description: error.message || "Failed to save file metadata",
             variant: "destructive",
           });
         } finally {

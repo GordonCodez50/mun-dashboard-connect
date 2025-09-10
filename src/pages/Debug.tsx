@@ -245,18 +245,42 @@ const Debug = () => {
           const latency = Math.round(performance.now() - startTime);
           return `${latency}ms latency`;
         }
-      },
-      {
-        name: 'Device APIs',
-        test: async () => {
-          const apis = [];
-          if ('geolocation' in navigator) apis.push('Geolocation');
-          if ('mediaDevices' in navigator) apis.push('MediaDevices');
-          if ('share' in navigator) apis.push('WebShare');
-          if ('credentials' in navigator) apis.push('Credentials');
-          return apis.length > 0 ? `${apis.join(', ')} available` : 'No advanced APIs';
+        },
+        {
+          name: 'Firebase Files Health',
+          test: async () => {
+            try {
+              // Import realtimeService
+              const { realtimeService } = await import('@/services/firebaseService');
+              
+              // Test writing to files/_health with a timestamp
+              const testResult = await realtimeService.saveFileMetadata('_health', 'test', {
+                timestamp: Date.now(),
+                test: true,
+                source: 'debug-health-check'
+              });
+              
+              if (testResult && testResult.success) {
+                return 'Firebase files write successful';
+              } else {
+                throw new Error(testResult?.error || 'Unknown Firebase error');
+              }
+            } catch (e) {
+              throw new Error(`Firebase files test failed: ${e.message}`);
+            }
+          }
+        },
+        {
+          name: 'Device APIs',
+          test: async () => {
+            const apis = [];
+            if ('geolocation' in navigator) apis.push('Geolocation');
+            if ('mediaDevices' in navigator) apis.push('MediaDevices');
+            if ('share' in navigator) apis.push('WebShare');
+            if ('credentials' in navigator) apis.push('Credentials');
+            return apis.length > 0 ? `${apis.join(', ')} available` : 'No advanced APIs';
+          }
         }
-      }
     ];
 
     for (let i = 0; i < tests.length; i++) {

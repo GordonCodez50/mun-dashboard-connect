@@ -540,23 +540,33 @@ export const realtimeService = {
   // File management for Cloudinary
   saveFileMetadata: async (councilId: string, assetId: string, fileMetadata: any) => {
     try {
-      const fileRef = ref(realtimeDb, `files/${councilId}/${assetId}`);
+      const filePath = `files/${councilId}/${assetId}`;
+      console.log('Saving file metadata to Firebase path:', filePath);
+      
+      const fileRef = ref(realtimeDb, filePath);
       await set(fileRef, fileMetadata);
-      return true;
+      console.log('File metadata saved successfully');
+      return { success: true };
     } catch (error) {
+      const errorMessage = `Failed to save file metadata: ${error.message}`;
       console.error('Error saving file metadata:', error);
-      return false;
+      return { success: false, error: errorMessage };
     }
   },
 
   saveAdminFileMetadata: async (assetId: string, fileMetadata: any) => {
     try {
-      const fileRef = ref(realtimeDb, `files/admin/${assetId}`);
+      const filePath = `files/admin/${assetId}`;
+      console.log('Saving admin file metadata to Firebase path:', filePath);
+      
+      const fileRef = ref(realtimeDb, filePath);
       await set(fileRef, fileMetadata);
-      return true;
+      console.log('Admin file metadata saved successfully');
+      return { success: true };
     } catch (error) {
+      const errorMessage = `Failed to save admin file metadata: ${error.message}`;
       console.error('Error saving admin file metadata:', error);
-      return false;
+      return { success: false, error: errorMessage };
     }
   },
 
@@ -599,13 +609,18 @@ export const realtimeService = {
   // Chair-to-members file management
   saveChairToMembersFile: async (council: string, assetId: string, fileMetadata: any) => {
     try {
+      const filePath = `files/chair-to-members/${council}/${assetId}`;
+      console.log('Saving chair-to-members file metadata to Firebase path:', filePath);
+      
       const { set } = await import('firebase/database');
-      const fileRef = ref(realtimeDb, `files/chair-to-members/${council}/${assetId}`);
+      const fileRef = ref(realtimeDb, filePath);
       await set(fileRef, fileMetadata);
-      return true;
+      console.log('Chair-to-members file metadata saved successfully');
+      return { success: true };
     } catch (error) {
+      const errorMessage = `Failed to save chair-to-members file metadata: ${error.message}`;
       console.error('Error saving chair-to-members file metadata:', error);
-      return false;
+      return { success: false, error: errorMessage };
     }
   },
 
