@@ -171,7 +171,7 @@ const ChairFileSharing = () => {
             sharedBy: user.id || user.council || 'unknown_user',
             visibility: isHCCOrFCCChair ? recipient : (finalAlertTag === 'printing' ? 'admin' : 'council'),
             fileType: fileFormat,
-            recipient: isHCCOrFCCChair ? recipient : undefined,
+            recipient: isHCCOrFCCChair ? recipient : (finalAlertTag === 'printing' ? 'admin' : user.council || 'unknown_council'),
             fromChair: isHCCOrFCCChair && recipient === 'members' ? user.council : undefined
           };
 
