@@ -163,18 +163,18 @@ const ChairFileSharing = () => {
             format: fileFormat,
             uploadTime: Date.now(),
             uploaderRole: 'chair',
-            councilId: user.council || '',
-            toCouncil: user.council || '',
+            councilId: user.council || 'unknown_council',
+            toCouncil: user.council || 'unknown_council',
             alertTag: finalAlertTag || 'general',
             originalName: fileName,
-            // Enhanced metadata
-            sharedWith: sharedWithValue,
-            sharedBy: user.id || user.council || '',
+            sharedWith: sharedWithValue || 'admin',
+            sharedBy: user.id || user.council || 'unknown_user',
             visibility: isHCCOrFCCChair ? recipient : (finalAlertTag === 'printing' ? 'admin' : 'council'),
             fileType: fileFormat,
-            recipient: isHCCOrFCCChair ? recipient : undefined,
-            fromChair: isHCCOrFCCChair && recipient === 'members' ? user.council : undefined
+            recipient: recipient || 'admin',
+            fromChair: isHCCOrFCCChair && recipient === 'members' ? user.council : 'unknown_council'
           };
+
           
           console.log('Saving chair file metadata:', fileMetadata);
 
