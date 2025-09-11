@@ -151,7 +151,7 @@ const ChairFileSharing = () => {
               sharedWithValue = recipient;
             }
           } else {
-            fileRecipient = finalAlertTag === 'printing' ? 'admin' : user.council || '';
+            fileRecipient = finalAlertTag === 'printing' ? 'admin' : user.council || 'unknown_council';
             sharedWithValue = fileRecipient;
           }
           
@@ -171,9 +171,10 @@ const ChairFileSharing = () => {
             sharedBy: user.id || user.council || 'unknown_user',
             visibility: isHCCOrFCCChair ? recipient : (finalAlertTag === 'printing' ? 'admin' : 'council'),
             fileType: fileFormat,
-            recipient: recipient || 'admin',
-            fromChair: isHCCOrFCCChair && recipient === 'members' ? user.council : 'unknown_council'
+            recipient: isHCCOrFCCChair ? recipient : undefined,
+            fromChair: isHCCOrFCCChair && recipient === 'members' ? user.council : undefined
           };
+
 
           
           console.log('Saving chair file metadata:', fileMetadata);
